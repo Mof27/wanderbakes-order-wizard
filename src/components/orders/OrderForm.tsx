@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useApp } from "@/context/AppContext";
 import { Customer, Order, Ingredient, Address, TierDetail, PackingItem } from "@/types";
@@ -953,3 +954,99 @@ const OrderForm = ({ order }: OrderFormProps) => {
                   Back to Required Information
                 </Button>
               </div>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
+
+      {/* New Address Dialog */}
+      <Dialog open={newAddressDialogOpen} onOpenChange={setNewAddressDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add New Address</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="dialog-address-text">Address *</Label>
+              <Textarea
+                id="dialog-address-text"
+                value={newAddress.text || ""}
+                onChange={(e) => handleAddressChange("text", e.target.value)}
+                placeholder="Full address"
+                className="min-h-[80px]"
+                required
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="dialog-address-area">Area *</Label>
+              <Select 
+                value={newAddress.area} 
+                onValueChange={(value) => handleAddressChange("area", value)}
+              >
+                <SelectTrigger id="dialog-address-area">
+                  <SelectValue placeholder="Select area" />
+                </SelectTrigger>
+                <SelectContent>
+                  {areaOptions.map((area) => (
+                    <SelectItem key={area} value={area}>{area}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="dialog-address-notes">Delivery Notes</Label>
+              <Textarea
+                id="dialog-address-notes"
+                value={newAddress.deliveryNotes || ""}
+                onChange={(e) => handleAddressChange("deliveryNotes", e.target.value)}
+                placeholder="Special delivery instructions"
+                className="min-h-[60px]"
+              />
+            </div>
+          </div>
+          
+          <div className="flex justify-end gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setNewAddressDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSaveNewAddress}
+              disabled={!newAddress.text}
+            >
+              Save Address
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex flex-col sm:flex-row justify-between gap-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleSaveDraft}
+            >
+              Save as Draft
+            </Button>
+            <Button
+              type="submit"
+              disabled={!areRequiredFieldsFilled()}
+              onClick={handleSubmitOrder}
+            >
+              {order ? "Update Order" : "Create Order"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default OrderForm;
