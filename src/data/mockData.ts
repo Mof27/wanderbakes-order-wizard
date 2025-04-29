@@ -70,28 +70,19 @@ export const mockCustomers: Customer[] = [
 
 // Mock Ingredients
 export const mockIngredients: Record<string, Ingredient[]> = {
-  "Chocolate Cake": [
+  "Double Chocolate": [
     { id: "i1", name: "Flour", quantity: 500, unit: "g" },
     { id: "i2", name: "Sugar", quantity: 300, unit: "g" },
     { id: "i3", name: "Cocoa Powder", quantity: 100, unit: "g" },
     { id: "i4", name: "Butter", quantity: 200, unit: "g" },
     { id: "i5", name: "Eggs", quantity: 4, unit: "pcs" },
   ],
-  "Vanilla Cake": [
+  "Vanilla": [
     { id: "i1", name: "Flour", quantity: 500, unit: "g" },
     { id: "i2", name: "Sugar", quantity: 300, unit: "g" },
     { id: "i6", name: "Vanilla Extract", quantity: 10, unit: "ml" },
     { id: "i4", name: "Butter", quantity: 200, unit: "g" },
     { id: "i5", name: "Eggs", quantity: 4, unit: "pcs" },
-  ],
-  "Red Velvet": [
-    { id: "i1", name: "Flour", quantity: 500, unit: "g" },
-    { id: "i2", name: "Sugar", quantity: 300, unit: "g" },
-    { id: "i3", name: "Cocoa Powder", quantity: 20, unit: "g" },
-    { id: "i4", name: "Butter", quantity: 200, unit: "g" },
-    { id: "i5", name: "Eggs", quantity: 4, unit: "pcs" },
-    { id: "i7", name: "Red Food Coloring", quantity: 30, unit: "ml" },
-    { id: "i8", name: "Buttermilk", quantity: 240, unit: "ml" },
   ]
 };
 
@@ -113,7 +104,7 @@ export const mockOrders: Order[] = [
     deliveryAddressNotes: mockCustomers[0].addresses[0].deliveryNotes,
     deliveryArea: mockCustomers[0].addresses[0].area,
     cakeDesign: "Flower themed",
-    cakeFlavor: "Chocolate Cake",
+    cakeFlavor: "Double Chocolate",
     cakeSize: "16 CM",
     cakeShape: "Round",
     cakeTier: 1,
@@ -131,7 +122,7 @@ export const mockOrders: Order[] = [
     attachments: ["cake-design-1.jpg"],
     createdAt: new Date('2024-04-25'),
     updatedAt: new Date('2024-04-25'),
-    ingredients: mockIngredients["Chocolate Cake"],
+    ingredients: mockIngredients["Double Chocolate"],
     totalPrice: 350000,
   },
   {
@@ -143,13 +134,13 @@ export const mockOrders: Order[] = [
     deliveryAddressNotes: mockCustomers[1].addresses[0].deliveryNotes,
     deliveryArea: mockCustomers[1].addresses[0].area,
     cakeDesign: "Superhero themed",
-    cakeFlavor: "Vanilla Cake",
+    cakeFlavor: "Vanilla",
     cakeSize: "22 CM",
     cakeShape: "Round",
     cakeTier: 2,
     tierDetails: [
-      { tier: 1, shape: "Round", size: "22 CM", flavor: "Vanilla Cake" },
-      { tier: 2, shape: "Round", size: "16 CM", flavor: "Chocolate Cake" }
+      { tier: 1, shape: "Round", size: "22 CM", flavor: "Vanilla" },
+      { tier: 2, shape: "Round", size: "16 CM", flavor: "Double Chocolate" }
     ],
     useSameFlavor: false,
     coverColor: "Blue",
@@ -163,7 +154,7 @@ export const mockOrders: Order[] = [
     attachments: ["cake-design-2.jpg"],
     createdAt: new Date('2024-04-28'),
     updatedAt: new Date('2024-04-29'),
-    ingredients: mockIngredients["Vanilla Cake"],
+    ingredients: mockIngredients["Vanilla"],
     totalPrice: 450000,
   },
   {
@@ -175,7 +166,7 @@ export const mockOrders: Order[] = [
     deliveryAddressNotes: mockCustomers[2].addresses[0].deliveryNotes,
     deliveryArea: mockCustomers[2].addresses[0].area,
     cakeDesign: "Floral pattern",
-    cakeFlavor: "Red Velvet",
+    cakeFlavor: "Vanilla",
     cakeSize: "18 CM",
     cakeShape: "Square",
     cakeTier: 1,
@@ -185,7 +176,7 @@ export const mockOrders: Order[] = [
     packingItems: defaultPackingItems,
     createdAt: new Date('2024-04-29'),
     updatedAt: new Date('2024-04-29'),
-    ingredients: mockIngredients["Red Velvet"],
+    ingredients: mockIngredients["Vanilla"],
     totalPrice: 250000,
   },
   {
@@ -197,7 +188,7 @@ export const mockOrders: Order[] = [
     deliveryAddressNotes: mockCustomers[3].addresses[0].deliveryNotes,
     deliveryArea: mockCustomers[3].addresses[0].area,
     cakeDesign: "Minimalist",
-    cakeFlavor: "Chocolate Cake",
+    cakeFlavor: "Double Chocolate",
     cakeSize: "24 CM",
     cakeShape: "Round",
     cakeTier: 1,
@@ -214,7 +205,7 @@ export const mockOrders: Order[] = [
     attachments: ["cake-design-3.jpg"],
     createdAt: new Date('2024-04-20'),
     updatedAt: new Date('2024-04-28'),
-    ingredients: mockIngredients["Chocolate Cake"],
+    ingredients: mockIngredients["Double Chocolate"],
     totalPrice: 400000,
   },
   {
@@ -226,14 +217,14 @@ export const mockOrders: Order[] = [
     deliveryAddressNotes: mockCustomers[4].addresses[0].deliveryNotes,
     deliveryArea: mockCustomers[4].addresses[0].area,
     cakeDesign: "Beach themed",
-    cakeFlavor: "Vanilla Cake",
+    cakeFlavor: "Vanilla",
     cakeSize: "16 CM",
     cakeShape: "Square",
     cakeTier: 3,
     tierDetails: [
-      { tier: 1, shape: "Square", size: "24 CM", flavor: "Vanilla Cake" },
-      { tier: 2, shape: "Square", size: "18 CM", flavor: "Vanilla Cake" },
-      { tier: 3, shape: "Square", size: "12 CM", flavor: "Vanilla Cake" }
+      { tier: 1, shape: "Square", size: "24 CM", flavor: "Vanilla" },
+      { tier: 2, shape: "Square", size: "18 CM", flavor: "Vanilla" },
+      { tier: 3, shape: "Square", size: "12 CM", flavor: "Vanilla" }
     ],
     useSameFlavor: true,
     coverColor: "Turquoise",
@@ -248,7 +239,7 @@ export const mockOrders: Order[] = [
     attachments: ["cake-design-4.jpg"],
     createdAt: new Date('2024-04-15'),
     updatedAt: new Date('2024-04-30'),
-    ingredients: mockIngredients["Vanilla Cake"],
+    ingredients: mockIngredients["Vanilla"],
     totalPrice: 300000,
   },
 ];
@@ -273,14 +264,8 @@ export const timeFilterOptions: FilterOption[] = [
 
 // Cake options
 export const cakeFlavors = [
-  "Chocolate Cake",
-  "Vanilla Cake", 
-  "Red Velvet",
-  "Carrot Cake",
-  "Lemon Cake",
-  "Coffee Cake",
-  "Marble Cake",
-  "Strawberry Cake",
+  "Vanilla",
+  "Double Chocolate"
 ];
 
 export const cakeSizes = [

@@ -129,15 +129,39 @@ const OrderForm = ({ order }: OrderFormProps) => {
     // Special handling for cake tier changes
     if (name === "cakeTier") {
       const tierCount = Number(value);
-      // Ensure we have the correct number of tier details
-      if (tierCount > 1) {
+      
+      // When changing from single tier to multi-tier, initialize the first tier with the existing cake shape
+      if (tierCount > 1 && prev.cakeTier === 1) {
+        const updatedTierDetails = [...tierDetails];
+        updatedTierDetails[0] = {
+          ...updatedTierDetails[0],
+          shape: prev.cakeShape,
+          size: prev.cakeSize,
+          flavor: useSameFlavor ? cakeFlavor : ""
+        };
+        
+        // Initialize remaining tiers
+        while (updatedTierDetails.length < tierCount) {
+          const tierIndex = updatedTierDetails.length;
+          updatedTierDetails.push({
+            tier: tierIndex + 1,
+            shape: "Round", // Default shape for additional tiers
+            size: "16 CM",  // Default size for additional tiers
+            flavor: useSameFlavor ? cakeFlavor : ""
+          });
+        }
+        
+        setTierDetails(updatedTierDetails.slice(0, tierCount));
+      }
+      // When changing between multi-tier options, ensure we have the correct number of tiers
+      else if (tierCount > 1) {
         setTierDetails(prev => {
           const newDetails = [...prev];
           while (newDetails.length < tierCount) {
             newDetails.push({
               tier: newDetails.length + 1,
-              shape: formData.cakeShape,
-              size: newDetails.length === 0 ? formData.cakeSize : "16 CM",
+              shape: "Round",
+              size: "16 CM",
               flavor: useSameFlavor ? cakeFlavor : ""
             });
           }
@@ -552,23 +576,7 @@ const OrderForm = ({ order }: OrderFormProps) => {
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="cakeShape">Cake Shape *</Label>
-                        <Select 
-                          value={formData.cakeShape} 
-                          onValueChange={(value) => handleSelectChange("cakeShape", value)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select cake shape" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {cakeShapes.map((shape) => (
-                              <SelectItem key={shape} value={shape}>{shape}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
+                      {/* Only show cake shape selector for single tier cakes */}
                       <div className="space-y-2">
                         <Label htmlFor="cakeTier">Cake Tiers *</Label>
                         <Select 
@@ -585,9 +593,33 @@ const OrderForm = ({ order }: OrderFormProps) => {
                           </SelectContent>
                         </Select>
                       </div>
+
+                      {/* Only show cake shape if it's a single tier */}
+                      <div className="space-y-2">
+                        <Label htmlFor="cakeShape">Cake Shape *</Label>
+                        <Select 
+                          value={formData.cakeShape} 
+                          onValueChange={(value) => handleSelectChange("cakeShape", value)}
+                          disabled={formData.cakeTier > 1}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select cake shape" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {cakeShapes.map((shape) => (
+                              <SelectItem key={shape} value={shape}>{shape}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {formData.cakeTier > 1 && (
+                          <p className="text-xs text-muted-foreground">
+                            Shape is defined per tier below
+                          </p>
+                        )}
+                      </div>
                     </div>
 
-                    {/* Single tier cake size */}
+                    {/* Single tier cake size - only show if it's a single tier */}
                     {formData.cakeTier === 1 && (
                       <div className="space-y-2">
                         <Label htmlFor="cakeSize">Cake Size *</Label>
