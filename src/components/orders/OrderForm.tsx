@@ -2,34 +2,23 @@
 import { useState, useEffect } from "react";
 import { useApp } from "@/context/AppContext";
 import { Customer, Order, Ingredient, Address, TierDetail, PackingItem } from "@/types";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
-import { format, addDays, subDays } from "date-fns";
-import { CalendarIcon, FileImage, Plus, MapPin, Check } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
-import CustomerSearch from "@/components/customers/CustomerSearch";
-import { cakeFlavors, cakeSizes, cakeColors, mockIngredients, areaOptions, cakeShapes, cakeTiers, defaultPackingItems } from "@/data/mockData";
-import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Checkbox } from "@/components/ui/checkbox";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "@/components/ui/sonner";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { cakeFlavors, cakeSizes, cakeColors, mockIngredients, areaOptions, cakeShapes, cakeTiers, defaultPackingItems } from "@/data/mockData";
+
+// Import component sections
+import CustomerSection from "./OrderFormComponents/CustomerSection";
+import DateSelectionSection from "./OrderFormComponents/DateSelectionSection";
+import PriceSection from "./OrderFormComponents/PriceSection";
+import AddressSection from "./OrderFormComponents/AddressSection";
+import CakeDetailsSection from "./OrderFormComponents/CakeDetailsSection";
+import OptionalDetailsSection from "./OrderFormComponents/OptionalDetailsSection";
+import PackingSection from "./OrderFormComponents/PackingSection";
+import NotesSection from "./OrderFormComponents/NotesSection";
+import IngredientsSection from "./OrderFormComponents/IngredientsSection";
+import AddNewAddressDialog from "./OrderFormComponents/AddNewAddressDialog";
+import ActionButtons from "./OrderFormComponents/ActionButtons";
 
 interface OrderFormProps {
   order?: Order;
@@ -56,7 +45,7 @@ const OrderForm = ({ order }: OrderFormProps) => {
     order?.packingItems || [...defaultPackingItems]
   );
   
-  // New state for address handling
+  // State for address handling
   const [selectedAddressId, setSelectedAddressId] = useState<string | "new">(
     order?.deliveryAddress ? "existing" : "new"
   );
@@ -91,6 +80,9 @@ const OrderForm = ({ order }: OrderFormProps) => {
       flavor: cakeFlavor
     }))
   );
+
+  const [file, setFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   // Update ingredients when cake flavor changes
   useEffect(() => {
@@ -278,6 +270,20 @@ const OrderForm = ({ order }: OrderFormProps) => {
     );
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const selectedFile = e.target.files[0];
+      setFile(selectedFile);
+      
+      // Create a preview
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setImagePreview(event.target?.result as string);
+      };
+      reader.readAsDataURL(selectedFile);
+    }
+  };
+
   const handleSaveDraft = () => {
     if (!customer || !deliveryDate) {
       return;
@@ -332,23 +338,6 @@ const OrderForm = ({ order }: OrderFormProps) => {
     navigate("/orders");
   };
 
-  const [file, setFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const selectedFile = e.target.files[0];
-      setFile(selectedFile);
-      
-      // Create a preview
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setImagePreview(event.target?.result as string);
-      };
-      reader.readAsDataURL(selectedFile);
-    }
-  };
-
   // Find the selected address for display
   const selectedAddress = customer && selectedAddressId !== "new" 
     ? customer.addresses.find(addr => addr.id === selectedAddressId) 
@@ -391,558 +380,91 @@ const OrderForm = ({ order }: OrderFormProps) => {
         <TabsContent value="required" className="space-y-6">
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div className="space-y-6">
-              {!customer && (
-                <Card>
-                  <CardContent className="pt-6">
-                    <h3 className="font-medium mb-4">Select Customer *</h3>
-                    <CustomerSearch onSelectCustomer={setCustomer} />
-                  </CardContent>
-                </Card>
-              )}
+              <CustomerSection 
+                customer={customer} 
+                setCustomer={setCustomer} 
+              />
 
-              {customer && (
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="font-medium">{customer.name}</h3>
-                        <p className="text-sm text-muted-foreground">{customer.whatsappNumber}</p>
-                        {customer.email && <p className="text-sm">{customer.email}</p>}
-                      </div>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => setCustomer(null)}
-                      >
-                        Change
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+              <DateSelectionSection 
+                orderDate={orderDate}
+                setOrderDate={setOrderDate}
+                deliveryDate={deliveryDate}
+                setDeliveryDate={setDeliveryDate}
+              />
 
-              <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
-                {/* Order Date Field */}
-                <div className="space-y-2">
-                  <Label htmlFor="orderDate">Order Date *</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !orderDate && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {orderDate ? (
-                          format(orderDate, "PPP")
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={orderDate}
-                        onSelect={setOrderDate}
-                        initialFocus
-                        className="pointer-events-auto"
-                        disabled={(date) => {
-                          const today = new Date();
-                          today.setHours(0, 0, 0, 0);
-                          const threeDaysAgo = subDays(today, 3);
-                          // Disable dates more than 3 days in the past or any future dates
-                          return date < threeDaysAgo || date > today;
-                        }}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
+              <PriceSection 
+                totalPrice={formData.totalPrice} 
+                handleInputChange={handleInputChange} 
+              />
 
-                <div className="space-y-2">
-                  <Label htmlFor="deliveryDate">Delivery Date *</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !deliveryDate && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {deliveryDate ? (
-                          format(deliveryDate, "PPP")
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={deliveryDate}
-                        onSelect={setDeliveryDate}
-                        initialFocus
-                        className="pointer-events-auto"
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="totalPrice">Price (IDR) *</Label>
-                <Input
-                  id="totalPrice"
-                  name="totalPrice"
-                  type="number"
-                  value={formData.totalPrice}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-
-              {/* Address Selection Section */}
-              <div className="space-y-2">
-                <Label htmlFor="addressSelect">Delivery Address *</Label>
-                
-                {customer && customer.addresses.length > 0 && (
-                  <Select 
-                    value={selectedAddressId || "new"} 
-                    onValueChange={setSelectedAddressId}
-                  >
-                    <SelectTrigger id="addressSelect" className="mb-2">
-                      <SelectValue placeholder="Select delivery address" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {customer.addresses.map(address => (
-                        <SelectItem key={address.id} value={address.id}>
-                          <div className="truncate">
-                            <span className="font-medium">{address.area}</span> - {address.text.substring(0, 20)}
-                            {address.text.length > 20 && "..."}
-                          </div>
-                        </SelectItem>
-                      ))}
-                      <SelectItem value="new">+ Add New Address</SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
-                
-                {/* Display selected address details */}
-                {selectedAddress && (
-                  <Card className="mb-4">
-                    <CardContent className="pt-4">
-                      <div className="space-y-1">
-                        <div className="flex items-start justify-between">
-                          <h4 className="font-medium">{selectedAddress.area}</h4>
-                        </div>
-                        <p className="text-sm">{selectedAddress.text}</p>
-                        {selectedAddress.deliveryNotes && (
-                          <div className="mt-2 text-sm">
-                            <span className="font-medium">Delivery Notes:</span> {selectedAddress.deliveryNotes}
-                          </div>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-                
-                {selectedAddressId === "new" && (
-                  <Card className="mt-2">
-                    <CardContent className="pt-4">
-                      <div className="space-y-3">
-                        <div>
-                          <Label htmlFor="newAddressText">Address Text *</Label>
-                          <Textarea
-                            id="newAddressText"
-                            name="deliveryAddress"
-                            value={formData.deliveryAddress}
-                            onChange={handleInputChange}
-                            placeholder="Full delivery address"
-                            required
-                            className="min-h-[80px]"
-                          />
-                        </div>
-                        
-                        <div>
-                          <Label htmlFor="deliveryArea">Area *</Label>
-                          <Select 
-                            value={formData.deliveryArea} 
-                            onValueChange={(value) => handleSelectChange("deliveryArea", value)}
-                          >
-                            <SelectTrigger id="deliveryArea">
-                              <SelectValue placeholder="Select area" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {areaOptions.map((area) => (
-                                <SelectItem key={area} value={area}>{area}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        
-                        <div>
-                          <Label htmlFor="deliveryAddressNotes">Delivery Notes</Label>
-                          <Textarea
-                            id="deliveryAddressNotes"
-                            name="deliveryAddressNotes"
-                            value={formData.deliveryAddressNotes}
-                            onChange={handleInputChange}
-                            placeholder="Special delivery instructions"
-                            className="min-h-[60px]"
-                          />
-                        </div>
-                        
-                        {customer && (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="mt-2"
-                            onClick={openNewAddressDialog}
-                          >
-                            <Plus className="mr-1 h-4 w-4" /> Save Address to Customer
-                          </Button>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
+              <AddressSection 
+                customer={customer}
+                selectedAddressId={selectedAddressId}
+                setSelectedAddressId={setSelectedAddressId}
+                selectedAddress={selectedAddress}
+                formData={{
+                  deliveryAddress: formData.deliveryAddress,
+                  deliveryAddressNotes: formData.deliveryAddressNotes,
+                  deliveryArea: formData.deliveryArea
+                }}
+                handleInputChange={handleInputChange}
+                handleSelectChange={handleSelectChange}
+                areaOptions={areaOptions}
+                openNewAddressDialog={openNewAddressDialog}
+              />
             </div>
 
-            <div className="space-y-6">
-              <Card>
-                <CardContent className="pt-6">
-                  <h3 className="font-medium mb-4">Cake Details *</h3>
-
-                  <div className="space-y-4">
-                    {/* Cake Design at the top */}
-                    <div className="space-y-2">
-                      <Label htmlFor="cakeDesign">Cake Design *</Label>
-                      <Input
-                        id="cakeDesign"
-                        name="cakeDesign"
-                        value={formData.cakeDesign}
-                        onChange={handleInputChange}
-                        placeholder="Description of cake design"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="cakeFlavor">Cake Flavor *</Label>
-                      <Select 
-                        value={cakeFlavor} 
-                        onValueChange={(value) => setCakeFlavor(value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select cake flavor" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {cakeFlavors.map((flavor) => (
-                            <SelectItem key={flavor} value={flavor}>{flavor}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="cakeTier">Cake Tiers *</Label>
-                        <Select 
-                          value={formData.cakeTier.toString()} 
-                          onValueChange={(value) => handleSelectChange("cakeTier", parseInt(value))}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select tier count" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {cakeTiers.map((tier) => (
-                              <SelectItem key={tier} value={tier.toString()}>{tier} Tier</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      {/* Show cake shape only if it's a single tier */}
-                      {formData.cakeTier === 1 && (
-                        <div className="space-y-2">
-                          <Label htmlFor="cakeShape">Cake Shape *</Label>
-                          <Select 
-                            value={formData.cakeShape} 
-                            onValueChange={(value) => handleSelectChange("cakeShape", value)}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select cake shape" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {cakeShapes.map((shape) => (
-                                <SelectItem key={shape} value={shape}>{shape}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Single tier cake size - only show if it's a single tier */}
-                    {formData.cakeTier === 1 && (
-                      <div className="space-y-2">
-                        <Label htmlFor="cakeSize">Cake Size *</Label>
-                        <Select 
-                          value={formData.cakeSize} 
-                          onValueChange={(value) => handleSelectChange("cakeSize", value)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select cake size" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {cakeSizes.map((size) => (
-                              <SelectItem key={size} value={size}>{size}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
-
-                    {/* Multi-tier cake details */}
-                    {formData.cakeTier > 1 && (
-                      <div className="space-y-4 mt-4">
-                        <div className="flex items-center space-x-2">
-                          <Checkbox 
-                            id="sameFlavor" 
-                            checked={useSameFlavor}
-                            onCheckedChange={handleToggleSameFlavor}
-                          />
-                          <Label htmlFor="sameFlavor">Use same flavor for all tiers</Label>
-                        </div>
-
-                        {/* Tier details section */}
-                        <div className="space-y-4 border rounded-md p-4">
-                          <h4 className="font-medium">Tier Details</h4>
-                          {Array.from({ length: formData.cakeTier }).map((_, index) => (
-                            <div key={index} className="border-t pt-3 mt-3 first:border-t-0 first:pt-0 first:mt-0">
-                              <h5 className="font-medium mb-2">Tier {index + 1} {index === 0 ? "(Bottom)" : index === formData.cakeTier - 1 ? "(Top)" : ""}</h5>
-                              <div className="grid grid-cols-2 gap-3">
-                                <div className="space-y-1">
-                                  <Label htmlFor={`tier-${index}-shape`}>Shape *</Label>
-                                  <Select 
-                                    value={tierDetails[index]?.shape || "Round"} 
-                                    onValueChange={(value) => handleTierDetailChange(index, "shape", value)}
-                                  >
-                                    <SelectTrigger id={`tier-${index}-shape`}>
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {cakeShapes.map((shape) => (
-                                        <SelectItem key={shape} value={shape}>{shape}</SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                                <div className="space-y-1">
-                                  <Label htmlFor={`tier-${index}-size`}>Size *</Label>
-                                  <Select 
-                                    value={tierDetails[index]?.size || "16 CM"} 
-                                    onValueChange={(value) => handleTierDetailChange(index, "size", value)}
-                                  >
-                                    <SelectTrigger id={`tier-${index}-size`}>
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {cakeSizes.map((size) => (
-                                        <SelectItem key={size} value={size}>{size}</SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                              </div>
-
-                              {/* Flavor selection for each tier if not using same flavor */}
-                              {!useSameFlavor && (
-                                <div className="space-y-1 mt-3">
-                                  <Label htmlFor={`tier-${index}-flavor`}>Flavor *</Label>
-                                  <Select 
-                                    value={tierDetails[index]?.flavor || ""} 
-                                    onValueChange={(value) => handleTierDetailChange(index, "flavor", value)}
-                                  >
-                                    <SelectTrigger id={`tier-${index}-flavor`}>
-                                      <SelectValue placeholder="Select flavor" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {cakeFlavors.map((flavor) => (
-                                        <SelectItem key={flavor} value={flavor}>{flavor}</SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="space-y-2">
-                      <Label htmlFor="coverColor">Cover Color *</Label>
-                      <Select 
-                        value={formData.coverColor} 
-                        onValueChange={(value) => handleSelectChange("coverColor", value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select cover color" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {cakeColors.map((color) => (
-                            <SelectItem key={color} value={color}>{color}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <div className="flex justify-end">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setActiveTab("optional")}
-                  className="w-full md:w-auto"
-                >
-                  Continue to Additional Details
-                </Button>
-              </div>
-            </div>
+            <CakeDetailsSection 
+              formData={{
+                cakeDesign: formData.cakeDesign,
+                cakeSize: formData.cakeSize,
+                cakeShape: formData.cakeShape,
+                cakeTier: formData.cakeTier,
+                coverColor: formData.coverColor,
+              }}
+              cakeFlavor={cakeFlavor}
+              setCakeFlavor={setCakeFlavor}
+              handleInputChange={handleInputChange}
+              handleSelectChange={handleSelectChange}
+              cakeFlavors={cakeFlavors}
+              cakeSizes={cakeSizes}
+              cakeShapes={cakeShapes}
+              cakeColors={cakeColors}
+              cakeTiers={cakeTiers}
+              tierDetails={tierDetails}
+              useSameFlavor={useSameFlavor}
+              handleToggleSameFlavor={handleToggleSameFlavor}
+              handleTierDetailChange={handleTierDetailChange}
+              setActiveTab={setActiveTab}
+            />
           </div>
         </TabsContent>
         
         <TabsContent value="optional" className="space-y-6">
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <div className="space-y-6">
-              <Card>
-                <CardContent className="pt-6">
-                  <h3 className="font-medium mb-4">Optional Design Details</h3>
-                  
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="cakeText">Cake Text</Label>
-                      <Input
-                        id="cakeText"
-                        name="cakeText"
-                        value={formData.cakeText}
-                        onChange={handleInputChange}
-                        placeholder="Text to be written on the cake"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="greetingCard">Greeting Card Message</Label>
-                      <Textarea
-                        id="greetingCard"
-                        name="greetingCard"
-                        value={formData.greetingCard}
-                        onChange={handleInputChange}
-                        placeholder="Message for the greeting card"
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <div className="space-y-2">
-                <Label>Design Attachment</Label>
-                <div className="border-2 border-dashed rounded-md p-4 text-center cursor-pointer hover:bg-muted/50 transition-colors">
-                  <input 
-                    type="file" 
-                    id="fileUpload" 
-                    className="hidden" 
-                    accept="image/*"
-                    onChange={handleFileChange}
-                  />
-                  <label htmlFor="fileUpload" className="cursor-pointer flex flex-col items-center">
-                    {imagePreview ? (
-                      <div className="space-y-2">
-                        <img src={imagePreview} alt="Preview" className="max-h-40 mx-auto rounded-md" />
-                        <p className="text-sm text-muted-foreground">Click to change image</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        <FileImage className="h-10 w-10 text-muted-foreground mx-auto" />
-                        <p className="text-sm font-medium">Upload design image</p>
-                        <p className="text-xs text-muted-foreground">Click to upload JPG, PNG</p>
-                      </div>
-                    )}
-                  </label>
-                </div>
-              </div>
-            </div>
+            <OptionalDetailsSection 
+              formData={{
+                cakeText: formData.cakeText,
+                greetingCard: formData.greetingCard
+              }}
+              handleInputChange={handleInputChange}
+              imagePreview={imagePreview}
+              handleFileChange={handleFileChange}
+            />
             
             <div className="space-y-6">
-              {/* Packing Accessories Section */}
-              <Card>
-                <CardContent className="pt-6">
-                  <h3 className="font-medium mb-4">Packing Accessories</h3>
-                  <div className="space-y-3">
-                    {packingItems.map(item => (
-                      <div key={item.id} className="flex items-center space-x-2">
-                        <Checkbox 
-                          id={`packing-${item.id}`} 
-                          checked={item.checked}
-                          onCheckedChange={(checked) => 
-                            handlePackingItemChange(item.id, checked === true)
-                          }
-                        />
-                        <Label 
-                          htmlFor={`packing-${item.id}`}
-                          className="cursor-pointer"
-                        >
-                          {item.name}
-                        </Label>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+              <PackingSection 
+                packingItems={packingItems}
+                handlePackingItemChange={handlePackingItemChange}
+              />
               
-              <div className="space-y-2">
-                <Label htmlFor="notes">Order Notes</Label>
-                <Textarea
-                  id="notes"
-                  name="notes"
-                  value={formData.notes}
-                  onChange={handleInputChange}
-                  placeholder="Additional notes about this order"
-                  className="min-h-[80px]"
-                />
-              </div>
+              <NotesSection 
+                notes={formData.notes}
+                handleInputChange={handleInputChange}
+              />
 
               {ingredients.length > 0 && (
-                <Card>
-                  <CardContent className="pt-6">
-                    <h3 className="font-medium mb-4">Ingredients (Bill of Material)</h3>
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b">
-                          <th className="text-left py-2">Ingredient</th>
-                          <th className="text-right py-2">Quantity</th>
-                          <th className="text-right py-2">Unit</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {ingredients.map((ingredient) => (
-                          <tr key={ingredient.id} className="border-b last:border-0">
-                            <td className="py-2">{ingredient.name}</td>
-                            <td className="text-right py-2">{ingredient.quantity}</td>
-                            <td className="text-right py-2">{ingredient.unit}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </CardContent>
-                </Card>
+                <IngredientsSection ingredients={ingredients} />
               )}
 
               <div className="flex justify-start">
@@ -959,92 +481,21 @@ const OrderForm = ({ order }: OrderFormProps) => {
         </TabsContent>
       </Tabs>
 
-      {/* New Address Dialog */}
-      <Dialog open={newAddressDialogOpen} onOpenChange={setNewAddressDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Add New Address</DialogTitle>
-          </DialogHeader>
-          
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label htmlFor="dialog-address-text">Address *</Label>
-              <Textarea
-                id="dialog-address-text"
-                value={newAddress.text || ""}
-                onChange={(e) => handleAddressChange("text", e.target.value)}
-                placeholder="Full address"
-                className="min-h-[80px]"
-                required
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="dialog-address-area">Area *</Label>
-              <Select 
-                value={newAddress.area} 
-                onValueChange={(value) => handleAddressChange("area", value)}
-              >
-                <SelectTrigger id="dialog-address-area">
-                  <SelectValue placeholder="Select area" />
-                </SelectTrigger>
-                <SelectContent>
-                  {areaOptions.map((area) => (
-                    <SelectItem key={area} value={area}>{area}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="dialog-address-notes">Delivery Notes</Label>
-              <Textarea
-                id="dialog-address-notes"
-                value={newAddress.deliveryNotes || ""}
-                onChange={(e) => handleAddressChange("deliveryNotes", e.target.value)}
-                placeholder="Special delivery instructions"
-                className="min-h-[60px]"
-              />
-            </div>
-          </div>
-          
-          <div className="flex justify-end gap-2">
-            <Button 
-              variant="outline" 
-              onClick={() => setNewAddressDialogOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleSaveNewAddress}
-              disabled={!newAddress.text}
-            >
-              Save Address
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <AddNewAddressDialog 
+        open={newAddressDialogOpen}
+        onOpenChange={setNewAddressDialogOpen}
+        newAddress={newAddress}
+        handleAddressChange={handleAddressChange}
+        handleSaveNewAddress={handleSaveNewAddress}
+        areaOptions={areaOptions}
+      />
 
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex flex-col sm:flex-row justify-between gap-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleSaveDraft}
-            >
-              Save as Draft
-            </Button>
-            <Button
-              type="submit"
-              disabled={!areRequiredFieldsFilled()}
-              onClick={handleSubmitOrder}
-            >
-              {order ? "Update Order" : "Create Order"}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <ActionButtons 
+        isEditMode={!!order}
+        isFormValid={areRequiredFieldsFilled()}
+        handleSaveDraft={handleSaveDraft}
+        handleSubmitOrder={handleSubmitOrder}
+      />
     </div>
   );
 };
