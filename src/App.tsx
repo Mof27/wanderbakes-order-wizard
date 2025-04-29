@@ -12,48 +12,63 @@ import EditOrderPage from "./pages/EditOrderPage";
 import CustomersPage from "./pages/CustomersPage";
 import NotFound from "./pages/NotFound";
 import { AppProvider } from "./context/AppContext";
+import { useEffect } from "react";
+import { config } from "./config";
+import { dataService } from "./services";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AppProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={
-              <MainLayout>
-                <Dashboard />
-              </MainLayout>
-            } />
-            <Route path="/orders" element={
-              <MainLayout>
-                <OrdersPage />
-              </MainLayout>
-            } />
-            <Route path="/orders/new" element={
-              <MainLayout>
-                <NewOrderPage />
-              </MainLayout>
-            } />
-            <Route path="/orders/:id" element={
-              <MainLayout>
-                <EditOrderPage />
-              </MainLayout>
-            } />
-            <Route path="/customers" element={
-              <MainLayout>
-                <CustomersPage />
-              </MainLayout>
-            } />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </AppProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  // Initialize data service
+  useEffect(() => {
+    // Set the data source mode from config
+    dataService.setMode(config.api.dataSourceMode, config.api.baseUrl);
+    
+    if (config.debug.enabled && config.debug.dataService) {
+      console.log(`Data service initialized in ${config.api.dataSourceMode} mode`);
+    }
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AppProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={
+                <MainLayout>
+                  <Dashboard />
+                </MainLayout>
+              } />
+              <Route path="/orders" element={
+                <MainLayout>
+                  <OrdersPage />
+                </MainLayout>
+              } />
+              <Route path="/orders/new" element={
+                <MainLayout>
+                  <NewOrderPage />
+                </MainLayout>
+              } />
+              <Route path="/orders/:id" element={
+                <MainLayout>
+                  <EditOrderPage />
+                </MainLayout>
+              } />
+              <Route path="/customers" element={
+                <MainLayout>
+                  <CustomersPage />
+                </MainLayout>
+              } />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AppProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
