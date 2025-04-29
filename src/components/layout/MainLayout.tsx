@@ -29,7 +29,7 @@ const SidebarMenu = () => {
   return <div className="space-y-2 px-4 py-2">
       {menuItems.map(item => <Link key={item.name} to={item.path} className={cn("flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-all hover:bg-cake-primary", location.pathname === item.path ? "bg-cake-primary" : "text-muted-foreground")}>
           <item.icon className="h-5 w-5" />
-          <span>{item.name}</span>
+          <span className="text-gray-950">{item.name}</span>
         </Link>)}
     </div>;
 };
