@@ -1,19 +1,14 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useApp } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { CakeIcon, CalendarIcon, CheckIcon, Clock, Plus, Users } from "lucide-react";
-
 const Dashboard = () => {
-  const { orders, customers } = useApp();
-
-  const upcomingDeliveries = orders.filter(
-    (order) => 
-      order.status !== "delivered" && 
-      order.status !== "cancelled" && 
-      new Date(order.deliveryDate) >= new Date()
-  ).sort((a, b) => new Date(a.deliveryDate).getTime() - new Date(b.deliveryDate).getTime());
+  const {
+    orders,
+    customers
+  } = useApp();
+  const upcomingDeliveries = orders.filter(order => order.status !== "delivered" && order.status !== "cancelled" && new Date(order.deliveryDate) >= new Date()).sort((a, b) => new Date(a.deliveryDate).getTime() - new Date(b.deliveryDate).getTime());
 
   // Order statistics
   const totalOrders = orders.length;
@@ -21,13 +16,11 @@ const Dashboard = () => {
   const inProgressOrders = orders.filter(order => order.status === "in-progress").length;
   const readyOrders = orders.filter(order => order.status === "ready").length;
   const deliveredOrders = orders.filter(order => order.status === "delivered").length;
-
-  return (
-    <div className="space-y-6">
+  return <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Dashboard</h1>
         <Link to="/orders/new">
-          <Button className="bg-cake-primary hover:bg-cake-primary/80 text-cake-text">
+          <Button className="bg-cake-primary hover:bg-cake-primary/80 text-gray-50">
             <Plus className="mr-2 h-4 w-4" />
             New Order
           </Button>
@@ -92,10 +85,8 @@ const Dashboard = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {upcomingDeliveries.length > 0 ? (
-              <div className="space-y-4">
-                {upcomingDeliveries.slice(0, 5).map((order) => (
-                  <div key={order.id} className="flex items-center justify-between border-b pb-3 last:border-0">
+            {upcomingDeliveries.length > 0 ? <div className="space-y-4">
+                {upcomingDeliveries.slice(0, 5).map(order => <div key={order.id} className="flex items-center justify-between border-b pb-3 last:border-0">
                     <div className="flex items-start gap-3">
                       <div className="bg-muted p-2 rounded">
                         <CalendarIcon className="h-5 w-5" />
@@ -112,22 +103,18 @@ const Dashboard = () => {
                     <div className="text-right">
                       <p className="font-medium">
                         {new Date(order.deliveryDate).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                        })}
+                    month: "short",
+                    day: "numeric"
+                  })}
                       </p>
                       <p className="text-sm text-muted-foreground capitalize">
                         {order.status.replace("-", " ")}
                       </p>
                     </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-muted-foreground py-6 text-center">
+                  </div>)}
+              </div> : <p className="text-muted-foreground py-6 text-center">
                 No upcoming deliveries
-              </p>
-            )}
+              </p>}
           </CardContent>
         </Card>
 
@@ -143,10 +130,9 @@ const Dashboard = () => {
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Draft</span>
                   <div className="w-full max-w-[70%] bg-muted rounded-full h-2.5">
-                    <div 
-                      className="bg-gray-400 h-2.5 rounded-full" 
-                      style={{ width: `${(orders.filter(o => o.status === "draft").length / totalOrders) * 100}%` }}
-                    ></div>
+                    <div className="bg-gray-400 h-2.5 rounded-full" style={{
+                    width: `${orders.filter(o => o.status === "draft").length / totalOrders * 100}%`
+                  }}></div>
                   </div>
                   <span className="ml-2 font-medium">{orders.filter(o => o.status === "draft").length}</span>
                 </div>
@@ -154,10 +140,9 @@ const Dashboard = () => {
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Confirmed</span>
                   <div className="w-full max-w-[70%] bg-muted rounded-full h-2.5">
-                    <div 
-                      className="bg-blue-500 h-2.5 rounded-full" 
-                      style={{ width: `${(confirmedOrders / totalOrders) * 100}%` }}
-                    ></div>
+                    <div className="bg-blue-500 h-2.5 rounded-full" style={{
+                    width: `${confirmedOrders / totalOrders * 100}%`
+                  }}></div>
                   </div>
                   <span className="ml-2 font-medium">{confirmedOrders}</span>
                 </div>
@@ -165,10 +150,9 @@ const Dashboard = () => {
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">In Progress</span>
                   <div className="w-full max-w-[70%] bg-muted rounded-full h-2.5">
-                    <div 
-                      className="bg-yellow-500 h-2.5 rounded-full" 
-                      style={{ width: `${(inProgressOrders / totalOrders) * 100}%` }}
-                    ></div>
+                    <div className="bg-yellow-500 h-2.5 rounded-full" style={{
+                    width: `${inProgressOrders / totalOrders * 100}%`
+                  }}></div>
                   </div>
                   <span className="ml-2 font-medium">{inProgressOrders}</span>
                 </div>
@@ -176,10 +160,9 @@ const Dashboard = () => {
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Ready</span>
                   <div className="w-full max-w-[70%] bg-muted rounded-full h-2.5">
-                    <div 
-                      className="bg-green-500 h-2.5 rounded-full" 
-                      style={{ width: `${(readyOrders / totalOrders) * 100}%` }}
-                    ></div>
+                    <div className="bg-green-500 h-2.5 rounded-full" style={{
+                    width: `${readyOrders / totalOrders * 100}%`
+                  }}></div>
                   </div>
                   <span className="ml-2 font-medium">{readyOrders}</span>
                 </div>
@@ -187,10 +170,9 @@ const Dashboard = () => {
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Delivered</span>
                   <div className="w-full max-w-[70%] bg-muted rounded-full h-2.5">
-                    <div 
-                      className="bg-purple-500 h-2.5 rounded-full" 
-                      style={{ width: `${(deliveredOrders / totalOrders) * 100}%` }}
-                    ></div>
+                    <div className="bg-purple-500 h-2.5 rounded-full" style={{
+                    width: `${deliveredOrders / totalOrders * 100}%`
+                  }}></div>
                   </div>
                   <span className="ml-2 font-medium">{deliveredOrders}</span>
                 </div>
@@ -198,10 +180,9 @@ const Dashboard = () => {
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Cancelled</span>
                   <div className="w-full max-w-[70%] bg-muted rounded-full h-2.5">
-                    <div 
-                      className="bg-red-500 h-2.5 rounded-full" 
-                      style={{ width: `${(orders.filter(o => o.status === "cancelled").length / totalOrders) * 100}%` }}
-                    ></div>
+                    <div className="bg-red-500 h-2.5 rounded-full" style={{
+                    width: `${orders.filter(o => o.status === "cancelled").length / totalOrders * 100}%`
+                  }}></div>
                   </div>
                   <span className="ml-2 font-medium">{orders.filter(o => o.status === "cancelled").length}</span>
                 </div>
@@ -210,8 +191,6 @@ const Dashboard = () => {
           </CardContent>
         </Card>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default Dashboard;
