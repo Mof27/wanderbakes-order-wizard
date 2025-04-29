@@ -1,4 +1,3 @@
-
 export type Address = {
   id: string;
   text: string;
@@ -38,15 +37,15 @@ export type PackingItem = {
 
 export type ColorType = 'solid' | 'gradient';
 
-export type SolidColor = {
+export interface SolidColor {
   type: 'solid';
   color: string;
-};
+}
 
-export type GradientColor = {
+export interface GradientColor {
   type: 'gradient';
   colors: string[];
-};
+}
 
 export type CakeColor = SolidColor | GradientColor;
 

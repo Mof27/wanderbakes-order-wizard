@@ -1,6 +1,6 @@
 
 import OrderForm from "@/components/orders/OrderForm";
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 
 const NewOrderPage = () => {
   return (
