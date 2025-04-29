@@ -10,7 +10,7 @@ interface AddNewAddressDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   newAddress: Partial<Address>;
-  handleAddressChange: (field: keyof typeof newAddress, value: string) => void;
+  handleAddressChange: (field: keyof Partial<Address>, value: string) => void;
   handleSaveNewAddress: () => void;
   areaOptions: string[];
 }

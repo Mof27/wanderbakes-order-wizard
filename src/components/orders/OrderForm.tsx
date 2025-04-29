@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/components/ui/sonner";
 import { cakeFlavors, cakeSizes, cakeColors, mockIngredients, areaOptions, cakeShapes, cakeTiers, defaultPackingItems } from "@/data/mockData";
+import { Button } from "@/components/ui/button"; // Add missing Button import
 
 // Import component sections
 import CustomerSection from "./OrderFormComponents/CustomerSection";
@@ -345,7 +346,7 @@ const OrderForm = ({ order }: OrderFormProps) => {
 
   // Check if required fields are filled
   const areRequiredFieldsFilled = () => {
-    const baseRequirements = (
+    const baseRequirements = Boolean(
       customer &&
       deliveryDate &&
       formData.deliveryAddress &&
