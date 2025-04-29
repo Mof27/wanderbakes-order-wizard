@@ -124,19 +124,19 @@ const OrderForm = ({ order }: OrderFormProps) => {
   };
 
   const handleSelectChange = (name: string, value: string | number) => {
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prevData) => ({ ...prevData, [name]: value }));
 
     // Special handling for cake tier changes
     if (name === "cakeTier") {
       const tierCount = Number(value);
       
       // When changing from single tier to multi-tier, initialize the first tier with the existing cake shape
-      if (tierCount > 1 && prev.cakeTier === 1) {
+      if (tierCount > 1 && formData.cakeTier === 1) {
         const updatedTierDetails = [...tierDetails];
         updatedTierDetails[0] = {
           ...updatedTierDetails[0],
-          shape: prev.cakeShape,
-          size: prev.cakeSize,
+          shape: formData.cakeShape,
+          size: formData.cakeSize,
           flavor: useSameFlavor ? cakeFlavor : ""
         };
         
@@ -155,8 +155,8 @@ const OrderForm = ({ order }: OrderFormProps) => {
       }
       // When changing between multi-tier options, ensure we have the correct number of tiers
       else if (tierCount > 1) {
-        setTierDetails(prev => {
-          const newDetails = [...prev];
+        setTierDetails(prevTiers => {
+          const newDetails = [...prevTiers];
           while (newDetails.length < tierCount) {
             newDetails.push({
               tier: newDetails.length + 1,
