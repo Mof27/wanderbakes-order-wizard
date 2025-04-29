@@ -6,6 +6,7 @@ export type Customer = {
   email?: string;
   address?: string;
   createdAt: Date;
+  updatedAt?: Date; // Added updatedAt property as optional
   orders?: Order[];
 };
 

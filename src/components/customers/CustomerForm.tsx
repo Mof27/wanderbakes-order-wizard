@@ -27,25 +27,29 @@ const CustomerForm = ({ customer, onSave }: CustomerFormProps) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.name || !formData.whatsappNumber) {
       return;
     }
 
-    if (customer) {
-      const updatedCustomer = { ...customer, ...formData };
-      updateCustomer(updatedCustomer);
-      onSave(updatedCustomer);
-    } else {
-      const newCustomer = addCustomer({
-        name: formData.name,
-        whatsappNumber: formData.whatsappNumber,
-        email: formData.email || undefined,
-        address: formData.address || undefined,
-      });
-      onSave(newCustomer);
+    try {
+      if (customer) {
+        const updatedCustomer = { ...customer, ...formData };
+        await updateCustomer(updatedCustomer);
+        onSave(updatedCustomer);
+      } else {
+        const newCustomer = await addCustomer({
+          name: formData.name,
+          whatsappNumber: formData.whatsappNumber,
+          email: formData.email || undefined,
+          address: formData.address || undefined,
+        });
+        onSave(newCustomer);
+      }
+    } catch (error) {
+      console.error("Error saving customer:", error);
     }
   };
 

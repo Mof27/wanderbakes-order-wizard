@@ -12,7 +12,7 @@ interface AppContextProps {
   activeTimeFilter: FilterOption;
   viewMode: ViewMode;
   addCustomer: (customer: Omit<Customer, 'id' | 'createdAt'>) => Promise<Customer>;
-  updateCustomer: (customer: Customer) => Promise<void>;
+  updateCustomer: (customer: Customer) => Promise<Customer>;
   findCustomerByWhatsApp: (whatsappNumber: string) => Promise<Customer | undefined>;
   addOrder: (order: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Order>;
   updateOrder: (order: Order) => Promise<void>;
@@ -70,13 +70,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const updateCustomer = async (updatedCustomer: Customer) => {
     try {
-      await dataService.customers.update(updatedCustomer.id, updatedCustomer);
+      const result = await dataService.customers.update(updatedCustomer.id, updatedCustomer);
       setCustomers(prevCustomers => 
         prevCustomers.map(customer => 
-          customer.id === updatedCustomer.id ? updatedCustomer : customer
+          customer.id === updatedCustomer.id ? result : customer
         )
       );
       toast.success("Customer updated successfully");
+      return result;
     } catch (error) {
       console.error("Failed to update customer:", error);
       toast.error("Failed to update customer");
