@@ -1,4 +1,3 @@
-
 export type Customer = {
   id: string;
   name: string;
@@ -8,6 +7,10 @@ export type Customer = {
   createdAt: Date;
   updatedAt?: Date; // Added updatedAt property as optional
   orders?: Order[];
+  // The following properties are computed and not stored in the repository
+  totalOrders?: number;
+  totalSpend?: number;
+  lastOrderDate?: Date;
 };
 
 export type Order = {
