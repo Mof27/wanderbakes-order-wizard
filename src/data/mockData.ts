@@ -1,5 +1,13 @@
+import { Customer, FilterOption, Ingredient, Order, OrderStatus, Address } from "../types";
 
-import { Customer, FilterOption, Ingredient, Order, OrderStatus } from "../types";
+// Mock Addresses
+const createAddress = (id: string, text: string, area: "Jakarta" | "Bekasi", deliveryNotes?: string): Address => ({
+  id,
+  text,
+  area,
+  deliveryNotes,
+  createdAt: new Date('2024-02-15'),
+});
 
 // Mock Customers
 export const mockCustomers: Customer[] = [
@@ -8,7 +16,10 @@ export const mockCustomers: Customer[] = [
     name: "Alice Johnson",
     whatsappNumber: "+6281234567890",
     email: "alice@example.com",
-    address: "123 Cake Street, Jakarta",
+    addresses: [
+      createAddress("addr1", "123 Cake Street, Jakarta Selatan", "Jakarta", "Leave with security"),
+      createAddress("addr2", "456 Pastry Lane, Jakarta Utara", "Jakarta", "Call before delivery")
+    ],
     createdAt: new Date('2024-02-15'),
   },
   {
@@ -16,7 +27,10 @@ export const mockCustomers: Customer[] = [
     name: "Bob Smith",
     whatsappNumber: "+6282345678901",
     email: "bob@example.com",
-    address: "456 Pastry Ave, Bandung",
+    addresses: [
+      createAddress("addr3", "456 Pastry Ave, Bekasi Timur", "Bekasi", "Apartment 3B, 3rd floor"),
+      createAddress("addr4", "789 Cookie Blvd, Bekasi Utara", "Bekasi")
+    ],
     createdAt: new Date('2024-03-10'),
   },
   {
@@ -24,13 +38,20 @@ export const mockCustomers: Customer[] = [
     name: "Carol Davis",
     whatsappNumber: "+6283456789012",
     email: "carol@example.com",
-    address: "789 Bakery Blvd, Surabaya",
+    addresses: [
+      createAddress("addr5", "789 Bakery Blvd, Jakarta Barat", "Jakarta", "Business address")
+    ],
     createdAt: new Date('2024-03-28'),
   },
   {
     id: "c4",
     name: "David Wilson",
     whatsappNumber: "+6284567890123",
+    addresses: [
+      createAddress("addr6", "101 Donut Drive, Bekasi Selatan", "Bekasi"),
+      createAddress("addr7", "202 Cupcake Court, Bekasi Barat", "Bekasi"),
+      createAddress("addr8", "303 Eclair Estate, Jakarta Timur", "Jakarta")
+    ],
     createdAt: new Date('2024-04-05'),
   },
   {
@@ -38,7 +59,10 @@ export const mockCustomers: Customer[] = [
     name: "Eve Brown",
     whatsappNumber: "+6285678901234",
     email: "eve@example.com",
-    address: "321 Muffin Lane, Bali",
+    addresses: [
+      createAddress("addr9", "321 Muffin Lane, Jakarta Pusat", "Jakarta", "Ring doorbell twice"),
+      createAddress("addr10", "654 Brownie Blvd, Bekasi Selatan", "Bekasi", "Weekend deliveries only")
+    ],
     createdAt: new Date('2024-04-12'),
   },
 ];
@@ -77,7 +101,9 @@ export const mockOrders: Order[] = [
     customer: mockCustomers[0],
     status: "confirmed",
     deliveryDate: new Date('2024-05-05'),
-    deliveryAddress: "123 Cake Street, Jakarta",
+    deliveryAddress: mockCustomers[0].addresses[0].text,
+    deliveryAddressNotes: mockCustomers[0].addresses[0].deliveryNotes,
+    deliveryArea: mockCustomers[0].addresses[0].area,
     cakeDesign: "Flower themed",
     cakeFlavor: "Chocolate Cake",
     cakeSize: "8 inch",
@@ -96,7 +122,9 @@ export const mockOrders: Order[] = [
     customer: mockCustomers[1],
     status: "in-progress",
     deliveryDate: new Date('2024-05-10'),
-    deliveryAddress: "456 Pastry Ave, Bandung",
+    deliveryAddress: mockCustomers[1].addresses[0].text,
+    deliveryAddressNotes: mockCustomers[1].addresses[0].deliveryNotes,
+    deliveryArea: mockCustomers[1].addresses[0].area,
     cakeDesign: "Superhero themed",
     cakeFlavor: "Vanilla Cake",
     cakeSize: "10 inch",
@@ -113,7 +141,9 @@ export const mockOrders: Order[] = [
     customer: mockCustomers[2],
     status: "draft",
     deliveryDate: new Date('2024-05-15'),
-    deliveryAddress: "789 Bakery Blvd, Surabaya",
+    deliveryAddress: mockCustomers[2].addresses[0].text,
+    deliveryAddressNotes: mockCustomers[2].addresses[0].deliveryNotes,
+    deliveryArea: mockCustomers[2].addresses[0].area,
     cakeDesign: "Floral pattern",
     cakeFlavor: "Red Velvet",
     cakeSize: "6 inch",
@@ -129,7 +159,9 @@ export const mockOrders: Order[] = [
     customer: mockCustomers[3],
     status: "ready",
     deliveryDate: new Date('2024-05-03'),
-    deliveryAddress: "101 Donut Drive, Yogyakarta",
+    deliveryAddress: mockCustomers[3].addresses[0].text,
+    deliveryAddressNotes: mockCustomers[3].addresses[0].deliveryNotes,
+    deliveryArea: mockCustomers[3].addresses[0].area,
     cakeDesign: "Minimalist",
     cakeFlavor: "Chocolate Cake",
     cakeSize: "9 inch",
@@ -147,7 +179,9 @@ export const mockOrders: Order[] = [
     customer: mockCustomers[4],
     status: "delivered",
     deliveryDate: new Date('2024-04-30'),
-    deliveryAddress: "321 Muffin Lane, Bali",
+    deliveryAddress: mockCustomers[4].addresses[0].text,
+    deliveryAddressNotes: mockCustomers[4].addresses[0].deliveryNotes,
+    deliveryArea: mockCustomers[4].addresses[0].area,
     cakeDesign: "Beach themed",
     cakeFlavor: "Vanilla Cake",
     cakeSize: "7 inch",
@@ -216,4 +250,10 @@ export const cakeColors = [
   "Silver",
   "Turquoise",
   "Orange",
+];
+
+// Area options
+export const areaOptions = [
+  "Jakarta",
+  "Bekasi"
 ];

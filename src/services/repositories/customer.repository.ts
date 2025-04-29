@@ -1,5 +1,5 @@
 
-import { Customer } from "@/types";
+import { Customer, Address } from "@/types";
 import { BaseRepository } from "./base.repository";
 
 export interface CustomerRepository extends BaseRepository<Customer> {
@@ -10,7 +10,31 @@ export class MockCustomerRepository implements CustomerRepository {
   private customers: Customer[] = [];
 
   constructor(initialData: Customer[] = []) {
-    this.customers = [...initialData];
+    // Handle migration from old structure (single address) to new structure (multiple addresses)
+    this.customers = initialData.map(customer => {
+      if (!Array.isArray(customer.addresses) && customer.address) {
+        // Convert old format to new format
+        return {
+          ...customer,
+          addresses: [
+            {
+              id: `addr_${customer.id}_1`,
+              text: customer.address,
+              area: "Jakarta", // Default value
+              createdAt: customer.createdAt,
+              updatedAt: customer.updatedAt,
+            }
+          ],
+          // Remove the old address property
+          address: undefined
+        };
+      }
+      // Already in the new format
+      return {
+        ...customer,
+        addresses: customer.addresses || []
+      };
+    });
   }
 
   async getAll(): Promise<Customer[]> {
@@ -26,6 +50,8 @@ export class MockCustomerRepository implements CustomerRepository {
       ...customer,
       id: `c${this.customers.length + 1}`,
       createdAt: new Date(),
+      // Ensure addresses are properly initialized
+      addresses: customer.addresses || [],
     };
     this.customers.push(newCustomer);
     return newCustomer;

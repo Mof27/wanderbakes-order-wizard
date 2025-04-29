@@ -7,10 +7,11 @@ import { Customer, FilterOption, Order } from "@/types";
 import { statusFilterOptions, timeFilterOptions } from "@/data/mockData";
 import OrderTableRow from "@/components/orders/OrderTableRow";
 import OrderCard from "@/components/orders/OrderCard";
-import { ArrowLeft, List, LayoutGrid } from "lucide-react";
+import { ArrowLeft, List, LayoutGrid, MapPin } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 
 const CustomerOrdersPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -111,9 +112,20 @@ const CustomerOrdersPage = () => {
             <p className="font-medium">{customer.whatsappNumber}</p>
             {customer.email && <p className="text-sm">{customer.email}</p>}
           </div>
-          <div>
-            <p className="text-sm text-muted-foreground mb-1">Address</p>
-            <p>{customer.address || "No address provided"}</p>
+          <div className="md:col-span-2">
+            <p className="text-sm text-muted-foreground mb-1">Addresses ({customer.addresses.length})</p>
+            {customer.addresses.length > 0 ? (
+              <div className="max-h-32 overflow-y-auto space-y-2">
+                {customer.addresses.map((address) => (
+                  <div key={address.id} className="text-sm flex gap-2">
+                    <Badge variant="outline" className="h-6">{address.area}</Badge>
+                    <span>{address.text}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p>No addresses provided</p>
+            )}
           </div>
           <div>
             <Link to={`/customers`} onClick={(e) => {

@@ -1,3 +1,4 @@
+
 import { useState, useMemo } from "react";
 import { useApp } from "@/context/AppContext";
 import { Customer, Order } from "@/types";
@@ -24,9 +25,10 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { CakeIcon, Calendar, DollarSign, Clock, ChevronDown, ChevronRight, Edit } from "lucide-react";
+import { CakeIcon, Calendar, DollarSign, Clock, ChevronDown, ChevronRight, Edit, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { Badge } from "@/components/ui/badge";
 
 interface CustomerDetailProps {
   customer: Customer;
@@ -111,12 +113,36 @@ const CustomerDetail = ({ customer }: CustomerDetailProps) => {
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="md:col-span-2">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">Address</CardTitle>
+            <CardTitle className="text-sm text-muted-foreground">Addresses ({customer.addresses.length})</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm">{customer.address || "No address provided"}</p>
+            {customer.addresses.length > 0 ? (
+              <div className="space-y-3">
+                {customer.addresses.map((address, index) => (
+                  <div key={address.id} className="p-3 border rounded-md">
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <MapPin className="h-4 w-4 text-muted-foreground" />
+                          <Badge variant="outline">{address.area}</Badge>
+                          <span className="text-xs text-muted-foreground">Address {index + 1}</span>
+                        </div>
+                        <p className="text-sm">{address.text}</p>
+                        {address.deliveryNotes && (
+                          <p className="text-xs text-muted-foreground italic">
+                            Notes: {address.deliveryNotes}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No addresses saved</p>
+            )}
           </CardContent>
         </Card>
         

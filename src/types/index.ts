@@ -1,11 +1,21 @@
+
+export type Address = {
+  id: string;
+  text: string;
+  deliveryNotes?: string;
+  area: "Jakarta" | "Bekasi" | string; // Making it extensible for future areas
+  createdAt: Date;
+  updatedAt?: Date;
+};
+
 export type Customer = {
   id: string;
   name: string;
   whatsappNumber: string;
   email?: string;
-  address?: string;
+  addresses: Address[];
   createdAt: Date;
-  updatedAt?: Date; // Added updatedAt property as optional
+  updatedAt?: Date;
   orders?: Order[];
   // The following properties are computed and not stored in the repository
   totalOrders?: number;
@@ -19,6 +29,8 @@ export type Order = {
   status: OrderStatus;
   deliveryDate: Date;
   deliveryAddress: string;
+  deliveryAddressNotes?: string;
+  deliveryArea?: string;
   cakeDesign: string;
   cakeFlavor: string;
   cakeSize: string;

@@ -28,6 +28,34 @@ const App = () => {
     if (config.debug.enabled && config.debug.dataService) {
       console.log(`Data service initialized in ${config.api.dataSourceMode} mode`);
     }
+
+    // Handle migration of existing customers with old address format
+    const migrateCustomers = async () => {
+      const customers = await dataService.customers.getAll();
+      for (const customer of customers) {
+        // @ts-ignore - to handle old format with address property
+        if (customer.address && (!customer.addresses || customer.addresses.length === 0)) {
+          // Convert old address format to new format
+          const updatedCustomer = {
+            ...customer,
+            addresses: [
+              {
+                id: `addr_${customer.id}_legacy`,
+                text: customer.address,
+                area: "Jakarta", // Default area
+                createdAt: customer.createdAt,
+              }
+            ],
+            // Remove the old address property
+            address: undefined
+          };
+          
+          await dataService.customers.update(customer.id, updatedCustomer);
+        }
+      }
+    };
+    
+    migrateCustomers().catch(console.error);
   }, []);
 
   return (
