@@ -1,12 +1,13 @@
 
 import { useState, useEffect } from "react";
 import { useApp } from "@/context/AppContext";
-import { Customer, Order, Ingredient, Address, TierDetail, PackingItem } from "@/types";
+import { Customer, Order, Ingredient, Address, TierDetail, PackingItem, CakeColor } from "@/types";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/components/ui/sonner";
 import { cakeFlavors, cakeSizes, cakeColors, mockIngredients, areaOptions, cakeShapes, cakeTiers, defaultPackingItems } from "@/data/mockData";
-import { Button } from "@/components/ui/button"; // Add missing Button import
+import { Button } from "@/components/ui/button";
+import { baseColors } from "@/data/colorData";
 
 // Import component sections
 import CustomerSection from "./OrderFormComponents/CustomerSection";
@@ -46,6 +47,11 @@ const OrderForm = ({ order }: OrderFormProps) => {
     order?.packingItems || [...defaultPackingItems]
   );
   
+  // Convert legacy string color to CakeColor object if needed
+  const initialCoverColor = typeof order?.coverColor === 'string' 
+    ? { type: 'solid' as const, color: order.coverColor } 
+    : order?.coverColor || { type: 'solid' as const, color: baseColors[0].value };
+  
   // State for address handling
   const [selectedAddressId, setSelectedAddressId] = useState<string | "new">(
     order?.deliveryAddress ? "existing" : "new"
@@ -65,7 +71,7 @@ const OrderForm = ({ order }: OrderFormProps) => {
     cakeSize: order?.cakeSize || "",
     cakeShape: order?.cakeShape || "Round",
     cakeTier: order?.cakeTier || 1,
-    coverColor: order?.coverColor || "",
+    coverColor: initialCoverColor,
     cakeText: order?.cakeText || "",
     greetingCard: order?.greetingCard || "",
     notes: order?.notes || "",
@@ -172,6 +178,11 @@ const OrderForm = ({ order }: OrderFormProps) => {
     }
   };
 
+  // Handler for cover color changes
+  const handleCoverColorChange = (value: CakeColor) => {
+    setFormData(prev => ({ ...prev, coverColor: value }));
+  };
+
   // Update dialog open state to initialize the form values correctly
   const openNewAddressDialog = () => {
     // Pre-populate the dialog with the current form values
@@ -183,7 +194,7 @@ const OrderForm = ({ order }: OrderFormProps) => {
     setNewAddressDialogOpen(true);
   };
 
-  const handleAddressChange = (field: keyof typeof newAddress, value: string) => {
+  const handleAddressChange = (field: keyof Partial<Address>, value: string) => {
     setNewAddress(prev => ({...prev, [field]: value}));
   };
   
@@ -427,6 +438,7 @@ const OrderForm = ({ order }: OrderFormProps) => {
               setCakeFlavor={setCakeFlavor}
               handleInputChange={handleInputChange}
               handleSelectChange={handleSelectChange}
+              handleCoverColorChange={handleCoverColorChange}
               cakeFlavors={cakeFlavors}
               cakeSizes={cakeSizes}
               cakeShapes={cakeShapes}

@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { TierDetail } from "@/types";
+import { CakeColor, TierDetail } from "@/types";
+import ColorPicker from "./ColorPicker/ColorPicker";
 
 interface CakeDetailsSectionProps {
   formData: {
@@ -13,16 +14,16 @@ interface CakeDetailsSectionProps {
     cakeSize: string;
     cakeShape: string;
     cakeTier: number;
-    coverColor: string;
+    coverColor: string | CakeColor;
   };
   cakeFlavor: string;
   setCakeFlavor: (value: string) => void;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   handleSelectChange: (name: string, value: string | number) => void;
+  handleCoverColorChange: (value: CakeColor) => void;
   cakeFlavors: string[];
   cakeSizes: string[];
   cakeShapes: string[];
-  cakeColors: string[];
   cakeTiers: number[];
   tierDetails: TierDetail[];
   useSameFlavor: boolean;
@@ -37,10 +38,10 @@ const CakeDetailsSection = ({
   setCakeFlavor,
   handleInputChange,
   handleSelectChange,
+  handleCoverColorChange,
   cakeFlavors,
   cakeSizes,
   cakeShapes,
-  cakeColors,
   cakeTiers,
   tierDetails,
   useSameFlavor,
@@ -48,6 +49,11 @@ const CakeDetailsSection = ({
   handleTierDetailChange,
   setActiveTab
 }: CakeDetailsSectionProps) => {
+  // Convert legacy string color to CakeColor object if needed
+  const coverColor: CakeColor = typeof formData.coverColor === 'string' 
+    ? { type: 'solid', color: formData.coverColor } 
+    : formData.coverColor as CakeColor;
+
   return (
     <div className="space-y-6">
       <Card>
@@ -223,19 +229,10 @@ const CakeDetailsSection = ({
 
             <div className="space-y-2">
               <Label htmlFor="coverColor">Cover Color *</Label>
-              <Select 
-                value={formData.coverColor} 
-                onValueChange={(value) => handleSelectChange("coverColor", value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select cover color" />
-                </SelectTrigger>
-                <SelectContent>
-                  {cakeColors.map((color) => (
-                    <SelectItem key={color} value={color}>{color}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <ColorPicker 
+                value={coverColor}
+                onChange={handleCoverColorChange}
+              />
             </div>
           </div>
         </CardContent>

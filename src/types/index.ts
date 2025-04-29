@@ -36,6 +36,20 @@ export type PackingItem = {
   checked: boolean;
 };
 
+export type ColorType = 'solid' | 'gradient';
+
+export type SolidColor = {
+  type: 'solid';
+  color: string;
+};
+
+export type GradientColor = {
+  type: 'gradient';
+  colors: string[];
+};
+
+export type CakeColor = SolidColor | GradientColor;
+
 export type Order = {
   id: string;
   customer: Customer;
@@ -52,7 +66,7 @@ export type Order = {
   cakeTier: number;
   tierDetails?: TierDetail[];
   useSameFlavor: boolean;
-  coverColor: string;
+  coverColor: string | CakeColor; // Support both legacy string and new color structure
   cakeText?: string;
   greetingCard?: string;
   notes?: string;

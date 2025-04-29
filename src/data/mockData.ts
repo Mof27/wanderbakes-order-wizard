@@ -1,5 +1,6 @@
 
-import { Customer, FilterOption, Ingredient, Order, OrderStatus, Address, PackingItem } from "../types";
+import { Customer, FilterOption, Ingredient, Order, OrderStatus, Address, PackingItem, CakeColor } from "../types";
+import { baseColors } from "./colorData";
 
 // Mock Addresses
 const createAddress = (id: string, text: string, area: "Jakarta" | "Bekasi", deliveryNotes?: string): Address => ({
@@ -8,6 +9,18 @@ const createAddress = (id: string, text: string, area: "Jakarta" | "Bekasi", del
   area,
   deliveryNotes,
   createdAt: new Date('2024-02-15'),
+});
+
+// Helper function to create a solid color
+const createSolidColor = (color: string): CakeColor => ({
+  type: 'solid',
+  color
+});
+
+// Helper function to create a gradient color
+const createGradientColor = (colors: string[]): CakeColor => ({
+  type: 'gradient',
+  colors
 });
 
 // Mock Customers
@@ -109,7 +122,7 @@ export const mockOrders: Order[] = [
     cakeShape: "Round",
     cakeTier: 1,
     useSameFlavor: true,
-    coverColor: "Pink",
+    coverColor: createSolidColor("#FFD1DC"), // Pink
     cakeText: "Happy Birthday Alice!",
     greetingCard: "Wishing you a fantastic day!",
     notes: "No nuts please",
@@ -143,7 +156,7 @@ export const mockOrders: Order[] = [
       { tier: 2, shape: "Round", size: "16 CM", flavor: "Double Chocolate" }
     ],
     useSameFlavor: false,
-    coverColor: "Blue",
+    coverColor: createGradientColor(["#D3E4FD", "#0EA5E9", "#1E3A8A"]), // Ocean Blue gradient
     cakeText: "Happy Birthday Bob!",
     packingItems: [
       { id: "p1", name: "Candles", checked: true },
