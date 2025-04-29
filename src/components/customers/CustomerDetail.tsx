@@ -1,8 +1,8 @@
-
 import { useState, useMemo } from "react";
 import { useApp } from "@/context/AppContext";
 import { Customer, Order } from "@/types";
 import { formatDate, formatCurrency } from "@/lib/utils";
+import { getColorDisplayName } from "@/utils/colorUtils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -313,7 +313,7 @@ const CustomerDetail = ({ customer }: CustomerDetailProps) => {
                                   <p><span className="font-medium">Cake Design:</span> {order.cakeDesign}</p>
                                   <p><span className="font-medium">Size:</span> {order.cakeSize}</p>
                                   <p><span className="font-medium">Flavor:</span> {order.cakeFlavor}</p>
-                                  <p><span className="font-medium">Cover Color:</span> {order.coverColor}</p>
+                                  <p><span className="font-medium">Cover Color:</span> {getColorDisplayName(order.coverColor)}</p>
                                   {order.cakeText && (
                                     <p><span className="font-medium">Cake Text:</span> {order.cakeText}</p>
                                   )}

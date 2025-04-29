@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useApp } from "@/context/AppContext";
 import { Customer, Order, Ingredient, Address, TierDetail, PackingItem, CakeColor } from "@/types";
@@ -442,7 +441,6 @@ const OrderForm = ({ order }: OrderFormProps) => {
               cakeFlavors={cakeFlavors}
               cakeSizes={cakeSizes}
               cakeShapes={cakeShapes}
-              cakeColors={cakeColors}
               cakeTiers={cakeTiers}
               tierDetails={tierDetails}
               useSameFlavor={useSameFlavor}

@@ -29,6 +29,6 @@ export const getColorDisplayName = (color: string | CakeColor): string => {
   if (color.type === 'solid') {
     return color.color;
   } else {
-    return 'Gradient';
+    return `Gradient (${color.colors.length} colors)`;
   }
 };

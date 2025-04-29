@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { CakeColor, ColorType } from "@/types";
+import { CakeColor, ColorType, SolidColor, GradientColor } from "@/types";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import SolidColorPicker from "./SolidColorPicker";
