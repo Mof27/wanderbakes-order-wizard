@@ -48,7 +48,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
           <SidebarContent className="bg-rose-200">
             <SidebarMenu />
           </SidebarContent>
-          <div className="mt-auto p-4">
+          <div className="mt-auto p-4 bg-rose-200">
             <div className="text-sm text-muted-foreground">
               WanderBakes CRM & Order Management
             </div>
