@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useApp } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, ChevronDown, ArrowUpDown, Calendar, DollarSign } from "lucide-react";
+import { Plus, Search, ChevronDown, ArrowUpDown, Calendar } from "lucide-react";
 import { Customer } from "@/types";
 import { formatDate, formatCurrency } from "@/lib/utils";
 import {
@@ -216,10 +216,7 @@ const CustomersPage = () => {
                   </TableCell>
                   <TableCell>{customer.totalOrders}</TableCell>
                   <TableCell>
-                    <div className="flex items-center">
-                      <DollarSign className="h-4 w-4 text-muted-foreground" />
-                      {formatCurrency(customer.totalSpend)}
-                    </div>
+                    {formatCurrency(customer.totalSpend)}
                   </TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
@@ -236,7 +233,12 @@ const CustomersPage = () => {
                         }}>
                           View Details
                         </DropdownMenuItem>
-                        {/* Add more actions as needed */}
+                        <DropdownMenuItem onClick={(e) => {
+                          e.stopPropagation();
+                          window.location.href = `/customers/${customer.id}/orders`;
+                        }}>
+                          View Orders
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>

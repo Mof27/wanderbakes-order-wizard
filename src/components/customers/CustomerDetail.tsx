@@ -24,8 +24,9 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { CakeIcon, Calendar, DollarSign, Clock, ChevronDown, ChevronRight } from "lucide-react";
+import { CakeIcon, Calendar, DollarSign, Clock, ChevronDown, ChevronRight, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 interface CustomerDetailProps {
   customer: Customer;
@@ -159,7 +160,6 @@ const CustomerDetail = ({ customer }: CustomerDetailProps) => {
               </CardHeader>
               <CardContent>
                 <div className="flex items-center">
-                  <DollarSign className="mr-2 h-5 w-5 text-cake-primary" />
                   <span className="text-2xl font-bold">{formatCurrency(totalSpend)}</span>
                 </div>
               </CardContent>
@@ -171,7 +171,6 @@ const CustomerDetail = ({ customer }: CustomerDetailProps) => {
               </CardHeader>
               <CardContent>
                 <div className="flex items-center">
-                  <DollarSign className="mr-2 h-5 w-5 text-cake-primary" />
                   <span className="text-2xl font-bold">{formatCurrency(avgOrderValue)}</span>
                 </div>
               </CardContent>
@@ -182,18 +181,25 @@ const CustomerDetail = ({ customer }: CustomerDetailProps) => {
         <TabsContent value="orders" className="pt-4">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-medium">Order History</h3>
-            <Select value={timeFrame} onValueChange={setTimeFrame}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Time Period" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Time</SelectItem>
-                <SelectItem value="30days">Last 30 Days</SelectItem>
-                <SelectItem value="90days">Last 90 Days</SelectItem>
-                <SelectItem value="6months">Last 6 Months</SelectItem>
-                <SelectItem value="12months">Last 12 Months</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex items-center gap-2">
+              <Select value={timeFrame} onValueChange={setTimeFrame}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Time Period" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Time</SelectItem>
+                  <SelectItem value="30days">Last 30 Days</SelectItem>
+                  <SelectItem value="90days">Last 90 Days</SelectItem>
+                  <SelectItem value="6months">Last 6 Months</SelectItem>
+                  <SelectItem value="12months">Last 12 Months</SelectItem>
+                </SelectContent>
+              </Select>
+              <Link to={`/customers/${customer.id}/orders`}>
+                <Button variant="outline" size="sm">
+                  View All Orders
+                </Button>
+              </Link>
+            </div>
           </div>
           
           {filteredOrders.length > 0 ? (
@@ -202,11 +208,12 @@ const CustomerDetail = ({ customer }: CustomerDetailProps) => {
                 <TableHeader>
                   <TableRow>
                     <TableHead></TableHead>
+                    <TableHead>Order ID</TableHead>
                     <TableHead>Order Date</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Delivery Date</TableHead>
                     <TableHead>Amount</TableHead>
-                    <TableHead>Details</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -229,6 +236,7 @@ const CustomerDetail = ({ customer }: CustomerDetailProps) => {
                             </Button>
                           </CollapsibleTrigger>
                         </TableCell>
+                        <TableCell>{order.id}</TableCell>
                         <TableCell>
                           <div className="flex items-center">
                             <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
@@ -255,20 +263,23 @@ const CustomerDetail = ({ customer }: CustomerDetailProps) => {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center">
-                            <DollarSign className="h-4 w-4 text-muted-foreground" />
-                            {formatCurrency(order.totalPrice)}
-                          </div>
+                          {formatCurrency(order.totalPrice)}
                         </TableCell>
                         <TableCell>
-                          <span className="text-sm text-muted-foreground">
-                            {order.cakeDesign} ({order.cakeSize}, {order.cakeFlavor})
-                          </span>
+                          <Link to={`/orders/${order.id}`}>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="bg-cake-primary hover:bg-cake-primary/80 text-cake-text h-8 w-8 p-0"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </Link>
                         </TableCell>
                       </TableRow>
                       <CollapsibleContent asChild>
                         <tr>
-                          <td colSpan={6} className="bg-muted/30 px-4 py-3">
+                          <td colSpan={7} className="bg-muted/30 px-4 py-3">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               <div>
                                 <h4 className="text-sm font-medium mb-2">Order Details</h4>
@@ -295,6 +306,13 @@ const CustomerDetail = ({ customer }: CustomerDetailProps) => {
                                   )}
                                 </div>
                               </div>
+                            </div>
+                            <div className="mt-4 flex justify-end">
+                              <Link to={`/orders/${order.id}`}>
+                                <Button size="sm" className="bg-cake-primary hover:bg-cake-primary/80 text-cake-text">
+                                  View Full Order
+                                </Button>
+                              </Link>
                             </div>
                           </td>
                         </tr>

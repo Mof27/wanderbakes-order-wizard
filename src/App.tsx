@@ -10,6 +10,7 @@ import OrdersPage from "./pages/OrdersPage";
 import NewOrderPage from "./pages/NewOrderPage";
 import EditOrderPage from "./pages/EditOrderPage";
 import CustomersPage from "./pages/CustomersPage";
+import CustomerOrdersPage from "./pages/CustomerOrdersPage";
 import NotFound from "./pages/NotFound";
 import { AppProvider } from "./context/AppContext";
 import { useEffect } from "react";
@@ -60,6 +61,11 @@ const App = () => {
               <Route path="/customers" element={
                 <MainLayout>
                   <CustomersPage />
+                </MainLayout>
+              } />
+              <Route path="/customers/:id/orders" element={
+                <MainLayout>
+                  <CustomerOrdersPage />
                 </MainLayout>
               } />
               <Route path="*" element={<NotFound />} />
