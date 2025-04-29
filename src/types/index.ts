@@ -23,6 +23,19 @@ export type Customer = {
   lastOrderDate?: Date;
 };
 
+export type TierDetail = {
+  tier: number;
+  shape: string;
+  size: string;
+  flavor?: string;
+};
+
+export type PackingItem = {
+  id: string;
+  name: string;
+  checked: boolean;
+};
+
 export type Order = {
   id: string;
   customer: Customer;
@@ -34,10 +47,15 @@ export type Order = {
   cakeDesign: string;
   cakeFlavor: string;
   cakeSize: string;
+  cakeShape: string;
+  cakeTier: number;
+  tierDetails?: TierDetail[];
+  useSameFlavor: boolean;
   coverColor: string;
   cakeText?: string;
   greetingCard?: string;
   notes?: string;
+  packingItems?: PackingItem[];
   attachments?: string[];
   createdAt: Date;
   updatedAt: Date;

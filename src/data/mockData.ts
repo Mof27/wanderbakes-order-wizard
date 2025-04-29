@@ -1,4 +1,5 @@
-import { Customer, FilterOption, Ingredient, Order, OrderStatus, Address } from "../types";
+
+import { Customer, FilterOption, Ingredient, Order, OrderStatus, Address, PackingItem } from "../types";
 
 // Mock Addresses
 const createAddress = (id: string, text: string, area: "Jakarta" | "Bekasi", deliveryNotes?: string): Address => ({
@@ -94,6 +95,13 @@ export const mockIngredients: Record<string, Ingredient[]> = {
   ]
 };
 
+export const defaultPackingItems: PackingItem[] = [
+  { id: "p1", name: "Candles", checked: false },
+  { id: "p2", name: "Big Knife", checked: false },
+  { id: "p3", name: "Greeting Card", checked: false },
+  { id: "p4", name: "Cake Topper", checked: false },
+];
+
 // Mock Orders
 export const mockOrders: Order[] = [
   {
@@ -106,11 +114,20 @@ export const mockOrders: Order[] = [
     deliveryArea: mockCustomers[0].addresses[0].area,
     cakeDesign: "Flower themed",
     cakeFlavor: "Chocolate Cake",
-    cakeSize: "8 inch",
+    cakeSize: "16 CM",
+    cakeShape: "Round",
+    cakeTier: 1,
+    useSameFlavor: true,
     coverColor: "Pink",
     cakeText: "Happy Birthday Alice!",
     greetingCard: "Wishing you a fantastic day!",
     notes: "No nuts please",
+    packingItems: [
+      { id: "p1", name: "Candles", checked: true },
+      { id: "p2", name: "Big Knife", checked: false },
+      { id: "p3", name: "Greeting Card", checked: true },
+      { id: "p4", name: "Cake Topper", checked: false },
+    ],
     attachments: ["cake-design-1.jpg"],
     createdAt: new Date('2024-04-25'),
     updatedAt: new Date('2024-04-25'),
@@ -127,9 +144,22 @@ export const mockOrders: Order[] = [
     deliveryArea: mockCustomers[1].addresses[0].area,
     cakeDesign: "Superhero themed",
     cakeFlavor: "Vanilla Cake",
-    cakeSize: "10 inch",
+    cakeSize: "22 CM",
+    cakeShape: "Round",
+    cakeTier: 2,
+    tierDetails: [
+      { tier: 1, shape: "Round", size: "22 CM", flavor: "Vanilla Cake" },
+      { tier: 2, shape: "Round", size: "16 CM", flavor: "Chocolate Cake" }
+    ],
+    useSameFlavor: false,
     coverColor: "Blue",
     cakeText: "Happy Birthday Bob!",
+    packingItems: [
+      { id: "p1", name: "Candles", checked: true },
+      { id: "p2", name: "Big Knife", checked: true },
+      { id: "p3", name: "Greeting Card", checked: false },
+      { id: "p4", name: "Cake Topper", checked: true },
+    ],
     attachments: ["cake-design-2.jpg"],
     createdAt: new Date('2024-04-28'),
     updatedAt: new Date('2024-04-29'),
@@ -146,9 +176,13 @@ export const mockOrders: Order[] = [
     deliveryArea: mockCustomers[2].addresses[0].area,
     cakeDesign: "Floral pattern",
     cakeFlavor: "Red Velvet",
-    cakeSize: "6 inch",
+    cakeSize: "18 CM",
+    cakeShape: "Square",
+    cakeTier: 1,
+    useSameFlavor: true,
     coverColor: "Red",
     notes: "Extra frosting please",
+    packingItems: defaultPackingItems,
     createdAt: new Date('2024-04-29'),
     updatedAt: new Date('2024-04-29'),
     ingredients: mockIngredients["Red Velvet"],
@@ -164,10 +198,19 @@ export const mockOrders: Order[] = [
     deliveryArea: mockCustomers[3].addresses[0].area,
     cakeDesign: "Minimalist",
     cakeFlavor: "Chocolate Cake",
-    cakeSize: "9 inch",
+    cakeSize: "24 CM",
+    cakeShape: "Round",
+    cakeTier: 1,
+    useSameFlavor: true,
     coverColor: "White",
     cakeText: "Congratulations!",
     greetingCard: "Well done on your achievement!",
+    packingItems: [
+      { id: "p1", name: "Candles", checked: false },
+      { id: "p2", name: "Big Knife", checked: true },
+      { id: "p3", name: "Greeting Card", checked: true },
+      { id: "p4", name: "Cake Topper", checked: false },
+    ],
     attachments: ["cake-design-3.jpg"],
     createdAt: new Date('2024-04-20'),
     updatedAt: new Date('2024-04-28'),
@@ -184,10 +227,24 @@ export const mockOrders: Order[] = [
     deliveryArea: mockCustomers[4].addresses[0].area,
     cakeDesign: "Beach themed",
     cakeFlavor: "Vanilla Cake",
-    cakeSize: "7 inch",
+    cakeSize: "16 CM",
+    cakeShape: "Square",
+    cakeTier: 3,
+    tierDetails: [
+      { tier: 1, shape: "Square", size: "24 CM", flavor: "Vanilla Cake" },
+      { tier: 2, shape: "Square", size: "18 CM", flavor: "Vanilla Cake" },
+      { tier: 3, shape: "Square", size: "12 CM", flavor: "Vanilla Cake" }
+    ],
+    useSameFlavor: true,
     coverColor: "Turquoise",
     cakeText: "Happy Anniversary!",
     notes: "Include a small gift box",
+    packingItems: [
+      { id: "p1", name: "Candles", checked: true },
+      { id: "p2", name: "Big Knife", checked: true },
+      { id: "p3", name: "Greeting Card", checked: true },
+      { id: "p4", name: "Cake Topper", checked: false },
+    ],
     attachments: ["cake-design-4.jpg"],
     createdAt: new Date('2024-04-15'),
     updatedAt: new Date('2024-04-30'),
@@ -227,14 +284,26 @@ export const cakeFlavors = [
 ];
 
 export const cakeSizes = [
-  "4 inch",
-  "6 inch", 
-  "8 inch",
-  "9 inch",
-  "10 inch",
-  "12 inch",
-  "14 inch",
-  "16 inch",
+  "12 CM",
+  "16 CM", 
+  "18 CM",
+  "22 CM",
+  "24 CM",
+  "25 CM",
+  "30 CM",
+  "35 CM",
+  "45 CM",
+  "50 CM",
+];
+
+export const cakeShapes = [
+  "Round",
+  "Square",
+  "Custom"
+];
+
+export const cakeTiers = [
+  1, 2, 3
 ];
 
 export const cakeColors = [
