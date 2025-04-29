@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useApp } from "@/context/AppContext";
 import { Customer, Order, Ingredient, Address, TierDetail, PackingItem } from "@/types";
@@ -28,6 +27,8 @@ import { Separator } from "@/components/ui/separator";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { toast } from "@/components/ui/sonner";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 interface OrderFormProps {
   order?: Order;
@@ -35,7 +36,7 @@ interface OrderFormProps {
 
 const OrderForm = ({ order }: OrderFormProps) => {
   const navigate = useNavigate();
-  const { addOrder, updateOrder } = useApp();
+  const { addOrder, updateOrder, updateCustomer } = useApp();
   const [customer, setCustomer] = useState<Customer | null>(order?.customer || null);
   
   // Add order date with default as today
@@ -177,31 +178,50 @@ const OrderForm = ({ order }: OrderFormProps) => {
     }
   };
 
+  // Update dialog open state to initialize the form values correctly
+  const openNewAddressDialog = () => {
+    // Pre-populate the dialog with the current form values
+    setNewAddress({
+      text: formData.deliveryAddress,
+      area: formData.deliveryArea,
+      deliveryNotes: formData.deliveryAddressNotes
+    });
+    setNewAddressDialogOpen(true);
+  };
+
   const handleAddressChange = (field: keyof typeof newAddress, value: string) => {
     setNewAddress(prev => ({...prev, [field]: value}));
   };
   
   const handleSaveNewAddress = async () => {
-    if (!customer || !newAddress.text) return;
+    if (!customer) {
+      toast.error("Please select a customer first");
+      return;
+    }
     
-    const newAddressObj: Address = {
-      id: `addr_${Date.now()}`,
-      text: newAddress.text || "",
-      area: newAddress.area || "Jakarta",
-      deliveryNotes: newAddress.deliveryNotes,
-      createdAt: new Date()
-    };
+    if (!newAddress.text) {
+      toast.error("Address text is required");
+      return;
+    }
     
-    // Add the address to the customer
-    const updatedCustomer = {
-      ...customer,
-      addresses: [...customer.addresses, newAddressObj]
-    };
-    
-    // Update customer in the app context
     try {
-      await updateCustomer(updatedCustomer);
-      setCustomer(updatedCustomer);
+      const newAddressObj: Address = {
+        id: `addr_${Date.now()}`,
+        text: newAddress.text || "",
+        area: newAddress.area || "Jakarta",
+        deliveryNotes: newAddress.deliveryNotes,
+        createdAt: new Date()
+      };
+      
+      // Add the address to the customer
+      const updatedCustomer = {
+        ...customer,
+        addresses: [...customer.addresses, newAddressObj]
+      };
+      
+      // Update customer in the app context
+      const result = await updateCustomer(updatedCustomer);
+      setCustomer(result);
       
       // Set the form data for delivery
       setFormData(prev => ({
@@ -217,14 +237,11 @@ const OrderForm = ({ order }: OrderFormProps) => {
       // Close the dialog
       setNewAddressDialogOpen(false);
       
-      // Reset the new address form
-      setNewAddress({
-        text: "",
-        area: "Jakarta",
-        deliveryNotes: ""
-      });
+      // Show success message
+      toast.success("Address saved successfully");
     } catch (error) {
       console.error("Error saving new address:", error);
+      toast.error("Failed to save address");
     }
   };
 
@@ -330,9 +347,6 @@ const OrderForm = ({ order }: OrderFormProps) => {
       reader.readAsDataURL(selectedFile);
     }
   };
-  
-  // Get access to updateCustomer function
-  const { updateCustomer } = useApp();
 
   // Find the selected address for display
   const selectedAddress = customer && selectedAddressId !== "new" 
@@ -407,7 +421,7 @@ const OrderForm = ({ order }: OrderFormProps) => {
               )}
 
               <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
-                {/* Add Order Date before Delivery Date */}
+                {/* Order Date Field */}
                 <div className="space-y-2">
                   <Label htmlFor="orderDate">Order Date *</Label>
                   <Popover>
@@ -587,7 +601,7 @@ const OrderForm = ({ order }: OrderFormProps) => {
                             variant="outline"
                             size="sm"
                             className="mt-2"
-                            onClick={() => setNewAddressDialogOpen(true)}
+                            onClick={openNewAddressDialog}
                           >
                             <Plus className="mr-1 h-4 w-4" /> Save Address to Customer
                           </Button>
@@ -605,7 +619,7 @@ const OrderForm = ({ order }: OrderFormProps) => {
                   <h3 className="font-medium mb-4">Cake Details *</h3>
 
                   <div className="space-y-4">
-                    {/* Move Cake Design to the top */}
+                    {/* Cake Design at the top */}
                     <div className="space-y-2">
                       <Label htmlFor="cakeDesign">Cake Design *</Label>
                       <Input
@@ -939,90 +953,3 @@ const OrderForm = ({ order }: OrderFormProps) => {
                   Back to Required Information
                 </Button>
               </div>
-            </div>
-          </div>
-        </TabsContent>
-      </Tabs>
-
-      {/* Save Address Dialog */}
-      <Dialog open={newAddressDialogOpen} onOpenChange={setNewAddressDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Save New Address</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="saveAddressText">Address Text *</Label>
-              <Textarea
-                id="saveAddressText"
-                value={newAddress.text || formData.deliveryAddress}
-                onChange={(e) => handleAddressChange('text', e.target.value)}
-                placeholder="Full address"
-                required
-                className="h-20"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="saveAddressArea">Area *</Label>
-              <Select
-                value={newAddress.area || formData.deliveryArea}
-                onValueChange={(value) => handleAddressChange('area', value)}
-              >
-                <SelectTrigger id="saveAddressArea">
-                  <SelectValue placeholder="Select area" />
-                </SelectTrigger>
-                <SelectContent>
-                  {areaOptions.map((area) => (
-                    <SelectItem key={area} value={area}>{area}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="saveAddressNotes">Delivery Notes</Label>
-              <Textarea
-                id="saveAddressNotes"
-                value={newAddress.deliveryNotes || formData.deliveryAddressNotes}
-                onChange={(e) => handleAddressChange('deliveryNotes', e.target.value)}
-                placeholder="Special delivery instructions"
-                className="h-16"
-              />
-            </div>
-            
-            <div className="flex justify-end space-x-2 pt-4">
-              <Button variant="outline" onClick={() => setNewAddressDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleSaveNewAddress} className="bg-cake-primary hover:bg-cake-primary/80 text-cake-text">
-                Save Address
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <div className="flex flex-col md:flex-row justify-end md:space-x-4 space-y-2 md:space-y-0">
-        <Button variant="outline" onClick={() => navigate("/orders")}>
-          Cancel
-        </Button>
-        <Button variant="outline" onClick={handleSaveDraft}>
-          Save as Draft
-        </Button>
-        <Button 
-          className={cn(
-            "bg-cake-primary hover:bg-cake-primary/80 text-white",
-            !areRequiredFieldsFilled() && "opacity-50 cursor-not-allowed"
-          )} 
-          onClick={handleSubmitOrder}
-          disabled={!areRequiredFieldsFilled()}
-        >
-          {order ? "Update Order" : "Create Order"}
-        </Button>
-      </div>
-    </div>
-  );
-};
-
-export default OrderForm;
