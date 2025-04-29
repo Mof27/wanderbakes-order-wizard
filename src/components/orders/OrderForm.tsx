@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useApp } from "@/context/AppContext";
 import { Customer, Order, Ingredient } from "@/types";
@@ -390,7 +389,7 @@ const OrderForm = ({ order }: OrderFormProps) => {
         <Button variant="outline" onClick={handleSaveDraft}>
           Save as Draft
         </Button>
-        <Button className="bg-cake-primary hover:bg-cake-primary/80 text-cake-text" onClick={handleSubmitOrder}>
+        <Button className="bg-cake-primary hover:bg-cake-primary/80 text-white" onClick={handleSubmitOrder}>
           {order ? "Update Order" : "Create Order"}
         </Button>
       </div>
