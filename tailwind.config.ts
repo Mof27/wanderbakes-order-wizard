@@ -64,9 +64,9 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				},
 				cake: {
-					primary: '#33C3F0',    // Sky Blue
-					secondary: '#FFDEE2',  // Soft Pink
-					accent: '#D3E4FD',     // Soft Blue
+					primary: '#3b70c9',    // Royal Blue
+					secondary: '#FFD1DC',  // Pastel Pink
+					accent: '#D4E3FF',     // Light Blue
 					neutral: '#F2FCE2',    // Keep the same light neutral
 					text: '#403E43'        // Keep the same dark text
 				}
