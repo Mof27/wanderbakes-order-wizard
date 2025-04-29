@@ -64,11 +64,11 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				},
 				cake: {
-					primary: '#FEC6A1',
-					secondary: '#FFDEE2',
-					accent: '#FEF7CD',
-					neutral: '#F2FCE2',
-					text: '#403E43'
+					primary: '#8B5CF6',    // Vibrant purple
+					secondary: '#D946EF',  // Magenta pink
+					accent: '#F97316',     // Bright orange
+					neutral: '#F2FCE2',    // Keep the same light neutral
+					text: '#403E43'        // Keep the same dark text
 				}
 			},
 			borderRadius: {
