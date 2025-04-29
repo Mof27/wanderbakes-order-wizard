@@ -1,5 +1,8 @@
 
-import { gradientPresets } from "@/data/colorData";
+import { useState } from "react";
+import { baseColors } from "@/data/colorData";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 
 interface GradientColorPickerProps {
   value: string[];
@@ -7,30 +10,119 @@ interface GradientColorPickerProps {
 }
 
 const GradientColorPicker = ({ value, onChange }: GradientColorPickerProps) => {
+  // State to track number of colors (2 or 3)
+  const [colorCount, setColorCount] = useState(value.length === 3 ? 3 : 2);
+  
   // Helper function to create gradient CSS
   const createGradientStyle = (colors: string[]): string => {
-    return `linear-gradient(to right, ${colors.join(", ")})`;
+    return `linear-gradient(to bottom, ${colors.join(", ")})`;
   };
 
-  // Check if two arrays have the same values
-  const areColorsEqual = (a: string[], b: string[]): boolean => {
-    if (a.length !== b.length) return false;
-    return a.every((val, idx) => val === b[idx]);
+  // Handle color count change
+  const handleColorCountChange = (count: number) => {
+    setColorCount(count);
+    
+    if (count === 2) {
+      // If switching to 2 colors, use the top and bottom colors
+      onChange([value[0], value[value.length - 1]]);
+    } else {
+      // If switching to 3 colors, add a middle color (use the first color as middle if only 2 colors)
+      onChange(value.length === 2 ? [value[0], value[0], value[1]] : value);
+    }
+  };
+
+  // Update an individual color in the gradient
+  const updateColor = (index: number, color: string) => {
+    const newColors = [...value];
+    newColors[index] = color;
+    onChange(newColors);
   };
 
   return (
-    <div className="grid grid-cols-2 gap-4">
-      {gradientPresets.map((preset, index) => (
-        <div
-          key={index}
-          className={`h-12 rounded-md cursor-pointer border-2 ${
-            areColorsEqual(value, preset.colors) ? "border-primary" : "border-transparent"
-          }`}
-          style={{ background: createGradientStyle(preset.colors) }}
-          onClick={() => onChange(preset.colors)}
-          title={preset.name}
-        />
-      ))}
+    <div className="space-y-4">
+      {/* Color count selector */}
+      <div className="space-y-2">
+        <Label>Number of Colors</Label>
+        <RadioGroup
+          value={colorCount.toString()}
+          onValueChange={(value) => handleColorCountChange(parseInt(value))}
+          className="flex space-x-4"
+        >
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="2" id="two-color" />
+            <Label htmlFor="two-color">2 Colors</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="3" id="three-color" />
+            <Label htmlFor="three-color">3 Colors</Label>
+          </div>
+        </RadioGroup>
+      </div>
+
+      {/* Gradient preview */}
+      <div 
+        className="h-16 rounded-md"
+        style={{ background: createGradientStyle(value) }}
+      />
+
+      {/* Color pickers for each position */}
+      <div className="space-y-3">
+        {/* Top color picker */}
+        <div className="space-y-2">
+          <Label>Top Color</Label>
+          <div className="grid grid-cols-5 gap-2">
+            {baseColors.map((color) => (
+              <div
+                key={`top-${color.value}`}
+                className={`h-8 rounded-md cursor-pointer border-2 ${
+                  value[0] === color.value ? "border-primary" : "border-transparent"
+                }`}
+                style={{ backgroundColor: color.value }}
+                onClick={() => updateColor(0, color.value)}
+                title={color.name}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Middle color picker (only when colorCount is 3) */}
+        {colorCount === 3 && (
+          <div className="space-y-2">
+            <Label>Middle Color</Label>
+            <div className="grid grid-cols-5 gap-2">
+              {baseColors.map((color) => (
+                <div
+                  key={`middle-${color.value}`}
+                  className={`h-8 rounded-md cursor-pointer border-2 ${
+                    value[1] === color.value ? "border-primary" : "border-transparent"
+                  }`}
+                  style={{ backgroundColor: color.value }}
+                  onClick={() => updateColor(1, color.value)}
+                  title={color.name}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Bottom color picker */}
+        <div className="space-y-2">
+          <Label>Bottom Color</Label>
+          <div className="grid grid-cols-5 gap-2">
+            {baseColors.map((color) => (
+              <div
+                key={`bottom-${color.value}`}
+                className={`h-8 rounded-md cursor-pointer border-2 ${
+                  value[colorCount === 2 ? 1 : 2] === color.value ? "border-primary" : "border-transparent"
+                }`}
+                style={{ backgroundColor: color.value }}
+                onClick={() => updateColor(colorCount === 2 ? 1 : 2, color.value)}
+                title={color.name}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

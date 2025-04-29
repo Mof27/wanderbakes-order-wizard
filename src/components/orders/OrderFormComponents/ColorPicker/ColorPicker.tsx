@@ -5,7 +5,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import SolidColorPicker from "./SolidColorPicker";
 import GradientColorPicker from "./GradientColorPicker";
-import { baseColors, gradientPresets } from "@/data/colorData";
+import { baseColors } from "@/data/colorData";
 
 interface ColorPickerProps {
   value: CakeColor;
@@ -23,9 +23,10 @@ const ColorPicker = ({ value, onChange }: ColorPickerProps) => {
         color: baseColors[0].value
       });
     } else {
+      // Default to 2-color gradient when switching to gradient mode
       onChange({
         type: 'gradient',
-        colors: gradientPresets[0].colors
+        colors: [baseColors[0].value, baseColors[1].value]
       });
     }
   };
