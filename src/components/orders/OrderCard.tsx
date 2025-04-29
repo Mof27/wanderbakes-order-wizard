@@ -1,4 +1,3 @@
-
 import { format } from "date-fns";
 import { Order } from "@/types";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
@@ -7,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Edit, Trash2 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
+import { formatDate, formatCurrency } from "@/lib/utils";
 
 interface OrderCardProps {
   order: Order;
@@ -54,7 +54,7 @@ const OrderCard = ({ order }: OrderCardProps) => {
           <div className="flex justify-between">
             <span className="text-muted-foreground">Delivery:</span>
             <span className="font-medium">
-              {format(new Date(order.deliveryDate), "MMM d, yyyy")}
+              {formatDate(order.deliveryDate)}
             </span>
           </div>
           <div className="flex justify-between">
@@ -78,10 +78,7 @@ const OrderCard = ({ order }: OrderCardProps) => {
         )}
 
         <div className="text-right text-lg font-semibold">
-          {new Intl.NumberFormat("id-ID", {
-            style: "currency",
-            currency: "IDR",
-          }).format(order.totalPrice)}
+          {formatCurrency(order.totalPrice)}
         </div>
       </CardContent>
       <CardFooter className="bg-muted py-2 flex justify-between">

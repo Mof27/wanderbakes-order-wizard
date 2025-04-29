@@ -1,7 +1,7 @@
-
 import { useState, useMemo } from "react";
 import { useApp } from "@/context/AppContext";
 import { Customer, Order } from "@/types";
+import { formatDate, formatCurrency } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -26,7 +26,6 @@ import {
 } from "@/components/ui/collapsible";
 import { CakeIcon, Calendar, DollarSign, Clock, ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { format } from "date-fns";
 
 interface CustomerDetailProps {
   customer: Customer;
@@ -127,7 +126,7 @@ const CustomerDetail = ({ customer }: CustomerDetailProps) => {
           <CardContent>
             <div className="flex items-center">
               <Calendar className="mr-2 h-5 w-5 text-muted-foreground" />
-              {firstOrderDate ? format(firstOrderDate, 'MMM d, yyyy') : "No orders yet"}
+              {firstOrderDate ? formatDate(firstOrderDate) : "No orders yet"}
             </div>
           </CardContent>
         </Card>
@@ -161,7 +160,7 @@ const CustomerDetail = ({ customer }: CustomerDetailProps) => {
               <CardContent>
                 <div className="flex items-center">
                   <DollarSign className="mr-2 h-5 w-5 text-cake-primary" />
-                  <span className="text-2xl font-bold">${totalSpend.toFixed(2)}</span>
+                  <span className="text-2xl font-bold">{formatCurrency(totalSpend)}</span>
                 </div>
               </CardContent>
             </Card>
@@ -173,7 +172,7 @@ const CustomerDetail = ({ customer }: CustomerDetailProps) => {
               <CardContent>
                 <div className="flex items-center">
                   <DollarSign className="mr-2 h-5 w-5 text-cake-primary" />
-                  <span className="text-2xl font-bold">${avgOrderValue.toFixed(2)}</span>
+                  <span className="text-2xl font-bold">{formatCurrency(avgOrderValue)}</span>
                 </div>
               </CardContent>
             </Card>
@@ -233,7 +232,7 @@ const CustomerDetail = ({ customer }: CustomerDetailProps) => {
                         <TableCell>
                           <div className="flex items-center">
                             <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
-                            {format(new Date(order.createdAt), 'MMM d, yyyy')}
+                            {formatDate(order.createdAt)}
                           </div>
                         </TableCell>
                         <TableCell>
@@ -252,13 +251,13 @@ const CustomerDetail = ({ customer }: CustomerDetailProps) => {
                         <TableCell>
                           <div className="flex items-center">
                             <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
-                            {format(new Date(order.deliveryDate), 'MMM d, yyyy')}
+                            {formatDate(order.deliveryDate)}
                           </div>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center">
                             <DollarSign className="h-4 w-4 text-muted-foreground" />
-                            {order.totalPrice.toFixed(2)}
+                            {formatCurrency(order.totalPrice)}
                           </div>
                         </TableCell>
                         <TableCell>
@@ -286,7 +285,7 @@ const CustomerDetail = ({ customer }: CustomerDetailProps) => {
                               <div>
                                 <h4 className="text-sm font-medium mb-2">Delivery Information</h4>
                                 <div className="space-y-1 text-sm">
-                                  <p><span className="font-medium">Delivery Date:</span> {format(new Date(order.deliveryDate), 'MMM d, yyyy')}</p>
+                                  <p><span className="font-medium">Delivery Date:</span> {formatDate(order.deliveryDate)}</p>
                                   <p><span className="font-medium">Delivery Address:</span> {order.deliveryAddress}</p>
                                   {order.notes && (
                                     <p><span className="font-medium">Notes:</span> {order.notes}</p>
@@ -317,7 +316,7 @@ const CustomerDetail = ({ customer }: CustomerDetailProps) => {
               Showing {filteredOrders.length} orders
             </div>
             <div className="text-sm">
-              <span className="font-medium">Total for period:</span> ${filteredTotalSpend.toFixed(2)}
+              <span className="font-medium">Total for period:</span> {formatCurrency(filteredTotalSpend)}
             </div>
           </div>
         </TabsContent>

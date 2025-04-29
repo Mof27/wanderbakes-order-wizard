@@ -1,10 +1,10 @@
-
 import { useState, useMemo } from "react";
 import { useApp } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Search, ChevronDown, ArrowUpDown, Calendar, DollarSign } from "lucide-react";
 import { Customer } from "@/types";
+import { formatDate, formatCurrency } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -208,7 +208,7 @@ const CustomersPage = () => {
                     {customer.lastOrderDate ? (
                       <div className="flex items-center">
                         <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
-                        {customer.lastOrderDate.toLocaleDateString()}
+                        {formatDate(customer.lastOrderDate)}
                       </div>
                     ) : (
                       <span className="text-muted-foreground text-sm">No orders</span>
@@ -218,7 +218,7 @@ const CustomersPage = () => {
                   <TableCell>
                     <div className="flex items-center">
                       <DollarSign className="h-4 w-4 text-muted-foreground" />
-                      {customer.totalSpend.toFixed(2)}
+                      {formatCurrency(customer.totalSpend)}
                     </div>
                   </TableCell>
                   <TableCell className="text-right">

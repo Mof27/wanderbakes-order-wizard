@@ -1,4 +1,3 @@
-
 import { format } from "date-fns";
 import { Order } from "@/types";
 import { Badge } from "@/components/ui/badge";
@@ -6,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Edit, Trash2 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
+import { formatDate, formatCurrency } from "@/lib/utils";
 
 interface OrderTableRowProps {
   order: Order;
@@ -50,7 +50,7 @@ const OrderTableRow = ({ order }: OrderTableRowProps) => {
         </Badge>
       </td>
       <td className="p-2 text-sm">
-        {format(new Date(order.deliveryDate), "MMM d, yyyy")}
+        {formatDate(order.deliveryDate)}
       </td>
       <td className="p-2 text-sm">
         <div>
@@ -59,10 +59,7 @@ const OrderTableRow = ({ order }: OrderTableRowProps) => {
         </div>
       </td>
       <td className="p-2 font-medium">
-        {new Intl.NumberFormat("id-ID", {
-          style: "currency",
-          currency: "IDR",
-        }).format(order.totalPrice)}
+        {formatCurrency(order.totalPrice)}
       </td>
       <td className="p-2">
         <div className="flex space-x-1">
