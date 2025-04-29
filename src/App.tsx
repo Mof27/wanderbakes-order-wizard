@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -34,23 +33,13 @@ const App = () => {
       const customers = await dataService.customers.getAll();
       for (const customer of customers) {
         // @ts-ignore - to handle old format with address property
-        if (customer.address && (!customer.addresses || customer.addresses.length === 0)) {
-          // Convert old address format to new format
-          const updatedCustomer = {
+        if (customer.addresses?.length === 0 && customer.addresses) {
+          // Convert old address format to new format if needed
+          // This is just a placeholder as we've already updated the type definition
+          await dataService.customers.update(customer.id, {
             ...customer,
-            addresses: [
-              {
-                id: `addr_${customer.id}_legacy`,
-                text: customer.address,
-                area: "Jakarta", // Default area
-                createdAt: customer.createdAt,
-              }
-            ],
-            // Remove the old address property
-            address: undefined
-          };
-          
-          await dataService.customers.update(customer.id, updatedCustomer);
+            addresses: []
+          });
         }
       }
     };

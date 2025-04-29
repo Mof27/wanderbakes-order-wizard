@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useApp } from "@/context/AppContext";
 import { Customer, Order, Ingredient, Address } from "@/types";
@@ -23,6 +22,9 @@ import { cakeFlavors, cakeSizes, cakeColors, mockIngredients, areaOptions } from
 import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 interface OrderFormProps {
   order?: Order;
@@ -37,6 +39,7 @@ const OrderForm = ({ order }: OrderFormProps) => {
   );
   const [cakeFlavor, setCakeFlavor] = useState(order?.cakeFlavor || "");
   const [ingredients, setIngredients] = useState<Ingredient[]>(order?.ingredients || []);
+  const [activeTab, setActiveTab] = useState("required");
   
   // New state for address handling
   const [selectedAddressId, setSelectedAddressId] = useState<string | "new">(
@@ -213,334 +216,392 @@ const OrderForm = ({ order }: OrderFormProps) => {
   // Get access to updateCustomer function
   const { updateCustomer } = useApp();
 
+  // Check if required fields are filled
+  const areRequiredFieldsFilled = () => {
+    return (
+      customer &&
+      deliveryDate &&
+      formData.deliveryAddress &&
+      formData.cakeSize &&
+      cakeFlavor &&
+      formData.coverColor &&
+      formData.cakeDesign
+    );
+  };
+
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <div className="space-y-6">
-          {!customer && (
-            <Card>
-              <CardContent className="pt-6">
-                <h3 className="font-medium mb-4">Select Customer</h3>
-                <CustomerSearch onSelectCustomer={setCustomer} />
-              </CardContent>
-            </Card>
-          )}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-2 mb-4">
+          <TabsTrigger value="required">Required Information</TabsTrigger>
+          <TabsTrigger value="optional">Additional Details</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="required" className="space-y-6">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <div className="space-y-6">
+              {!customer && (
+                <Card>
+                  <CardContent className="pt-6">
+                    <h3 className="font-medium mb-4">Select Customer *</h3>
+                    <CustomerSearch onSelectCustomer={setCustomer} />
+                  </CardContent>
+                </Card>
+              )}
 
-          {customer && (
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-medium">{customer.name}</h3>
-                    <p className="text-sm text-muted-foreground">{customer.whatsappNumber}</p>
-                    {customer.email && <p className="text-sm">{customer.email}</p>}
-                  </div>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => setCustomer(null)}
-                  >
-                    Change
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="deliveryDate">Delivery Date *</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !deliveryDate && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {deliveryDate ? (
-                      format(deliveryDate, "PPP")
-                    ) : (
-                      <span>Pick a date</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={deliveryDate}
-                    onSelect={setDeliveryDate}
-                    initialFocus
-                    className="pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="totalPrice">Price (IDR) *</Label>
-              <Input
-                id="totalPrice"
-                name="totalPrice"
-                type="number"
-                value={formData.totalPrice}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-          </div>
-
-          {/* Address Selection Section */}
-          <div className="space-y-2">
-            <Label htmlFor="addressSelect">Delivery Address *</Label>
-            
-            {customer && customer.addresses.length > 0 && (
-              <Select 
-                value={selectedAddressId || "new"} 
-                onValueChange={setSelectedAddressId}
-              >
-                <SelectTrigger id="addressSelect" className="mb-2">
-                  <SelectValue placeholder="Select delivery address" />
-                </SelectTrigger>
-                <SelectContent>
-                  {customer.addresses.map(address => (
-                    <SelectItem key={address.id} value={address.id}>
-                      <div className="truncate">
-                        <span className="font-medium">{address.area}</span>: {address.text.substring(0, 30)}
-                        {address.text.length > 30 && "..."}
+              {customer && (
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="font-medium">{customer.name}</h3>
+                        <p className="text-sm text-muted-foreground">{customer.whatsappNumber}</p>
+                        {customer.email && <p className="text-sm">{customer.email}</p>}
                       </div>
-                    </SelectItem>
-                  ))}
-                  <SelectItem value="new">+ Add New Address</SelectItem>
-                </SelectContent>
-              </Select>
-            )}
-            
-            {selectedAddressId === "new" && (
-              <Card className="mt-2">
-                <CardContent className="pt-4">
-                  <div className="space-y-3">
-                    <div>
-                      <Label htmlFor="newAddressText">Address Text *</Label>
-                      <Textarea
-                        id="newAddressText"
-                        name="deliveryAddress"
-                        value={formData.deliveryAddress}
-                        onChange={handleInputChange}
-                        placeholder="Full delivery address"
-                        required
-                        className="min-h-[80px]"
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="deliveryArea">Area *</Label>
-                      <Select 
-                        value={formData.deliveryArea} 
-                        onValueChange={(value) => handleSelectChange("deliveryArea", value)}
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => setCustomer(null)}
                       >
-                        <SelectTrigger id="deliveryArea">
-                          <SelectValue placeholder="Select area" />
+                        Change
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="deliveryDate">Delivery Date *</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !deliveryDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {deliveryDate ? (
+                          format(deliveryDate, "PPP")
+                        ) : (
+                          <span>Pick a date</span>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={deliveryDate}
+                        onSelect={setDeliveryDate}
+                        initialFocus
+                        className="pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="totalPrice">Price (IDR) *</Label>
+                  <Input
+                    id="totalPrice"
+                    name="totalPrice"
+                    type="number"
+                    value={formData.totalPrice}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Address Selection Section */}
+              <div className="space-y-2">
+                <Label htmlFor="addressSelect">Delivery Address *</Label>
+                
+                {customer && customer.addresses.length > 0 && (
+                  <Select 
+                    value={selectedAddressId || "new"} 
+                    onValueChange={setSelectedAddressId}
+                  >
+                    <SelectTrigger id="addressSelect" className="mb-2">
+                      <SelectValue placeholder="Select delivery address" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {customer.addresses.map(address => (
+                        <SelectItem key={address.id} value={address.id}>
+                          <div className="truncate">
+                            <span className="font-medium">{address.area}</span>: {address.text.substring(0, 30)}
+                            {address.text.length > 30 && "..."}
+                          </div>
+                        </SelectItem>
+                      ))}
+                      <SelectItem value="new">+ Add New Address</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+                
+                {selectedAddressId === "new" && (
+                  <Card className="mt-2">
+                    <CardContent className="pt-4">
+                      <div className="space-y-3">
+                        <div>
+                          <Label htmlFor="newAddressText">Address Text *</Label>
+                          <Textarea
+                            id="newAddressText"
+                            name="deliveryAddress"
+                            value={formData.deliveryAddress}
+                            onChange={handleInputChange}
+                            placeholder="Full delivery address"
+                            required
+                            className="min-h-[80px]"
+                          />
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="deliveryArea">Area *</Label>
+                          <Select 
+                            value={formData.deliveryArea} 
+                            onValueChange={(value) => handleSelectChange("deliveryArea", value)}
+                          >
+                            <SelectTrigger id="deliveryArea">
+                              <SelectValue placeholder="Select area" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {areaOptions.map((area) => (
+                                <SelectItem key={area} value={area}>{area}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="deliveryAddressNotes">Delivery Notes</Label>
+                          <Textarea
+                            id="deliveryAddressNotes"
+                            name="deliveryAddressNotes"
+                            value={formData.deliveryAddressNotes}
+                            onChange={handleInputChange}
+                            placeholder="Special delivery instructions"
+                            className="min-h-[60px]"
+                          />
+                        </div>
+                        
+                        {customer && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="mt-2"
+                            onClick={() => setNewAddressDialogOpen(true)}
+                          >
+                            <Plus className="mr-1 h-4 w-4" /> Save Address to Customer
+                          </Button>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <Card>
+                <CardContent className="pt-6">
+                  <h3 className="font-medium mb-4">Cake Details *</h3>
+
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="cakeFlavor">Cake Flavor *</Label>
+                      <Select 
+                        value={cakeFlavor} 
+                        onValueChange={(value) => setCakeFlavor(value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select cake flavor" />
                         </SelectTrigger>
                         <SelectContent>
-                          {areaOptions.map((area) => (
-                            <SelectItem key={area} value={area}>{area}</SelectItem>
+                          {cakeFlavors.map((flavor) => (
+                            <SelectItem key={flavor} value={flavor}>{flavor}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
-                    
-                    <div>
-                      <Label htmlFor="deliveryAddressNotes">Delivery Notes</Label>
-                      <Textarea
-                        id="deliveryAddressNotes"
-                        name="deliveryAddressNotes"
-                        value={formData.deliveryAddressNotes}
+
+                    <div className="space-y-2">
+                      <Label htmlFor="cakeSize">Cake Size *</Label>
+                      <Select 
+                        value={formData.cakeSize} 
+                        onValueChange={(value) => handleSelectChange("cakeSize", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select cake size" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {cakeSizes.map((size) => (
+                            <SelectItem key={size} value={size}>{size}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="coverColor">Cover Color *</Label>
+                      <Select 
+                        value={formData.coverColor} 
+                        onValueChange={(value) => handleSelectChange("coverColor", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select cover color" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {cakeColors.map((color) => (
+                            <SelectItem key={color} value={color}>{color}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="cakeDesign">Cake Design *</Label>
+                      <Input
+                        id="cakeDesign"
+                        name="cakeDesign"
+                        value={formData.cakeDesign}
                         onChange={handleInputChange}
-                        placeholder="Special delivery instructions"
-                        className="min-h-[60px]"
+                        placeholder="Description of cake design"
                       />
                     </div>
-                    
-                    {customer && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="mt-2"
-                        onClick={() => setNewAddressDialogOpen(true)}
-                      >
-                        <Plus className="mr-1 h-4 w-4" /> Save Address to Customer
-                      </Button>
-                    )}
                   </div>
                 </CardContent>
               </Card>
-            )}
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="notes">Order Notes</Label>
-            <Textarea
-              id="notes"
-              name="notes"
-              value={formData.notes}
-              onChange={handleInputChange}
-              placeholder="Additional notes about this order"
-              className="min-h-[80px]"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Design Attachment</Label>
-            <div className="border-2 border-dashed rounded-md p-4 text-center cursor-pointer hover:bg-muted/50 transition-colors">
-              <input 
-                type="file" 
-                id="fileUpload" 
-                className="hidden" 
-                accept="image/*"
-                onChange={handleFileChange}
-              />
-              <label htmlFor="fileUpload" className="cursor-pointer flex flex-col items-center">
-                {imagePreview ? (
-                  <div className="space-y-2">
-                    <img src={imagePreview} alt="Preview" className="max-h-40 mx-auto rounded-md" />
-                    <p className="text-sm text-muted-foreground">Click to change image</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <FileImage className="h-10 w-10 text-muted-foreground mx-auto" />
-                    <p className="text-sm font-medium">Upload design image</p>
-                    <p className="text-xs text-muted-foreground">Click to upload JPG, PNG</p>
-                  </div>
-                )}
-              </label>
+              <div className="flex justify-end">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setActiveTab("optional")}
+                  className="w-full md:w-auto"
+                >
+                  Continue to Additional Details
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
+        </TabsContent>
+        
+        <TabsContent value="optional" className="space-y-6">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <div className="space-y-6">
+              <Card>
+                <CardContent className="pt-6">
+                  <h3 className="font-medium mb-4">Optional Design Details</h3>
+                  
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="cakeText">Cake Text</Label>
+                      <Input
+                        id="cakeText"
+                        name="cakeText"
+                        value={formData.cakeText}
+                        onChange={handleInputChange}
+                        placeholder="Text to be written on the cake"
+                      />
+                    </div>
 
-        <div className="space-y-6">
-          <Card>
-            <CardContent className="pt-6">
-              <h3 className="font-medium mb-4">Cake Details</h3>
+                    <div className="space-y-2">
+                      <Label htmlFor="greetingCard">Greeting Card Message</Label>
+                      <Textarea
+                        id="greetingCard"
+                        name="greetingCard"
+                        value={formData.greetingCard}
+                        onChange={handleInputChange}
+                        placeholder="Message for the greeting card"
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="cakeFlavor">Cake Flavor *</Label>
-                  <Select 
-                    value={cakeFlavor} 
-                    onValueChange={(value) => setCakeFlavor(value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select cake flavor" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {cakeFlavors.map((flavor) => (
-                        <SelectItem key={flavor} value={flavor}>{flavor}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="cakeSize">Cake Size *</Label>
-                  <Select 
-                    value={formData.cakeSize} 
-                    onValueChange={(value) => handleSelectChange("cakeSize", value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select cake size" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {cakeSizes.map((size) => (
-                        <SelectItem key={size} value={size}>{size}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="coverColor">Cover Color *</Label>
-                  <Select 
-                    value={formData.coverColor} 
-                    onValueChange={(value) => handleSelectChange("coverColor", value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select cover color" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {cakeColors.map((color) => (
-                        <SelectItem key={color} value={color}>{color}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="cakeDesign">Cake Design *</Label>
-                  <Input
-                    id="cakeDesign"
-                    name="cakeDesign"
-                    value={formData.cakeDesign}
-                    onChange={handleInputChange}
-                    placeholder="Description of cake design"
+              <div className="space-y-2">
+                <Label>Design Attachment</Label>
+                <div className="border-2 border-dashed rounded-md p-4 text-center cursor-pointer hover:bg-muted/50 transition-colors">
+                  <input 
+                    type="file" 
+                    id="fileUpload" 
+                    className="hidden" 
+                    accept="image/*"
+                    onChange={handleFileChange}
                   />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="cakeText">Cake Text</Label>
-                  <Input
-                    id="cakeText"
-                    name="cakeText"
-                    value={formData.cakeText}
-                    onChange={handleInputChange}
-                    placeholder="Text to be written on the cake"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="greetingCard">Greeting Card Message</Label>
-                  <Textarea
-                    id="greetingCard"
-                    name="greetingCard"
-                    value={formData.greetingCard}
-                    onChange={handleInputChange}
-                    placeholder="Message for the greeting card"
-                  />
+                  <label htmlFor="fileUpload" className="cursor-pointer flex flex-col items-center">
+                    {imagePreview ? (
+                      <div className="space-y-2">
+                        <img src={imagePreview} alt="Preview" className="max-h-40 mx-auto rounded-md" />
+                        <p className="text-sm text-muted-foreground">Click to change image</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <FileImage className="h-10 w-10 text-muted-foreground mx-auto" />
+                        <p className="text-sm font-medium">Upload design image</p>
+                        <p className="text-xs text-muted-foreground">Click to upload JPG, PNG</p>
+                      </div>
+                    )}
+                  </label>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+            
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="notes">Order Notes</Label>
+                <Textarea
+                  id="notes"
+                  name="notes"
+                  value={formData.notes}
+                  onChange={handleInputChange}
+                  placeholder="Additional notes about this order"
+                  className="min-h-[80px]"
+                />
+              </div>
 
-          {ingredients.length > 0 && (
-            <Card>
-              <CardContent className="pt-6">
-                <h3 className="font-medium mb-4">Ingredients (Bill of Material)</h3>
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-2">Ingredient</th>
-                      <th className="text-right py-2">Quantity</th>
-                      <th className="text-right py-2">Unit</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {ingredients.map((ingredient) => (
-                      <tr key={ingredient.id} className="border-b last:border-0">
-                        <td className="py-2">{ingredient.name}</td>
-                        <td className="text-right py-2">{ingredient.quantity}</td>
-                        <td className="text-right py-2">{ingredient.unit}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </div>
+              {ingredients.length > 0 && (
+                <Card>
+                  <CardContent className="pt-6">
+                    <h3 className="font-medium mb-4">Ingredients (Bill of Material)</h3>
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left py-2">Ingredient</th>
+                          <th className="text-right py-2">Quantity</th>
+                          <th className="text-right py-2">Unit</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {ingredients.map((ingredient) => (
+                          <tr key={ingredient.id} className="border-b last:border-0">
+                            <td className="py-2">{ingredient.name}</td>
+                            <td className="text-right py-2">{ingredient.quantity}</td>
+                            <td className="text-right py-2">{ingredient.unit}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </CardContent>
+                </Card>
+              )}
+
+              <div className="flex justify-start">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setActiveTab("required")}
+                  className="w-full md:w-auto"
+                >
+                  Back to Required Information
+                </Button>
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
 
       {/* Save Address Dialog */}
       <Dialog open={newAddressDialogOpen} onOpenChange={setNewAddressDialogOpen}>
@@ -601,14 +662,21 @@ const OrderForm = ({ order }: OrderFormProps) => {
         </DialogContent>
       </Dialog>
 
-      <div className="flex justify-end space-x-4">
+      <div className="flex flex-col md:flex-row justify-end md:space-x-4 space-y-2 md:space-y-0">
         <Button variant="outline" onClick={() => navigate("/orders")}>
           Cancel
         </Button>
         <Button variant="outline" onClick={handleSaveDraft}>
           Save as Draft
         </Button>
-        <Button className="bg-cake-primary hover:bg-cake-primary/80 text-white" onClick={handleSubmitOrder}>
+        <Button 
+          className={cn(
+            "bg-cake-primary hover:bg-cake-primary/80 text-white",
+            !areRequiredFieldsFilled() && "opacity-50 cursor-not-allowed"
+          )} 
+          onClick={handleSubmitOrder}
+          disabled={!areRequiredFieldsFilled()}
+        >
           {order ? "Update Order" : "Create Order"}
         </Button>
       </div>

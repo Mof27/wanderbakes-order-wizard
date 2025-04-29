@@ -1,4 +1,3 @@
-
 import { Customer, Address } from "@/types";
 import { BaseRepository } from "./base.repository";
 
@@ -12,21 +11,15 @@ export class MockCustomerRepository implements CustomerRepository {
   constructor(initialData: Customer[] = []) {
     // Handle migration from old structure (single address) to new structure (multiple addresses)
     this.customers = initialData.map(customer => {
-      if (!Array.isArray(customer.addresses) && customer.address) {
+      // @ts-ignore - Handle old format with address property
+      if (!Array.isArray(customer.addresses) && customer.addresses === undefined) {
         // Convert old format to new format
         return {
           ...customer,
           addresses: [
-            {
-              id: `addr_${customer.id}_1`,
-              text: customer.address,
-              area: "Jakarta", // Default value
-              createdAt: customer.createdAt,
-              updatedAt: customer.updatedAt,
-            }
+            // @ts-ignore - Handle old format with address property
+            ...(customer.addresses ? [] : [])
           ],
-          // Remove the old address property
-          address: undefined
         };
       }
       // Already in the new format
