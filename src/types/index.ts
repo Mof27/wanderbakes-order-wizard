@@ -40,6 +40,7 @@ export type Order = {
   id: string;
   customer: Customer;
   status: OrderStatus;
+  orderDate?: Date;
   deliveryDate: Date;
   deliveryAddress: string;
   deliveryAddressNotes?: string;

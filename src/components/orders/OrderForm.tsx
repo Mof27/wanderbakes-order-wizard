@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
-import { format } from "date-fns";
+import { format, addDays, subDays } from "date-fns";
 import { CalendarIcon, FileImage, Plus, MapPin, Check } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
@@ -37,6 +37,12 @@ const OrderForm = ({ order }: OrderFormProps) => {
   const navigate = useNavigate();
   const { addOrder, updateOrder } = useApp();
   const [customer, setCustomer] = useState<Customer | null>(order?.customer || null);
+  
+  // Add order date with default as today
+  const [orderDate, setOrderDate] = useState<Date | undefined>(
+    order?.orderDate || new Date()
+  );
+  
   const [deliveryDate, setDeliveryDate] = useState<Date | undefined>(
     order?.deliveryDate ? new Date(order.deliveryDate) : undefined
   );
@@ -261,6 +267,7 @@ const OrderForm = ({ order }: OrderFormProps) => {
 
     const orderData = {
       customer,
+      orderDate,
       deliveryDate,
       cakeFlavor,
       ingredients,
@@ -287,6 +294,7 @@ const OrderForm = ({ order }: OrderFormProps) => {
 
     const orderData = {
       customer,
+      orderDate,
       deliveryDate,
       cakeFlavor,
       ingredients,
@@ -399,6 +407,45 @@ const OrderForm = ({ order }: OrderFormProps) => {
               )}
 
               <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+                {/* Add Order Date before Delivery Date */}
+                <div className="space-y-2">
+                  <Label htmlFor="orderDate">Order Date *</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !orderDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {orderDate ? (
+                          format(orderDate, "PPP")
+                        ) : (
+                          <span>Pick a date</span>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={orderDate}
+                        onSelect={setOrderDate}
+                        initialFocus
+                        className="pointer-events-auto"
+                        disabled={(date) => {
+                          const today = new Date();
+                          today.setHours(0, 0, 0, 0);
+                          const threeDaysAgo = subDays(today, 3);
+                          // Disable dates more than 3 days in the past or any future dates
+                          return date < threeDaysAgo || date > today;
+                        }}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="deliveryDate">Delivery Date *</Label>
                   <Popover>
@@ -429,18 +476,18 @@ const OrderForm = ({ order }: OrderFormProps) => {
                     </PopoverContent>
                   </Popover>
                 </div>
+              </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="totalPrice">Price (IDR) *</Label>
-                  <Input
-                    id="totalPrice"
-                    name="totalPrice"
-                    type="number"
-                    value={formData.totalPrice}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="totalPrice">Price (IDR) *</Label>
+                <Input
+                  id="totalPrice"
+                  name="totalPrice"
+                  type="number"
+                  value={formData.totalPrice}
+                  onChange={handleInputChange}
+                  required
+                />
               </div>
 
               {/* Address Selection Section */}
@@ -558,6 +605,18 @@ const OrderForm = ({ order }: OrderFormProps) => {
                   <h3 className="font-medium mb-4">Cake Details *</h3>
 
                   <div className="space-y-4">
+                    {/* Move Cake Design to the top */}
+                    <div className="space-y-2">
+                      <Label htmlFor="cakeDesign">Cake Design *</Label>
+                      <Input
+                        id="cakeDesign"
+                        name="cakeDesign"
+                        value={formData.cakeDesign}
+                        onChange={handleInputChange}
+                        placeholder="Description of cake design"
+                      />
+                    </div>
+
                     <div className="space-y-2">
                       <Label htmlFor="cakeFlavor">Cake Flavor *</Label>
                       <Select 
@@ -576,7 +635,6 @@ const OrderForm = ({ order }: OrderFormProps) => {
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
-                      {/* Only show cake shape selector for single tier cakes */}
                       <div className="space-y-2">
                         <Label htmlFor="cakeTier">Cake Tiers *</Label>
                         <Select 
@@ -594,29 +652,25 @@ const OrderForm = ({ order }: OrderFormProps) => {
                         </Select>
                       </div>
 
-                      {/* Only show cake shape if it's a single tier */}
-                      <div className="space-y-2">
-                        <Label htmlFor="cakeShape">Cake Shape *</Label>
-                        <Select 
-                          value={formData.cakeShape} 
-                          onValueChange={(value) => handleSelectChange("cakeShape", value)}
-                          disabled={formData.cakeTier > 1}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select cake shape" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {cakeShapes.map((shape) => (
-                              <SelectItem key={shape} value={shape}>{shape}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        {formData.cakeTier > 1 && (
-                          <p className="text-xs text-muted-foreground">
-                            Shape is defined per tier below
-                          </p>
-                        )}
-                      </div>
+                      {/* Show cake shape only if it's a single tier */}
+                      {formData.cakeTier === 1 && (
+                        <div className="space-y-2">
+                          <Label htmlFor="cakeShape">Cake Shape *</Label>
+                          <Select 
+                            value={formData.cakeShape} 
+                            onValueChange={(value) => handleSelectChange("cakeShape", value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select cake shape" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {cakeShapes.map((shape) => (
+                                <SelectItem key={shape} value={shape}>{shape}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
                     </div>
 
                     {/* Single tier cake size - only show if it's a single tier */}
@@ -732,17 +786,6 @@ const OrderForm = ({ order }: OrderFormProps) => {
                           ))}
                         </SelectContent>
                       </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="cakeDesign">Cake Design *</Label>
-                      <Input
-                        id="cakeDesign"
-                        name="cakeDesign"
-                        value={formData.cakeDesign}
-                        onChange={handleInputChange}
-                        placeholder="Description of cake design"
-                      />
                     </div>
                   </div>
                 </CardContent>
