@@ -163,6 +163,24 @@ const CakeDetailsSection = ({
                   </Select>
                 </div>
 
+                {/* Add cake height selection for single tier */}
+                <div className="space-y-2">
+                  <Label htmlFor="cakeHeight">Cake Height *</Label>
+                  <Select
+                    value={tierDetails[0]?.height || cakeHeightOptions[0]}
+                    onValueChange={(value) => handleTierDetailChange(0, "height", value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select cake height" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {cakeHeightOptions.map((height) => (
+                        <SelectItem key={height} value={height}>{height}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 {/* Cover type selection for single tier - replaced RadioGroup with ToggleGroup */}
                 <div className="space-y-2">
                   <Label>Cover Type *</Label>

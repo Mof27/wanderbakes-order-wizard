@@ -154,14 +154,29 @@ const OrderForm = ({ order }: OrderFormProps) => {
     if (name === "cakeTier") {
       const tierCount = Number(value);
       
+      // When changing from multi-tier to single tier, initialize the single tier details
+      if (tierCount === 1) {
+        const updatedTierDetails = [...tierDetails];
+        updatedTierDetails[0] = {
+          tier: 1,
+          shape: formData.cakeShape,
+          size: formData.cakeSize || "16 CM",
+          height: updatedTierDetails[0]?.height || "2 Layer - 10 CM", // Keep existing height or use default
+          flavor: cakeFlavor,
+          coverType: formData.coverType || "buttercream",
+          coverColor: formData.coverColor
+        };
+        
+        setTierDetails(updatedTierDetails.slice(0, 1));
+      }
       // When changing from single tier to multi-tier, initialize the first tier with the existing cake shape
-      if (tierCount > 1 && formData.cakeTier === 1) {
+      else if (tierCount > 1 && formData.cakeTier === 1) {
         const updatedTierDetails = [...tierDetails];
         updatedTierDetails[0] = {
           ...updatedTierDetails[0],
           shape: formData.cakeShape,
           size: formData.cakeSize,
-          height: "2 Layer - 10 CM", // Default height
+          height: updatedTierDetails[0]?.height || "2 Layer - 10 CM", // Keep existing height or use default
           flavor: useSameFlavor ? cakeFlavor : "",
           coverType: formData.coverType || "buttercream",
           coverColor: formData.coverColor
@@ -201,6 +216,18 @@ const OrderForm = ({ order }: OrderFormProps) => {
           return newDetails.slice(0, tierCount);
         });
       }
+    }
+    
+    // If cake shape or size changes for a single tier, update the first tier details
+    if ((name === "cakeShape" || name === "cakeSize") && formData.cakeTier === 1) {
+      setTierDetails(prev => {
+        const updated = [...prev];
+        updated[0] = {
+          ...updated[0],
+          [name === "cakeShape" ? "shape" : "size"]: value
+        };
+        return updated;
+      });
     }
   };
 
