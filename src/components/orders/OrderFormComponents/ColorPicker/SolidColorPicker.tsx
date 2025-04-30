@@ -21,7 +21,7 @@ const SolidColorPicker = ({ value, onChange }: SolidColorPickerProps) => {
             style={{ backgroundColor: color.value }}
             onClick={() => onChange(color.value)}
           >
-            <span style={{ color: textColor, fontWeight: "500" }}>
+            <span style={{ color: textColor, fontWeight: "500" }} className="text-xs">
               {color.name}
             </span>
           </div>

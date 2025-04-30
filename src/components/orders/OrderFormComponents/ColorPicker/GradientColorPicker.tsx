@@ -83,7 +83,7 @@ const GradientColorPicker = ({ value, onChange }: GradientColorPickerProps) => {
                   style={{ backgroundColor: color.value }}
                   onClick={() => updateColor(0, color.value)}
                 >
-                  <span style={{ color: textColor, fontWeight: "500" }}>
+                  <span style={{ color: textColor, fontWeight: "500" }} className="text-xs">
                     {color.name}
                   </span>
                 </div>
@@ -108,7 +108,7 @@ const GradientColorPicker = ({ value, onChange }: GradientColorPickerProps) => {
                     style={{ backgroundColor: color.value }}
                     onClick={() => updateColor(1, color.value)}
                   >
-                    <span style={{ color: textColor, fontWeight: "500" }}>
+                    <span style={{ color: textColor, fontWeight: "500" }} className="text-xs">
                       {color.name}
                     </span>
                   </div>
@@ -133,7 +133,7 @@ const GradientColorPicker = ({ value, onChange }: GradientColorPickerProps) => {
                   style={{ backgroundColor: color.value }}
                   onClick={() => updateColor(colorCount === 2 ? 1 : 2, color.value)}
                 >
-                  <span style={{ color: textColor, fontWeight: "500" }}>
+                  <span style={{ color: textColor, fontWeight: "500" }} className="text-xs">
                     {color.name}
                   </span>
                 </div>
