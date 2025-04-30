@@ -2,29 +2,29 @@
 import React, { useRef } from 'react';
 import { Order, PrintEvent } from "@/types";
 import { Button } from "@/components/ui/button";
-import { Printer } from "lucide-react";
+import { PackageCheck } from "lucide-react";
 import { useReactToPrint } from 'react-to-print';
-import PrintableOrderView from './PrintableOrderView';
+import DeliveryLabelView from './DeliveryLabelView';
 import { useApp } from "@/context/AppContext";
 import { toast } from "@/components/ui/sonner";
 
-interface OrderPrintButtonProps {
+interface DeliveryLabelPrintButtonProps {
   order: Partial<Order>;
   showPrintCount?: boolean;
 }
 
-const OrderPrintButton = ({ order, showPrintCount = true }: OrderPrintButtonProps) => {
+const DeliveryLabelPrintButton = ({ order, showPrintCount = true }: DeliveryLabelPrintButtonProps) => {
   const printRef = useRef<HTMLDivElement>(null);
   const { updateOrder } = useApp();
 
   // Track print count from history
-  const printCount = order.printHistory?.filter(event => event.type === 'order-form').length || 0;
+  const printCount = order.printHistory?.filter(event => event.type === 'delivery-label').length || 0;
 
   const handlePrint = useReactToPrint({
-    documentTitle: `Cake Order ${order.id || ''}`,
+    documentTitle: `Delivery Label ${order.id || ''}`,
     onPrintError: (error) => {
       console.error('Print failed', error);
-      toast.error('Failed to print order form');
+      toast.error('Failed to print delivery label');
     },
     onAfterPrint: async () => {
       // Only track prints for saved orders with an ID
@@ -32,19 +32,19 @@ const OrderPrintButton = ({ order, showPrintCount = true }: OrderPrintButtonProp
         try {
           // Create a new print event
           const printEvent: PrintEvent = {
-            type: 'order-form',
+            type: 'delivery-label',
             timestamp: new Date(),
           };
           
           // Update the order with the new print event
           const printHistory = [...(order.printHistory || []), printEvent];
           
-          await updateOrder({ 
-            ...order as Order, 
-            printHistory 
+          await updateOrder({
+            ...order as Order,
+            printHistory
           });
           
-          toast.success('Print successful');
+          toast.success('Label printed successfully');
         } catch (error) {
           console.error('Failed to update print history', error);
         }
@@ -53,19 +53,19 @@ const OrderPrintButton = ({ order, showPrintCount = true }: OrderPrintButtonProp
     contentRef: printRef,
     pageStyle: `
       @page {
-        size: A5 landscape;
-        margin: 5mm;
+        size: 4in 6in portrait;
+        margin: 2mm;
       }
       @media print {
         body {
           margin: 0;
           padding: 0;
         }
-        .print-container {
+        .print-delivery-label {
           width: 100% !important;
           height: 100% !important;
           margin: 0 !important;
-          padding: 5mm !important;
+          padding: 2mm !important;
           box-shadow: none !important;
         }
       }
@@ -75,8 +75,8 @@ const OrderPrintButton = ({ order, showPrintCount = true }: OrderPrintButtonProp
   return (
     <>
       <Button onClick={handlePrint} variant="outline">
-        <Printer className="mr-2 h-4 w-4" />
-        Print Order
+        <PackageCheck className="mr-2 h-4 w-4" />
+        Print Label
         {showPrintCount && order.id && (
           <span className="ml-1 text-xs bg-muted text-muted-foreground rounded-full px-1.5 py-0.5">
             {printCount}
@@ -85,10 +85,10 @@ const OrderPrintButton = ({ order, showPrintCount = true }: OrderPrintButtonProp
       </Button>
       
       <div className="hidden">
-        <PrintableOrderView ref={printRef} order={order} />
+        <DeliveryLabelView ref={printRef} order={order} />
       </div>
     </>
   );
 };
 
-export default OrderPrintButton;
+export default DeliveryLabelPrintButton;

@@ -7,6 +7,7 @@ import CakeShapesSettings from "@/components/settings/CakeShapesSettings";
 import CakeFlavorsSettings from "@/components/settings/CakeFlavorsSettings";
 import ColorsSettings from "@/components/settings/ColorsSettings";
 import PrintSettings from "@/components/settings/PrintSettings";
+import DeliveryLabelSettings from "@/components/settings/DeliveryLabelSettings";
 
 const SettingsPage = () => {
   const [activeTab, setActiveTab] = useState("cake-sizes");
@@ -31,6 +32,7 @@ const SettingsPage = () => {
         <CakeFlavorsSettings />
         <ColorsSettings />
         <PrintSettings />
+        <DeliveryLabelSettings />
       </SettingsLayout>
     </div>
   );

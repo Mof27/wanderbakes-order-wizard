@@ -1,4 +1,3 @@
-
 export type Address = {
   id: string;
   text: string;
@@ -66,6 +65,13 @@ export type DeliveryMethod = 'flat-rate' | 'lalamove' | 'self-pickup';
 
 export type FlatRateTimeSlot = 'slot1' | 'slot2' | 'slot3';
 
+// New type for print event tracking
+export interface PrintEvent {
+  type: 'order-form' | 'delivery-label';
+  timestamp: Date;
+  user?: string; // Can be used for tracking who printed
+}
+
 export type Order = {
   id: string;
   customer: Customer;
@@ -98,6 +104,7 @@ export type Order = {
   deliveryMethod?: DeliveryMethod;
   deliveryTimeSlot?: string;
   deliveryPrice?: number;
+  printHistory?: PrintEvent[]; // New field to track print history
 };
 
 export type Ingredient = {
@@ -174,10 +181,41 @@ export interface PrintTemplate {
   sections: PrintSection[];
 }
 
+// New types for delivery label template
+export type DeliveryLabelFieldType = 'section-title' | 'text' | 'field' | 'separator' | 'spacer' | 'qr-code';
+
+export interface DeliveryLabelField {
+  id: string;
+  type: DeliveryLabelFieldType;
+  label?: string;
+  value?: string;
+  fieldKey?: string; // References Order object field path
+  enabled: boolean;
+  order: number;
+  size?: number; // For QR code size
+  fontWeight?: FontWeight;
+  fontStyle?: FontStyle;
+  fontSize?: FontSize;
+}
+
+export interface DeliveryLabelSection {
+  id: string;
+  title: string;
+  fields: DeliveryLabelField[];
+  enabled: boolean;
+  order: number;
+}
+
+export interface DeliveryLabelTemplate {
+  title: string;
+  sections: DeliveryLabelSection[];
+}
+
 export type SettingsData = {
   cakeSizes: SettingItem[];
   cakeShapes: ShapeSettingItem[];
   cakeFlavors: SettingItem[];
   colors: ColorSettingItem[];
   printTemplate: PrintTemplate;
+  deliveryLabelTemplate: DeliveryLabelTemplate; // New field for delivery label template
 };

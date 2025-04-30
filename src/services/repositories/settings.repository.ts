@@ -1,4 +1,4 @@
-import { SettingItem, ColorSettingItem, SettingsData, ShapeSettingItem, PrintTemplate } from "@/types";
+import { SettingItem, ColorSettingItem, SettingsData, ShapeSettingItem, PrintTemplate, DeliveryLabelTemplate } from "@/types";
 import { baseColors } from "@/data/colorData";
 import { cakeFlavors, cakeSizes, cakeShapes } from "@/data/mockData";
 
@@ -12,6 +12,7 @@ export interface SettingsRepository {
   updateCakeFlavors(items: SettingItem[]): Promise<SettingItem[]>;
   updateColors(items: ColorSettingItem[]): Promise<ColorSettingItem[]>;
   updatePrintTemplate(template: PrintTemplate): Promise<PrintTemplate>;
+  updateDeliveryLabelTemplate(template: DeliveryLabelTemplate): Promise<DeliveryLabelTemplate>;
 }
 
 /**
@@ -61,7 +62,8 @@ export class MockSettingsRepository implements SettingsRepository {
         enabled: true,
         createdAt: new Date()
       })),
-      printTemplate: this.createDefaultPrintTemplate()
+      printTemplate: this.createDefaultPrintTemplate(),
+      deliveryLabelTemplate: this.createDefaultDeliveryLabelTemplate()
     };
     
     // Try to load from localStorage if available
@@ -77,6 +79,12 @@ export class MockSettingsRepository implements SettingsRepository {
             return value;
           });
           console.log("Loaded settings from localStorage:", parsedSettings);
+          
+          // If delivery label template is not in saved settings, add it
+          if (!parsedSettings.deliveryLabelTemplate) {
+            parsedSettings.deliveryLabelTemplate = this.createDefaultDeliveryLabelTemplate();
+          }
+          
           return parsedSettings;
         }
       } catch (error) {
@@ -385,6 +393,138 @@ export class MockSettingsRepository implements SettingsRepository {
       ]
     };
   }
+
+  private createDefaultDeliveryLabelTemplate(): DeliveryLabelTemplate {
+    return {
+      title: "Delivery Label",
+      sections: [
+        {
+          id: "recipient_section",
+          title: "Recipient",
+          enabled: true,
+          order: 0,
+          fields: [
+            {
+              id: "recipient_name",
+              type: "field",
+              label: "Name",
+              fieldKey: "customer.name",
+              enabled: true,
+              order: 0,
+              fontSize: "lg",
+              fontWeight: "bold"
+            },
+            {
+              id: "recipient_phone",
+              type: "field",
+              label: "Phone",
+              fieldKey: "customer.whatsappNumber",
+              enabled: true,
+              order: 1
+            },
+            {
+              id: "recipient_address",
+              type: "field",
+              label: "Address",
+              fieldKey: "deliveryAddress",
+              enabled: true,
+              order: 2
+            },
+            {
+              id: "recipient_area",
+              type: "field",
+              label: "Area",
+              fieldKey: "deliveryArea",
+              enabled: true,
+              order: 3
+            },
+            {
+              id: "recipient_notes",
+              type: "field",
+              label: "Notes",
+              fieldKey: "deliveryAddressNotes",
+              enabled: true,
+              order: 4
+            }
+          ]
+        },
+        {
+          id: "delivery_section",
+          title: "Delivery Information",
+          enabled: true,
+          order: 1,
+          fields: [
+            {
+              id: "delivery_date",
+              type: "field",
+              label: "Date",
+              fieldKey: "deliveryDate",
+              enabled: true,
+              order: 0
+            },
+            {
+              id: "delivery_time",
+              type: "field",
+              label: "Time",
+              fieldKey: "deliveryTimeSlot",
+              enabled: true,
+              order: 1
+            },
+            {
+              id: "delivery_method",
+              type: "field",
+              label: "Method",
+              fieldKey: "deliveryMethod",
+              enabled: true,
+              order: 2
+            }
+          ]
+        },
+        {
+          id: "order_section",
+          title: "Order Details",
+          enabled: true,
+          order: 2,
+          fields: [
+            {
+              id: "order_id",
+              type: "field",
+              label: "Order ID",
+              fieldKey: "id",
+              enabled: true,
+              order: 0
+            },
+            {
+              id: "cake_info",
+              type: "text",
+              label: "Cake Info",
+              value: "Cake information",
+              enabled: true,
+              order: 1
+            },
+            {
+              id: "qr_code",
+              type: "qr-code",
+              label: "Scan for Order",
+              fieldKey: "orderUrl",
+              size: 120,
+              enabled: true,
+              order: 2
+            },
+            {
+              id: "whatsapp_qr",
+              type: "qr-code",
+              label: "WhatsApp Contact",
+              fieldKey: "customer.whatsappLink",
+              size: 100,
+              enabled: true,
+              order: 3
+            }
+          ]
+        }
+      ]
+    };
+  }
   
   private saveSettings() {
     if (typeof window !== 'undefined') {
@@ -427,6 +567,12 @@ export class MockSettingsRepository implements SettingsRepository {
 
   async updatePrintTemplate(template: PrintTemplate): Promise<PrintTemplate> {
     this.settings.printTemplate = template;
+    this.saveSettings();
+    return template;
+  }
+
+  async updateDeliveryLabelTemplate(template: DeliveryLabelTemplate): Promise<DeliveryLabelTemplate> {
+    this.settings.deliveryLabelTemplate = template;
     this.saveSettings();
     return template;
   }

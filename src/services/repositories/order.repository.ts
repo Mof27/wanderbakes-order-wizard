@@ -1,11 +1,12 @@
 
-import { Order, OrderStatus } from "@/types";
+import { Order, OrderStatus, PrintEvent } from "@/types";
 import { BaseRepository } from "./base.repository";
 
 export interface OrderRepository extends BaseRepository<Order> {
   getByStatus(status: OrderStatus): Promise<Order[]>;
   getByCustomerId(customerId: string): Promise<Order[]>;
   getByTimeFrame(timeFrame: 'today' | 'this-week' | 'this-month'): Promise<Order[]>;
+  updatePrintHistory(orderId: string, printEvent: PrintEvent): Promise<Order>;
 }
 
 export class MockOrderRepository implements OrderRepository {
@@ -23,6 +24,15 @@ export class MockOrderRepository implements OrderRepository {
           cakePrice: (order as any).totalPrice
         };
       }
+      
+      // Ensure printHistory exists
+      if (!order.printHistory) {
+        return {
+          ...order,
+          printHistory: []
+        };
+      }
+      
       return order;
     });
   }
@@ -42,6 +52,7 @@ export class MockOrderRepository implements OrderRepository {
       id: `o${this.orders.length + 1}`,
       createdAt: now,
       updatedAt: now,
+      printHistory: []
     };
     this.orders.unshift(newOrder); // Add to the beginning for newest first
     return newOrder;
@@ -54,6 +65,22 @@ export class MockOrderRepository implements OrderRepository {
     this.orders[index] = {
       ...this.orders[index],
       ...order,
+      updatedAt: new Date()
+    };
+    
+    return this.orders[index];
+  }
+
+  async updatePrintHistory(orderId: string, printEvent: PrintEvent): Promise<Order> {
+    const index = this.orders.findIndex(o => o.id === orderId);
+    if (index === -1) throw new Error(`Order with id ${orderId} not found`);
+    
+    // Get existing print history or initialize empty array
+    const printHistory = [...(this.orders[index].printHistory || []), printEvent];
+    
+    this.orders[index] = {
+      ...this.orders[index],
+      printHistory,
       updatedAt: new Date()
     };
     

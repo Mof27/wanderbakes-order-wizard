@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { dataService } from "@/services";
 import { SettingsData } from "@/types";
 import OrderPrintButton from "@/components/orders/OrderPrintButton";
+import DeliveryLabelPrintButton from "@/components/orders/DeliveryLabelPrintButton";
 
 const EditOrderPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -69,6 +70,9 @@ const EditOrderPage = () => {
     );
   }
 
+  const orderPrintCount = order.printHistory?.filter(e => e.type === 'order-form').length || 0;
+  const labelPrintCount = order.printHistory?.filter(e => e.type === 'delivery-label').length || 0;
+
   return (
     <div className="space-y-6">
       <Helmet>
@@ -78,12 +82,27 @@ const EditOrderPage = () => {
         <h1 className="text-2xl font-bold">Edit Order #{order.id}</h1>
         <div className="flex gap-2">
           <OrderPrintButton order={order} />
+          <DeliveryLabelPrintButton order={order} />
           <Button variant="outline" onClick={() => navigate("/orders")}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Orders
           </Button>
         </div>
       </div>
+      
+      {/* Print history indicator */}
+      {(orderPrintCount > 0 || labelPrintCount > 0) && (
+        <div className="flex gap-4 text-sm text-muted-foreground">
+          <span>Print history:</span>
+          {orderPrintCount > 0 && (
+            <span>Order form: {orderPrintCount} {orderPrintCount === 1 ? 'time' : 'times'}</span>
+          )}
+          {labelPrintCount > 0 && (
+            <span>Delivery label: {labelPrintCount} {labelPrintCount === 1 ? 'time' : 'times'}</span>
+          )}
+        </div>
+      )}
+      
       <OrderForm order={order} settings={settings} />
     </div>
   );

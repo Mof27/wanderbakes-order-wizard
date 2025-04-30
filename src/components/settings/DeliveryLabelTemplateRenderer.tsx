@@ -1,17 +1,18 @@
+
 import React, { forwardRef } from "react";
-import { PrintTemplate, Order, PrintSection, PrintField } from "@/types";
+import { DeliveryLabelTemplate, Order, DeliveryLabelSection, DeliveryLabelField } from "@/types";
 import { formatCurrency, formatDate, formatTimeSlot } from "@/lib/utils";
 import { get } from "lodash";
 import { QRCodeSVG } from "qrcode.react";
 import { cn } from "@/lib/utils";
 
-interface PrintTemplateRendererProps {
-  template: PrintTemplate;
+interface DeliveryLabelTemplateRendererProps {
+  template: DeliveryLabelTemplate;
   order: Partial<Order>;
   isPreviewing?: boolean;
 }
 
-export const PrintTemplateRenderer = forwardRef<HTMLDivElement, PrintTemplateRendererProps>(
+export const DeliveryLabelTemplateRenderer = forwardRef<HTMLDivElement, DeliveryLabelTemplateRendererProps>(
   ({ template, order, isPreviewing = false }, ref) => {
     // Get nested properties safely
     const getFieldValue = (fieldKey?: string): string | number | React.ReactNode => {
@@ -26,74 +27,23 @@ export const PrintTemplateRenderer = forwardRef<HTMLDivElement, PrintTemplateRen
         return `${baseUrl}/orders/${orderId}/edit`;
       }
       
-      // Special handler for total price (calculated field)
-      if (fieldKey === "totalPrice") {
-        return formatCurrency((order.cakePrice || 0) + (order.deliveryPrice || 0));
-      }
-      
-      // Special handler for print date
-      if (fieldKey === "printDate") {
-        return formatDate(new Date());
-      }
-      
-      // Special handler for delivery time slot
-      if (fieldKey === "deliveryTimeSlot" && order.deliveryTimeSlot) {
-        return order.deliveryTimeSlot.startsWith("slot") 
-          ? formatTimeSlot(order.deliveryTimeSlot)
-          : order.deliveryTimeSlot;
-      }
-      
-      // Special handler for delivery method display
-      if (fieldKey === "deliveryMethod") {
-        const method = order.deliveryMethod;
-        if (method === "flat-rate") return "Flat Rate";
-        if (method === "lalamove") return "Lalamove";
-        if (method === "self-pickup") return "Self-Pickup";
-        return method || "";
-      }
-      
-      // Special handler for cover color
-      if (fieldKey === "coverColor") {
-        const coverColor = order.coverColor;
-        if (!coverColor) return "";
-        if (typeof coverColor === "string") return coverColor;
-        
-        if (coverColor.type === "solid") return coverColor.color;
-        if (coverColor.type === "gradient") return "Gradient";
-        if (coverColor.type === "custom") return "Custom";
-        return "";
-      }
-      
-      // Special handler for cake shape with custom shape
-      if (fieldKey === "cakeShape") {
-        const shape = order.cakeShape;
-        const customShape = order.customShape;
-        if (shape === "Custom" && customShape) {
-          return `${shape} (${customShape})`;
-        }
-        return shape || "";
-      }
-      
-      // Special handler for packing items
-      if (fieldKey === "packingItems") {
-        const packingItems = order.packingItems;
-        if (!packingItems || packingItems.length === 0) return "";
-        
-        const checkedItems = packingItems.filter(item => item.checked);
-        if (checkedItems.length === 0) return "";
-        
-        return checkedItems.map(item => item.name).join(", ");
+      // Special handler for customer phone with WhatsApp deep link
+      if (fieldKey === "customer.whatsappLink") {
+        const phone = order.customer?.whatsappNumber;
+        if (!phone) return "";
+        // Format number for WhatsApp (remove spaces, add + if needed)
+        const formattedPhone = phone.replace(/\s+/g, '');
+        return `https://wa.me/${formattedPhone.startsWith('+') ? formattedPhone.substring(1) : formattedPhone}`;
       }
       
       // Get value from order object using lodash get for nested paths
       const value = get(order, fieldKey);
       
-      // Format dates
+      // Handle special cases
       if (fieldKey.includes("Date") && value instanceof Date) {
         return formatDate(value);
       }
       
-      // Format prices
       if ((fieldKey.includes("Price") || fieldKey === "totalPrice") && typeof value === 'number') {
         return formatCurrency(value);
       }
@@ -115,7 +65,7 @@ export const PrintTemplateRenderer = forwardRef<HTMLDivElement, PrintTemplateRen
     };
 
     // Render a single field with styling
-    const renderField = (field: PrintField): React.ReactNode => {
+    const renderField = (field: DeliveryLabelField): React.ReactNode => {
       if (!field.enabled) return null;
       
       // Determine text styling classes based on field properties
@@ -160,10 +110,10 @@ export const PrintTemplateRenderer = forwardRef<HTMLDivElement, PrintTemplateRen
           const value = getFieldValue(field.fieldKey);
           if (!value && !isPreviewing) return null;
           
-          const size = field.size || 100; // Default size if not specified
+          const size = field.size || 100;
           
           return (
-            <div className="flex flex-col items-center gap-1 mt-2 mb-2">
+            <div className="flex flex-col items-center gap-1 my-2">
               {field.label && <div className={cn("font-medium", textClasses)}>{field.label}</div>}
               <div className="border p-2 bg-white inline-block">
                 {isPreviewing && !value ? 
@@ -173,7 +123,7 @@ export const PrintTemplateRenderer = forwardRef<HTMLDivElement, PrintTemplateRen
                   <QRCodeSVG 
                     value={value.toString()} 
                     size={size} 
-                    level="M" // QR Code error correction level 
+                    level="M"
                   />
                 }
               </div>
@@ -187,14 +137,14 @@ export const PrintTemplateRenderer = forwardRef<HTMLDivElement, PrintTemplateRen
     };
 
     // Render a section
-    const renderSection = (section: PrintSection): React.ReactNode => {
+    const renderSection = (section: DeliveryLabelSection): React.ReactNode => {
       if (!section.enabled) return null;
       
       const enabledFields = section.fields.filter(f => f.enabled);
       if (enabledFields.length === 0) return null;
       
       return (
-        <div key={section.id} className="mb-4">
+        <div key={section.id} className="mb-3">
           <h2 className="text-lg font-semibold border-b pb-1 mb-2">{section.title}</h2>
           <div className="space-y-2">
             {enabledFields
@@ -207,30 +157,14 @@ export const PrintTemplateRenderer = forwardRef<HTMLDivElement, PrintTemplateRen
       );
     };
 
-    // Fixed header with QR code at top right
-    const renderFixedHeader = () => {
-      const orderId = order.id || (isPreviewing ? "ORD12345" : "");
-      // Make sure we use an absolute URL with origin
-      const orderUrl = `${window.location.origin}/orders/${orderId}/edit`;
-      
+    // Fixed header for delivery label
+    const renderHeader = () => {
       return (
-        <div className="flex justify-between items-start mb-4 border-b pb-3">
-          <div className="text-left">
-            <h1 className="text-2xl font-bold">Cake Order Form</h1>
-            {orderId && (
-              <p className="text-sm text-muted-foreground">Order #{orderId}</p>
-            )}
-          </div>
-          
-          <div className="flex flex-col items-end">
-            <QRCodeSVG 
-              value={orderUrl} 
-              size={80} 
-              level="M"
-              className="border p-1 bg-white"
-            />
-            <p className="text-xs text-center mt-1">Order QR</p>
-          </div>
+        <div className="text-center mb-4 border-b pb-2">
+          <h1 className="text-xl font-bold">{template.title}</h1>
+          {order.id && (
+            <p className="text-sm text-muted-foreground">Order #{order.id}</p>
+          )}
         </div>
       );
     };
@@ -238,33 +172,28 @@ export const PrintTemplateRenderer = forwardRef<HTMLDivElement, PrintTemplateRen
     return (
       <div 
         ref={ref}
-        className="print-container bg-white p-8 shadow-lg overflow-auto"
+        className="print-delivery-label bg-white p-4 shadow-lg overflow-auto"
         style={{ 
-          width: template.orientation === 'landscape' ? '210mm' : '148mm', 
-          height: template.orientation === 'landscape' ? '148mm' : '210mm',
+          width: '4in', 
+          height: '6in',
           margin: '0 auto',
           boxSizing: 'border-box'
         }}
       >
-        {/* Fixed header with title and QR */}
-        {renderFixedHeader()}
+        {renderHeader()}
 
         {/* Custom sections */}
-        <div className="space-y-4">
+        <div className="space-y-3">
           {template.sections
             .filter(section => section.enabled)
             .sort((a, b) => a.order - b.order)
             .map(renderSection)}
-        </div>
-        
-        <div className="text-center text-xs text-gray-500 mt-6 pt-2 border-t">
-          <p>Printed on {formatDate(new Date())}</p>
         </div>
       </div>
     );
   }
 );
 
-PrintTemplateRenderer.displayName = "PrintTemplateRenderer";
+DeliveryLabelTemplateRenderer.displayName = "DeliveryLabelTemplateRenderer";
 
-export default PrintTemplateRenderer;
+export default DeliveryLabelTemplateRenderer;
