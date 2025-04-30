@@ -1,12 +1,12 @@
 
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatCurrency, parseCurrencyInput } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { DeliveryMethod, FlatRateTimeSlot } from "@/types";
-import { TimePickerInput } from "./TimePickerInput";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Clock10, Package, UserRound } from "lucide-react";
 
 // Define time slots
 const TIME_SLOTS = {
@@ -65,30 +65,82 @@ const DeliveryOptionsSection = ({
     }
   };
 
+  // Generate time options for the hour and minute selectors
+  const generateTimeOptions = () => {
+    const hours = [];
+    const minutes = ["00", "30"];
+    
+    for (let i = 6; i <= 23; i++) {
+      hours.push(i.toString().padStart(2, "0"));
+    }
+    
+    return { hours, minutes };
+  };
+  
+  const { hours, minutes } = generateTimeOptions();
+  
+  // Parse the current time slot for custom time selection
+  const parseTimeSlot = () => {
+    if (deliveryMethod === "flat-rate" || TIME_SLOTS[deliveryTimeSlot as keyof typeof TIME_SLOTS]) {
+      return { hour: "06", minute: "00" };
+    }
+    
+    // Parse the time from format like "14.30 WIB"
+    const timeMatch = deliveryTimeSlot.match(/(\d{2})\.(\d{2})/);
+    if (timeMatch) {
+      return { hour: timeMatch[1], minute: timeMatch[2] };
+    }
+    
+    return { hour: "06", minute: "00" };
+  };
+  
+  const [selectedHour, setSelectedHour] = useState<string>(parseTimeSlot().hour);
+  const [selectedMinute, setSelectedMinute] = useState<string>(parseTimeSlot().minute);
+  
+  // Update the time slot when hour or minute changes
+  useEffect(() => {
+    if (deliveryMethod !== "flat-rate") {
+      onTimeSlotChange(`${selectedHour}.${selectedMinute} WIB`);
+    }
+  }, [selectedHour, selectedMinute, deliveryMethod, onTimeSlotChange]);
+  
+  // Update hour and minute when delivery time slot changes externally
+  useEffect(() => {
+    if (deliveryMethod !== "flat-rate") {
+      const { hour, minute } = parseTimeSlot();
+      setSelectedHour(hour);
+      setSelectedMinute(minute);
+    }
+  }, [deliveryTimeSlot, deliveryMethod]);
+
   return (
     <div className="space-y-4">
       <h3 className="font-medium">Delivery Options *</h3>
       
-      <RadioGroup 
-        value={deliveryMethod} 
-        onValueChange={(value) => onMethodChange(value as DeliveryMethod)}
-        className="space-y-3"
-      >
-        <div className="flex items-center space-x-2">
-          <RadioGroupItem value="flat-rate" id="flat-rate" />
-          <Label htmlFor="flat-rate">Flat Rate Delivery</Label>
-        </div>
-        
-        <div className="flex items-center space-x-2">
-          <RadioGroupItem value="lalamove" id="lalamove" />
-          <Label htmlFor="lalamove">Tarif Lalamove</Label>
-        </div>
-        
-        <div className="flex items-center space-x-2">
-          <RadioGroupItem value="self-pickup" id="self-pickup" />
-          <Label htmlFor="self-pickup">Self-Pickup</Label>
-        </div>
-      </RadioGroup>
+      <div className="space-y-2">
+        <Label>Delivery Method *</Label>
+        <ToggleGroup 
+          type="single" 
+          value={deliveryMethod} 
+          onValueChange={(value) => {
+            if (value) onMethodChange(value as DeliveryMethod);
+          }}
+          className="justify-start"
+        >
+          <ToggleGroupItem value="flat-rate" aria-label="Flat Rate Delivery">
+            <Package className="h-4 w-4 mr-2" />
+            Flat Rate
+          </ToggleGroupItem>
+          <ToggleGroupItem value="lalamove" aria-label="Lalamove">
+            <Clock10 className="h-4 w-4 mr-2" />
+            Lalamove
+          </ToggleGroupItem>
+          <ToggleGroupItem value="self-pickup" aria-label="Self-Pickup">
+            <UserRound className="h-4 w-4 mr-2" />
+            Self-Pickup
+          </ToggleGroupItem>
+        </ToggleGroup>
+      </div>
 
       <div className="space-y-2">
         <Label>Delivery Time *</Label>
@@ -108,12 +160,41 @@ const DeliveryOptionsSection = ({
             </SelectContent>
           </Select>
         ) : (
-          <TimePickerInput
-            value={deliveryTimeSlot}
-            onChange={onTimeSlotChange}
-            minHour={6}
-            maxHour={23}
-          />
+          <div className="flex space-x-2">
+            <div className="w-1/2">
+              <Select 
+                value={selectedHour} 
+                onValueChange={setSelectedHour}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Hour" />
+                </SelectTrigger>
+                <SelectContent>
+                  {hours.map((hour) => (
+                    <SelectItem key={hour} value={hour}>{hour}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="w-1/2">
+              <Select 
+                value={selectedMinute} 
+                onValueChange={setSelectedMinute}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Minute" />
+                </SelectTrigger>
+                <SelectContent>
+                  {minutes.map((minute) => (
+                    <SelectItem key={minute} value={minute}>{minute}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center">
+              <span className="text-sm text-muted-foreground">WIB</span>
+            </div>
+          </div>
         )}
       </div>
 
