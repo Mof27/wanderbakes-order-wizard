@@ -2,7 +2,7 @@
 import React, { useRef } from 'react';
 import { Order, PrintEvent } from "@/types";
 import { Button } from "@/components/ui/button";
-import { PackageCheck } from "lucide-react";
+import { Label } from "lucide-react";
 import { useReactToPrint } from 'react-to-print';
 import DeliveryLabelView from './DeliveryLabelView';
 import { useApp } from "@/context/AppContext";
@@ -22,6 +22,7 @@ const DeliveryLabelPrintButton = ({ order, showPrintCount = true }: DeliveryLabe
 
   const handlePrint = useReactToPrint({
     documentTitle: `Delivery Label ${order.id || ''}`,
+    content: () => printRef.current,
     onPrintError: (error) => {
       console.error('Print failed', error);
       toast.error('Failed to print delivery label');
@@ -50,7 +51,6 @@ const DeliveryLabelPrintButton = ({ order, showPrintCount = true }: DeliveryLabe
         }
       }
     },
-    contentRef: printRef,
     pageStyle: `
       @page {
         size: 4in 6in portrait;
@@ -75,7 +75,7 @@ const DeliveryLabelPrintButton = ({ order, showPrintCount = true }: DeliveryLabe
   return (
     <>
       <Button onClick={handlePrint} variant="outline">
-        <PackageCheck className="mr-2 h-4 w-4" />
+        <Label className="mr-2 h-4 w-4" />
         Print Label
         {showPrintCount && order.id && (
           <span className="ml-1 text-xs bg-muted text-muted-foreground rounded-full px-1.5 py-0.5">
