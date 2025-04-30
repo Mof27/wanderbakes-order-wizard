@@ -14,8 +14,9 @@ const OrderPrintButton = ({ order }: OrderPrintButtonProps) => {
   const printRef = useRef<HTMLDivElement>(null);
 
   const handlePrint = useReactToPrint({
-    content: () => printRef.current,
     documentTitle: `Cake Order ${order.id || ''}`,
+    onPrintError: (error) => console.error('Print failed', error),
+    contentRef: printRef,
     pageStyle: `
       @page {
         size: A5;

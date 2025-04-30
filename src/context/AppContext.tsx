@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, ReactNode, useEffect } from "react";
 import { Customer, FilterOption, Order, ViewMode } from "../types";
 import { statusFilterOptions, timeFilterOptions } from "../data/mockData";
@@ -22,6 +21,7 @@ interface AppContextProps {
   setViewMode: (mode: ViewMode) => void;
   filteredOrders: Order[];
   isLoading: boolean;
+  getOrderById: (id: string) => Order | undefined;
 }
 
 const AppContext = createContext<AppContextProps | undefined>(undefined);
@@ -134,6 +134,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
+  // Get a specific order by ID
+  const getOrderById = (id: string): Order | undefined => {
+    return orders.find(order => order.id === id);
+  };
+
   // Filter orders
   const filteredOrders = orders.filter((order) => {
     // Status filtering
@@ -188,6 +193,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setViewMode,
     filteredOrders,
     isLoading,
+    getOrderById,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

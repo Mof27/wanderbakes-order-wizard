@@ -38,7 +38,7 @@ const ActionButtons = ({
           {isEditMode ? "Update Order" : "Create Order"}
         </Button>
       </div>
-      {isEditMode && formData && (
+      {formData && (
         <OrderPrintButton order={formData} />
       )}
     </div>

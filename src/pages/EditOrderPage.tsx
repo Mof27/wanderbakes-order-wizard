@@ -14,8 +14,8 @@ import OrderPrintButton from "@/components/orders/OrderPrintButton";
 const EditOrderPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getOrderById } = useApp();
-  const [order, setOrder] = useState(id ? getOrderById(id) : null);
+  const { orders } = useApp();
+  const [order, setOrder] = useState(id ? orders.find(o => o.id === id) : null);
   const [settings, setSettings] = useState<SettingsData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -33,6 +33,14 @@ const EditOrderPage = () => {
 
     loadSettings();
   }, []);
+
+  // Update order when orders change (in case it was modified elsewhere)
+  useEffect(() => {
+    if (id) {
+      const currentOrder = orders.find(o => o.id === id);
+      setOrder(currentOrder || null);
+    }
+  }, [id, orders]);
 
   if (!order) {
     return (
