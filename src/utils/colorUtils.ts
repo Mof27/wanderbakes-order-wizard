@@ -11,10 +11,13 @@ export const getColorStyle = (color: string | CakeColor): React.CSSProperties =>
   // Handle new color structure
   if (color.type === 'solid') {
     return { backgroundColor: color.color };
-  } else {
+  } else if (color.type === 'gradient') {
     // Create gradient
     const gradientColors = color.colors.join(', ');
     return { background: `linear-gradient(to right, ${gradientColors})` };
+  } else {
+    // Custom color - use a placeholder or return a simple style
+    return { backgroundColor: '#f0f0f0' }; // Light gray as placeholder
   }
 };
 
@@ -28,7 +31,10 @@ export const getColorDisplayName = (color: string | CakeColor): string => {
   // Handle new color structure
   if (color.type === 'solid') {
     return color.color;
-  } else {
+  } else if (color.type === 'gradient') {
     return `Gradient (${color.colors.length} colors)`;
+  } else {
+    // Custom color
+    return `Custom: ${color.notes.substring(0, 20)}${color.notes.length > 20 ? '...' : ''}`;
   }
 };

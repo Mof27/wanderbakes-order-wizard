@@ -1,5 +1,5 @@
 
-import { Customer, FilterOption, Ingredient, Order, OrderStatus, Address, PackingItem, CakeColor } from "../types";
+import { Customer, FilterOption, Ingredient, Order, OrderStatus, Address, PackingItem, CakeColor, CoverType, TierDetail } from "../types";
 import { baseColors } from "./colorData";
 
 // Mock Addresses
@@ -21,6 +21,13 @@ const createSolidColor = (color: string): CakeColor => ({
 const createGradientColor = (colors: string[]): CakeColor => ({
   type: 'gradient',
   colors
+});
+
+// Helper function to create a custom color
+const createCustomColor = (notes: string, imageUrl?: string): CakeColor => ({
+  type: 'custom',
+  notes,
+  imageUrl
 });
 
 // Mock Customers
@@ -123,6 +130,7 @@ export const mockOrders: Order[] = [
     cakeTier: 1,
     useSameFlavor: true,
     coverColor: createSolidColor("#FFD1DC"), // Pink
+    coverType: "buttercream" as CoverType,
     cakeText: "Happy Birthday Alice!",
     greetingCard: "Wishing you a fantastic day!",
     notes: "No nuts please",
@@ -152,11 +160,26 @@ export const mockOrders: Order[] = [
     cakeShape: "Round",
     cakeTier: 2,
     tierDetails: [
-      { tier: 1, shape: "Round", size: "22 CM", flavor: "Vanilla" },
-      { tier: 2, shape: "Round", size: "16 CM", flavor: "Double Chocolate" }
+      { 
+        tier: 1, 
+        shape: "Round", 
+        size: "22 CM", 
+        flavor: "Vanilla",
+        coverType: "buttercream" as CoverType,
+        coverColor: createSolidColor("#D3E4FD")
+      },
+      { 
+        tier: 2, 
+        shape: "Round", 
+        size: "16 CM", 
+        flavor: "Double Chocolate",
+        coverType: "buttercream" as CoverType,
+        coverColor: createSolidColor("#FFD1DC")
+      }
     ],
     useSameFlavor: false,
     coverColor: createGradientColor(["#D3E4FD", "#0EA5E9", "#1E3A8A"]), // Ocean Blue gradient
+    coverType: "buttercream" as CoverType,
     cakeText: "Happy Birthday Bob!",
     packingItems: [
       { id: "p1", name: "Candles", checked: true },
@@ -184,7 +207,8 @@ export const mockOrders: Order[] = [
     cakeShape: "Square",
     cakeTier: 1,
     useSameFlavor: true,
-    coverColor: "Red",
+    coverColor: createSolidColor("#FF0000"), // Red
+    coverType: "buttercream" as CoverType,
     notes: "Extra frosting please",
     packingItems: defaultPackingItems,
     createdAt: new Date('2024-04-29'),
@@ -206,7 +230,8 @@ export const mockOrders: Order[] = [
     cakeShape: "Round",
     cakeTier: 1,
     useSameFlavor: true,
-    coverColor: "White",
+    coverColor: createSolidColor("#FFFFFF"), // White
+    coverType: "buttercream" as CoverType,
     cakeText: "Congratulations!",
     greetingCard: "Well done on your achievement!",
     packingItems: [
@@ -235,12 +260,34 @@ export const mockOrders: Order[] = [
     cakeShape: "Square",
     cakeTier: 3,
     tierDetails: [
-      { tier: 1, shape: "Square", size: "24 CM", flavor: "Vanilla" },
-      { tier: 2, shape: "Square", size: "18 CM", flavor: "Vanilla" },
-      { tier: 3, shape: "Square", size: "12 CM", flavor: "Vanilla" }
+      { 
+        tier: 1, 
+        shape: "Square", 
+        size: "24 CM", 
+        flavor: "Vanilla",
+        coverType: "buttercream" as CoverType,
+        coverColor: createSolidColor("#40E0D0")
+      },
+      { 
+        tier: 2, 
+        shape: "Square", 
+        size: "18 CM", 
+        flavor: "Vanilla",
+        coverType: "buttercream" as CoverType,
+        coverColor: createSolidColor("#40E0D0") 
+      },
+      { 
+        tier: 3, 
+        shape: "Square", 
+        size: "12 CM", 
+        flavor: "Vanilla",
+        coverType: "buttercream" as CoverType,
+        coverColor: createSolidColor("#40E0D0")
+      }
     ],
     useSameFlavor: true,
-    coverColor: "Turquoise",
+    coverColor: createSolidColor("#40E0D0"), // Turquoise
+    coverType: "buttercream" as CoverType,
     cakeText: "Happy Anniversary!",
     notes: "Include a small gift box",
     packingItems: [
