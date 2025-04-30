@@ -4,6 +4,7 @@ import { LiveApiClient } from "./api";
 import { CustomerRepository } from "./repositories/customer.repository";
 import { OrderRepository } from "./repositories/order.repository";
 import { ProductRepository } from "./repositories/product.repository";
+import { SettingsRepository, MockSettingsRepository } from "./repositories/settings.repository";
 
 /**
  * Data source mode to determine which data provider to use
@@ -19,9 +20,11 @@ export class DataService {
   private mockDataProvider: MockDataProvider;
   private liveApiClient: LiveApiClient | null = null;
   private mode: DataSourceMode = 'mock'; // Default to mock
+  private settingsRepository: SettingsRepository;
 
   private constructor() {
     this.mockDataProvider = new MockDataProvider();
+    this.settingsRepository = new MockSettingsRepository();
   }
 
   /**
@@ -75,6 +78,13 @@ export class DataService {
   public get products(): ProductRepository {
     // In future, return live repository when mode is 'live'
     return this.mockDataProvider.productRepository;
+  }
+
+  /**
+   * Get the settings repository
+   */
+  public get settings(): SettingsRepository {
+    return this.settingsRepository;
   }
 }
 

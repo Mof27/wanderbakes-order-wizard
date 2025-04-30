@@ -1,4 +1,3 @@
-
 export type Address = {
   id: string;
   text: string;
@@ -109,3 +108,30 @@ export type FilterOption = {
 };
 
 export type ViewMode = 'list' | 'grid';
+
+// New types for settings management
+export type SettingCategory = 'cakeSize' | 'cakeShape' | 'cakeFlavor' | 'color';
+
+export interface SettingItem {
+  id: string;
+  name: string;
+  value: string;
+  enabled: boolean;
+  createdAt: Date;
+  updatedAt?: Date;
+}
+
+export interface ColorSettingItem extends SettingItem {
+  value: string; // hex color code
+}
+
+export interface ShapeSettingItem extends SettingItem {
+  customFields?: boolean; // Whether this shape requires additional custom fields
+}
+
+export type SettingsData = {
+  cakeSizes: SettingItem[];
+  cakeShapes: ShapeSettingItem[];
+  cakeFlavors: SettingItem[];
+  colors: ColorSettingItem[];
+};
