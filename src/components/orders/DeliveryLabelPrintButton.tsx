@@ -134,7 +134,6 @@ const DeliveryLabelPrintButton = ({ order, showPrintCount = true }: DeliveryLabe
         .italic { font-style: italic !important; }
       }
     `,
-    removeAfterPrint: false,
   });
 
   return (
