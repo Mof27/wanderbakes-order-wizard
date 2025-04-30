@@ -1,3 +1,4 @@
+
 import { format } from "date-fns";
 import { Order } from "@/types";
 import { Badge } from "@/components/ui/badge";
@@ -59,7 +60,7 @@ const OrderTableRow = ({ order }: OrderTableRowProps) => {
         </div>
       </td>
       <td className="p-2 font-medium">
-        {formatCurrency(order.totalPrice)}
+        {formatCurrency(order.cakePrice)}
       </td>
       <td className="p-2">
         <div className="flex space-x-1">

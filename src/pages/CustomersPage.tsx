@@ -50,7 +50,7 @@ const CustomersPage = () => {
     return customers.map(customer => {
       const customerOrders = orders.filter(order => order.customer.id === customer.id);
       const totalOrders = customerOrders.length;
-      const totalSpend = customerOrders.reduce((sum, order) => sum + order.totalPrice, 0);
+      const totalSpend = customerOrders.reduce((sum, order) => sum + order.cakePrice, 0);
       const lastOrderDate = customerOrders.length > 0 
         ? new Date(Math.max(...customerOrders.map(o => new Date(o.createdAt).getTime())))
         : null;

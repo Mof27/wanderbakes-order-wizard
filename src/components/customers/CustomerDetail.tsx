@@ -78,7 +78,7 @@ const CustomerDetail = ({ customer }: CustomerDetailProps) => {
   
   // Calculate metrics
   const totalOrders = customerOrders.length;
-  const totalSpend = customerOrders.reduce((sum, order) => sum + order.totalPrice, 0);
+  const totalSpend = customerOrders.reduce((sum, order) => sum + order.cakePrice, 0);
   const avgOrderValue = totalOrders > 0 ? totalSpend / totalOrders : 0;
   const firstOrderDate = customerOrders.length > 0 
     ? new Date(Math.min(...customerOrders.map(o => new Date(o.createdAt).getTime())))
@@ -86,7 +86,7 @@ const CustomerDetail = ({ customer }: CustomerDetailProps) => {
   
   // Calculate filtered metrics
   const filteredTotalOrders = filteredOrders.length;
-  const filteredTotalSpend = filteredOrders.reduce((sum, order) => sum + order.totalPrice, 0);
+  const filteredTotalSpend = filteredOrders.reduce((sum, order) => sum + order.cakePrice, 0);
   
   const toggleOrderDetails = (orderId: string) => {
     if (expandedOrderId === orderId) {
@@ -289,7 +289,7 @@ const CustomerDetail = ({ customer }: CustomerDetailProps) => {
                           </div>
                         </TableCell>
                         <TableCell>
-                          {formatCurrency(order.totalPrice)}
+                          {formatCurrency(order.cakePrice)}
                         </TableCell>
                         <TableCell>
                           <Link to={`/orders/${order.id}`}>

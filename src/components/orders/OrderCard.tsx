@@ -1,3 +1,4 @@
+
 import { format } from "date-fns";
 import { Order } from "@/types";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
@@ -78,7 +79,7 @@ const OrderCard = ({ order }: OrderCardProps) => {
         )}
 
         <div className="text-right text-lg font-semibold">
-          {formatCurrency(order.totalPrice)}
+          {formatCurrency(order.cakePrice)}
         </div>
       </CardContent>
       <CardFooter className="bg-muted py-2 flex justify-between">

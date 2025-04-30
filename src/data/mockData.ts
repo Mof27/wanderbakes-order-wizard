@@ -1,4 +1,3 @@
-
 import { Customer, FilterOption, Ingredient, Order, OrderStatus, Address, PackingItem, CakeColor, CoverType, TierDetail } from "../types";
 import { baseColors } from "./colorData";
 
@@ -144,7 +143,7 @@ export const mockOrders: Order[] = [
     createdAt: new Date('2024-04-25'),
     updatedAt: new Date('2024-04-25'),
     ingredients: mockIngredients["Double Chocolate"],
-    totalPrice: 350000,
+    cakePrice: 350000,
   },
   {
     id: "o2",
@@ -193,7 +192,7 @@ export const mockOrders: Order[] = [
     createdAt: new Date('2024-04-28'),
     updatedAt: new Date('2024-04-29'),
     ingredients: mockIngredients["Vanilla"],
-    totalPrice: 450000,
+    cakePrice: 450000,
   },
   {
     id: "o3",
@@ -216,7 +215,7 @@ export const mockOrders: Order[] = [
     createdAt: new Date('2024-04-29'),
     updatedAt: new Date('2024-04-29'),
     ingredients: mockIngredients["Vanilla"],
-    totalPrice: 250000,
+    cakePrice: 250000,
   },
   {
     id: "o4",
@@ -246,7 +245,7 @@ export const mockOrders: Order[] = [
     createdAt: new Date('2024-04-20'),
     updatedAt: new Date('2024-04-28'),
     ingredients: mockIngredients["Double Chocolate"],
-    totalPrice: 400000,
+    cakePrice: 400000,
   },
   {
     id: "o5",
@@ -305,7 +304,7 @@ export const mockOrders: Order[] = [
     createdAt: new Date('2024-04-15'),
     updatedAt: new Date('2024-04-30'),
     ingredients: mockIngredients["Vanilla"],
-    totalPrice: 300000,
+    cakePrice: 300000,
   },
 ];
 
