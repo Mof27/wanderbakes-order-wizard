@@ -1,8 +1,10 @@
+
 import React, { forwardRef } from "react";
 import { PrintTemplate, Order, PrintSection, PrintField } from "@/types";
 import { formatCurrency, formatDate, formatTimeSlot } from "@/lib/utils";
 import { get } from "lodash";
 import { QRCodeSVG } from "qrcode.react";
+import { cn } from "@/lib/utils";
 
 interface PrintTemplateRendererProps {
   template: PrintTemplate;
@@ -113,27 +115,36 @@ export const PrintTemplateRenderer = forwardRef<HTMLDivElement, PrintTemplateRen
       return value.toString();
     };
 
-    // Render a single field
+    // Render a single field with styling
     const renderField = (field: PrintField): React.ReactNode => {
       if (!field.enabled) return null;
+      
+      // Determine text styling classes based on field properties
+      const textClasses = cn(
+        field.fontSize ? `text-${field.fontSize}` : "text-sm",
+        field.fontWeight ? `font-${field.fontWeight}` : "",
+        field.fontStyle === "italic" ? "italic" : ""
+      );
       
       switch (field.type) {
         case 'section-title':
           return (
-            <h3 className="text-lg font-semibold">{field.label || field.value}</h3>
+            <h3 className={cn("font-semibold", textClasses)}>
+              {field.label || field.value}
+            </h3>
           );
           
         case 'text':
-          return <p className="text-sm">{field.value}</p>;
+          return <p className={textClasses}>{field.value}</p>;
           
         case 'field': {
           const value = getFieldValue(field.fieldKey);
           if (!value && !isPreviewing) return null;
           
           return (
-            <div className="grid grid-cols-2 gap-1 items-start text-sm">
-              <div className="font-medium">{field.label}:</div>
-              <div className="text-sm">
+            <div className="grid grid-cols-2 gap-1 items-start">
+              <div className={cn("font-medium", textClasses)}>{field.label}:</div>
+              <div className={textClasses}>
                 {isPreviewing && !value ? "(No data)" : value}
               </div>
             </div>
@@ -154,7 +165,7 @@ export const PrintTemplateRenderer = forwardRef<HTMLDivElement, PrintTemplateRen
           
           return (
             <div className="flex flex-col items-center gap-1 mt-2 mb-2">
-              {field.label && <div className="font-medium text-sm">{field.label}</div>}
+              {field.label && <div className={cn("font-medium", textClasses)}>{field.label}</div>}
               <div className="border p-2 bg-white inline-block">
                 {isPreviewing && !value ? 
                   <div className="w-[100px] h-[100px] bg-gray-200 flex items-center justify-center text-xs text-gray-500">
@@ -197,6 +208,33 @@ export const PrintTemplateRenderer = forwardRef<HTMLDivElement, PrintTemplateRen
       );
     };
 
+    // Fixed header with QR code at top right
+    const renderFixedHeader = () => {
+      const orderId = order.id || (isPreviewing ? "ORD12345" : "");
+      const orderUrl = `${window.location.origin}/orders/${orderId}/edit`;
+      
+      return (
+        <div className="flex justify-between items-start mb-4 border-b pb-3">
+          <div className="text-left">
+            <h1 className="text-2xl font-bold">Cake Order Form</h1>
+            {orderId && (
+              <p className="text-sm text-muted-foreground">Order #{orderId}</p>
+            )}
+          </div>
+          
+          <div className="flex flex-col items-end">
+            <QRCodeSVG 
+              value={orderUrl} 
+              size={80} 
+              level="M"
+              className="border p-1 bg-white"
+            />
+            <p className="text-xs text-center mt-1">Order QR</p>
+          </div>
+        </div>
+      );
+    };
+
     return (
       <div 
         ref={ref}
@@ -208,13 +246,10 @@ export const PrintTemplateRenderer = forwardRef<HTMLDivElement, PrintTemplateRen
           boxSizing: 'border-box'
         }}
       >
-        <div className="text-center mb-4">
-          <h1 className="text-2xl font-bold">{template.title}</h1>
-          {order.id && (
-            <p className="text-sm text-muted-foreground">Order #{order.id}</p>
-          )}
-        </div>
+        {/* Fixed header with title and QR */}
+        {renderFixedHeader()}
 
+        {/* Custom sections */}
         <div className="space-y-4">
           {template.sections
             .filter(section => section.enabled)

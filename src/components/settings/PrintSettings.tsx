@@ -1,12 +1,11 @@
-
 import { useState, useEffect } from "react";
-import { PrintSection, PrintTemplate, PrintField, PrintFieldType } from "@/types";
+import { PrintSection, PrintTemplate, PrintField, PrintFieldType, FontWeight, FontStyle, FontSize } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { TabsContent } from "@/components/ui/tabs";
 import { dataService } from "@/services";
 import { toast } from "@/components/ui/sonner";
-import { Plus, MoveVertical, Trash2, Eye, EyeOff, ArrowDown, ArrowUp, QrCode } from "lucide-react";
+import { Plus, MoveVertical, Trash2, Eye, EyeOff, ArrowDown, ArrowUp, QrCode, Bold, Italic } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -22,6 +21,22 @@ const fieldTypeOptions = [
   { value: 'separator', label: 'Separator Line' },
   { value: 'spacer', label: 'Spacer' },
   { value: 'qr-code', label: 'QR Code' }
+];
+
+const fontSizeOptions = [
+  { value: 'xs', label: 'Extra Small' },
+  { value: 'sm', label: 'Small' },
+  { value: 'base', label: 'Normal' },
+  { value: 'lg', label: 'Large' },
+  { value: 'xl', label: 'Extra Large' },
+  { value: '2xl', label: '2X Large' }
+];
+
+const fontWeightOptions = [
+  { value: 'normal', label: 'Normal' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'semibold', label: 'Semi Bold' },
+  { value: 'bold', label: 'Bold' }
 ];
 
 // Order field options for dropdown
@@ -321,6 +336,61 @@ const PrintSettings = () => {
             />
           </div>
 
+          {/* Text styling options */}
+          <div className="space-y-2">
+            <Label htmlFor={`field-font-size-${field.id}`}>Font Size</Label>
+            <Select 
+              value={field.fontSize || "sm"} 
+              onValueChange={(value) => handleFieldChange(section.id, field.id, 'fontSize', value as FontSize)}
+              disabled={field.type === 'separator' || field.type === 'spacer' || field.type === 'qr-code'}
+            >
+              <SelectTrigger id={`field-font-size-${field.id}`}>
+                <SelectValue placeholder="Select size" />
+              </SelectTrigger>
+              <SelectContent>
+                {fontSizeOptions.map(option => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor={`field-font-weight-${field.id}`}>Font Weight</Label>
+            <Select 
+              value={field.fontWeight || "normal"} 
+              onValueChange={(value) => handleFieldChange(section.id, field.id, 'fontWeight', value as FontWeight)}
+              disabled={field.type === 'separator' || field.type === 'spacer' || field.type === 'qr-code'}
+            >
+              <SelectTrigger id={`field-font-weight-${field.id}`}>
+                <SelectValue placeholder="Select weight" />
+              </SelectTrigger>
+              <SelectContent>
+                {fontWeightOptions.map(option => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2 col-span-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor={`field-font-style-${field.id}`}>Italic</Label>
+              <Switch
+                id={`field-font-style-${field.id}`}
+                checked={field.fontStyle === 'italic'}
+                onCheckedChange={(checked) => 
+                  handleFieldChange(section.id, field.id, 'fontStyle', checked ? 'italic' : 'normal')
+                }
+                disabled={field.type === 'separator' || field.type === 'spacer' || field.type === 'qr-code'}
+              />
+            </div>
+          </div>
+
           {field.type === 'field' && (
             <div className="space-y-2 col-span-2">
               <Label htmlFor={`field-key-${field.id}`}>Order Field</Label>
@@ -442,7 +512,7 @@ const PrintSettings = () => {
         <CardHeader>
           <CardTitle>Print Form Layout</CardTitle>
           <CardDescription>
-            Customize the layout of your order print form. Drag sections and fields to reorder.
+            Customize the layout of your order print form. The title "Cake Order Form" and QR code position are fixed.
           </CardDescription>
         </CardHeader>
         <CardContent>
