@@ -36,7 +36,7 @@ const DateSelectionSection = ({
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
               {orderDate ? (
-                format(orderDate, "PPP")
+                format(orderDate, "d MMMM yyyy")
               ) : (
                 <span>Pick a date</span>
               )}
@@ -74,7 +74,7 @@ const DateSelectionSection = ({
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
               {deliveryDate ? (
-                format(deliveryDate, "PPP")
+                format(deliveryDate, "d MMMM yyyy")
               ) : (
                 <span>Pick a date</span>
               )}

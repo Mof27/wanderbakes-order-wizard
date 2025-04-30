@@ -8,12 +8,12 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
- * Formats a date to display in the format: 1 Jan 2025
+ * Formats a date to display in the format: 30 April 2025
  */
 export function formatDate(date: Date | string | number): string {
   if (!date) return "-";
   const dateObj = date instanceof Date ? date : new Date(date);
-  return dateFnsFormat(dateObj, 'd MMM yyyy');
+  return dateFnsFormat(dateObj, 'd MMMM yyyy');
 }
 
 /**

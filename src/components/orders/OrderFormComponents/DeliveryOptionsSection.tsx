@@ -7,7 +7,6 @@ import { useEffect, useState } from "react";
 import { DeliveryMethod, FlatRateTimeSlot } from "@/types";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Clock10, Package, UserRound } from "lucide-react";
-import { TimePickerInput } from "../OrderFormComponents/TimePickerInput";
 
 // Define time slots
 const TIME_SLOTS = {
@@ -15,6 +14,19 @@ const TIME_SLOTS = {
   slot2: "13.00 s/d 16.00 WIB",
   slot3: "16.00 s/d 20.00 WIB"
 };
+
+// Define custom time slots with 30-minute intervals
+const generateCustomTimeOptions = () => {
+  const options = [];
+  for (let hour = 6; hour <= 23; hour++) {
+    const hourStr = hour.toString().padStart(2, "0");
+    options.push(`${hourStr}.00 WIB`);
+    options.push(`${hourStr}.30 WIB`);
+  }
+  return options;
+};
+
+const CUSTOM_TIME_OPTIONS = generateCustomTimeOptions();
 
 interface DeliveryOptionsSectionProps {
   deliveryMethod: DeliveryMethod;
@@ -113,12 +125,21 @@ const DeliveryOptionsSection = ({
             </SelectContent>
           </Select>
         ) : (
-          <TimePickerInput 
+          <Select 
             value={deliveryTimeSlot} 
-            onChange={onTimeSlotChange}
-            minHour={6}
-            maxHour={23}
-          />
+            onValueChange={onTimeSlotChange}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select delivery time" />
+            </SelectTrigger>
+            <SelectContent>
+              {CUSTOM_TIME_OPTIONS.map((timeOption) => (
+                <SelectItem key={timeOption} value={timeOption}>
+                  {timeOption}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         )}
       </div>
 
