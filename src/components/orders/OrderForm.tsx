@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { useApp } from "@/context/AppContext";
-import { Customer, Order, Ingredient, Address, TierDetail, PackingItem, CakeColor, CoverType } from "@/types";
+import { Customer, Order, Ingredient, Address, TierDetail, PackingItem, CakeColor, CoverType, SettingsData } from "@/types";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/components/ui/sonner";
-import { cakeFlavors, cakeSizes, mockIngredients, areaOptions, cakeShapes, cakeTiers, defaultPackingItems } from "@/data/mockData";
+import { mockIngredients, areaOptions, cakeTiers, defaultPackingItems } from "@/data/mockData";
 import { Button } from "@/components/ui/button";
 import { baseColors } from "@/data/colorData";
 
@@ -23,13 +23,19 @@ import ActionButtons from "./OrderFormComponents/ActionButtons";
 
 interface OrderFormProps {
   order?: Order;
+  settings?: SettingsData | null;
 }
 
-const OrderForm = ({ order }: OrderFormProps) => {
+const OrderForm = ({ order, settings }: OrderFormProps) => {
   const navigate = useNavigate();
   const { addOrder, updateOrder, updateCustomer } = useApp();
   const [customer, setCustomer] = useState<Customer | null>(order?.customer || null);
   
+  // Get available options from settings
+  const cakeSizes = settings?.cakeSizes?.filter(item => item.enabled).map(item => item.value) || [];
+  const cakeShapes = settings?.cakeShapes?.filter(item => item.enabled).map(item => item.value) || [];
+  const cakeFlavors = settings?.cakeFlavors?.filter(item => item.enabled).map(item => item.value) || [];
+
   // Add order date with default as today
   const [orderDate, setOrderDate] = useState<Date | undefined>(
     order?.orderDate || new Date()
@@ -38,7 +44,7 @@ const OrderForm = ({ order }: OrderFormProps) => {
   const [deliveryDate, setDeliveryDate] = useState<Date | undefined>(
     order?.deliveryDate ? new Date(order.deliveryDate) : undefined
   );
-  const [cakeFlavor, setCakeFlavor] = useState(order?.cakeFlavor || "");
+  const [cakeFlavor, setCakeFlavor] = useState(order?.cakeFlavor || (cakeFlavors.length > 0 ? cakeFlavors[0] : ""));
   const [ingredients, setIngredients] = useState<Ingredient[]>(order?.ingredients || []);
   const [activeTab, setActiveTab] = useState("required");
   const [useSameFlavor, setUseSameFlavor] = useState(order?.useSameFlavor !== false);
@@ -48,9 +54,12 @@ const OrderForm = ({ order }: OrderFormProps) => {
   );
   
   // Convert legacy string color to CakeColor object if needed
+  const defaultColor = settings?.colors?.length && settings.colors[0].enabled ? 
+    settings.colors[0].value : baseColors[0].value;
+  
   const initialCoverColor = typeof order?.coverColor === 'string' 
     ? { type: 'solid' as const, color: order.coverColor } 
-    : order?.coverColor || { type: 'solid' as const, color: baseColors[0].value };
+    : order?.coverColor || { type: 'solid' as const, color: defaultColor };
   
   // State for address handling
   const [selectedAddressId, setSelectedAddressId] = useState<string | "new">(
@@ -68,8 +77,8 @@ const OrderForm = ({ order }: OrderFormProps) => {
     deliveryAddressNotes: order?.deliveryAddressNotes || "",
     deliveryArea: order?.deliveryArea || "Jakarta",
     cakeDesign: order?.cakeDesign || "",
-    cakeSize: order?.cakeSize || "",
-    cakeShape: order?.cakeShape || "Round",
+    cakeSize: order?.cakeSize || (cakeSizes.length > 0 ? cakeSizes[0] : ""),
+    cakeShape: order?.cakeShape || (cakeShapes.length > 0 ? cakeShapes[0] : "Round"),
     customShape: order?.customShape || "", // Add customShape field
     cakeTier: order?.cakeTier || 1,
     coverColor: initialCoverColor,
@@ -84,13 +93,13 @@ const OrderForm = ({ order }: OrderFormProps) => {
   const [tierDetails, setTierDetails] = useState<TierDetail[]>(
     order?.tierDetails || Array(3).fill(0).map((_, i) => ({
       tier: i + 1,
-      shape: "Round",
-      size: "16 CM",
+      shape: cakeShapes.length > 0 ? cakeShapes[0] : "Round",
+      size: cakeSizes.length > 0 ? cakeSizes[0] : "16 CM",
       height: "2 Layer - 10 CM",
-      flavor: cakeFlavor,
+      flavor: cakeFlavor || (cakeFlavors.length > 0 ? cakeFlavors[0] : ""),
       coverType: "buttercream",
-      coverColor: { type: 'solid', color: baseColors[0].value },
-      customShape: "" // Add customShape field for each tier
+      coverColor: { type: 'solid', color: defaultColor },
+      customShape: "" 
     }))
   );
 
