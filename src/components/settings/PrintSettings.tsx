@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { PrintSection, PrintTemplate, PrintField, PrintFieldType } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -5,20 +6,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { TabsContent } from "@/components/ui/tabs";
 import { dataService } from "@/services";
 import { toast } from "@/components/ui/sonner";
-import { Plus, MoveVertical, Trash2, Eye, EyeOff, ArrowDown, ArrowUp } from "lucide-react";
+import { Plus, MoveVertical, Trash2, Eye, EyeOff, ArrowDown, ArrowUp, QrCode } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import PrintPreview from "./PrintPreview";
+import { Slider } from "@/components/ui/slider";
 
 const fieldTypeOptions = [
   { value: 'section-title', label: 'Section Title' },
   { value: 'text', label: 'Custom Text' },
   { value: 'field', label: 'Order Field' },
   { value: 'separator', label: 'Separator Line' },
-  { value: 'spacer', label: 'Spacer' }
+  { value: 'spacer', label: 'Spacer' },
+  { value: 'qr-code', label: 'QR Code' }
 ];
 
 // Order field options for dropdown
@@ -337,6 +340,40 @@ const PrintSettings = () => {
                 </SelectContent>
               </Select>
             </div>
+          )}
+
+          {field.type === 'qr-code' && (
+            <>
+              <div className="space-y-2 col-span-2">
+                <Label htmlFor={`field-key-${field.id}`}>QR Code Content</Label>
+                <Select 
+                  value={field.fieldKey || "orderUrl"} 
+                  onValueChange={(value) => handleFieldChange(section.id, field.id, 'fieldKey', value)}
+                >
+                  <SelectTrigger id={`field-key-${field.id}`}>
+                    <SelectValue placeholder="Select content" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="orderUrl">Order URL (Deep Link)</SelectItem>
+                    <SelectItem value="id">Order ID</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2 col-span-2">
+                <div className="flex justify-between">
+                  <Label htmlFor={`field-size-${field.id}`}>QR Code Size</Label>
+                  <span className="text-sm text-muted-foreground">{field.size || 100}px</span>
+                </div>
+                <Slider
+                  id={`field-size-${field.id}`}
+                  value={[field.size || 100]}
+                  min={50}
+                  max={200}
+                  step={10}
+                  onValueChange={(value) => handleFieldChange(section.id, field.id, 'size', value[0])}
+                />
+              </div>
+            </>
           )}
 
           {field.type === 'text' && (

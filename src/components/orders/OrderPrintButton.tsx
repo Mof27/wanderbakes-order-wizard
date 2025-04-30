@@ -19,7 +19,7 @@ const OrderPrintButton = ({ order }: OrderPrintButtonProps) => {
     contentRef: printRef,
     pageStyle: `
       @page {
-        size: A5;
+        size: A5 landscape;
         margin: 5mm;
       }
       @media print {

@@ -1,4 +1,3 @@
-
 import { SettingItem, ColorSettingItem, SettingsData, ShapeSettingItem, PrintTemplate } from "@/types";
 import { baseColors } from "@/data/colorData";
 import { cakeFlavors, cakeSizes, cakeShapes } from "@/data/mockData";
@@ -92,7 +91,7 @@ export class MockSettingsRepository implements SettingsRepository {
   private createDefaultPrintTemplate(): PrintTemplate {
     return {
       title: "Cake Order Form",
-      orientation: "portrait",
+      orientation: "landscape",
       sections: [
         {
           id: "header",
@@ -115,6 +114,15 @@ export class MockSettingsRepository implements SettingsRepository {
               fieldKey: "id",
               enabled: true,
               order: 1
+            },
+            {
+              id: "order_qr",
+              type: "qr-code",
+              label: "Order QR Code",
+              fieldKey: "orderUrl",
+              size: 100,
+              enabled: true,
+              order: 2
             }
           ]
         },

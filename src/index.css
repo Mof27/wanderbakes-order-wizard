@@ -80,7 +80,12 @@
   }
   
   @page {
-    size: A5 portrait;
+    size: A5 landscape;
     margin: 5mm;
+  }
+  
+  /* Ensure QR codes print clearly */
+  svg {
+    shape-rendering: crispEdges;
   }
 }

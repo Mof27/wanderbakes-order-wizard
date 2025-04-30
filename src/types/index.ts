@@ -1,4 +1,3 @@
-
 export type Address = {
   id: string;
   text: string;
@@ -138,7 +137,7 @@ export interface ShapeSettingItem extends SettingItem {
 }
 
 // New types for print form customization
-export type PrintFieldType = 'section-title' | 'text' | 'field' | 'separator' | 'spacer';
+export type PrintFieldType = 'section-title' | 'text' | 'field' | 'separator' | 'spacer' | 'qr-code';
 
 export interface PrintField {
   id: string;
@@ -148,6 +147,7 @@ export interface PrintField {
   fieldKey?: string; // References Order object field path
   enabled: boolean;
   order: number;
+  size?: number; // Added for QR code size
 }
 
 export interface PrintSection {

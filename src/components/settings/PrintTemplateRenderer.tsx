@@ -1,8 +1,8 @@
-
 import React, { forwardRef } from "react";
 import { PrintTemplate, Order, PrintSection, PrintField } from "@/types";
 import { formatCurrency, formatDate, formatTimeSlot } from "@/lib/utils";
 import { get } from "lodash";
+import { QRCodeSVG } from "qrcode.react";
 
 interface PrintTemplateRendererProps {
   template: PrintTemplate;
@@ -15,6 +15,15 @@ export const PrintTemplateRenderer = forwardRef<HTMLDivElement, PrintTemplateRen
     // Get nested properties safely
     const getFieldValue = (fieldKey?: string): string | number | React.ReactNode => {
       if (!fieldKey) return "";
+      
+      // Special handler for order URL (for QR code)
+      if (fieldKey === "orderUrl") {
+        const orderId = order.id;
+        if (!orderId && !isPreviewing) return "";
+        // Create a URL to the order edit page
+        const baseUrl = window.location.origin;
+        return `${baseUrl}/orders/${orderId}/edit`;
+      }
       
       // Special handler for total price (calculated field)
       if (fieldKey === "totalPrice") {
@@ -136,6 +145,31 @@ export const PrintTemplateRenderer = forwardRef<HTMLDivElement, PrintTemplateRen
           
         case 'spacer':
           return <div className="h-4" />;
+          
+        case 'qr-code': {
+          const value = getFieldValue(field.fieldKey);
+          if (!value && !isPreviewing) return null;
+          
+          const size = field.size || 100; // Default size if not specified
+          
+          return (
+            <div className="flex flex-col items-center gap-1 mt-2 mb-2">
+              {field.label && <div className="font-medium text-sm">{field.label}</div>}
+              <div className="border p-2 bg-white inline-block">
+                {isPreviewing && !value ? 
+                  <div className="w-[100px] h-[100px] bg-gray-200 flex items-center justify-center text-xs text-gray-500">
+                    QR Preview
+                  </div> :
+                  <QRCodeSVG 
+                    value={value.toString()} 
+                    size={size} 
+                    level="M" // QR Code error correction level 
+                  />
+                }
+              </div>
+            </div>
+          );
+        }
           
         default:
           return null;
