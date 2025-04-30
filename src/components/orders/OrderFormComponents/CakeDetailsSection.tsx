@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -8,6 +9,13 @@ import { CakeColor, TierDetail, CoverType } from "@/types";
 import ColorPicker from "./ColorPicker/ColorPicker";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Brush, Droplet } from "lucide-react";
+
+// Height options for cake tiers
+const cakeHeightOptions = [
+  "2 Layer - 10 CM",
+  "3 Layer - 15 CM",
+  "4 Layer - 20 CM",
+];
 
 interface CakeDetailsSectionProps {
   formData: {
@@ -283,6 +291,24 @@ const CakeDetailsSection = ({
                             </SelectContent>
                           </Select>
                         </div>
+                      </div>
+
+                      {/* Add height selection for each tier */}
+                      <div className="space-y-1 mt-3">
+                        <Label htmlFor={`tier-${index}-height`}>Height *</Label>
+                        <Select 
+                          value={tierDetails[index]?.height || cakeHeightOptions[0]} 
+                          onValueChange={(value) => handleTierDetailChange(index, "height", value)}
+                        >
+                          <SelectTrigger id={`tier-${index}-height`}>
+                            <SelectValue placeholder="Select height" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {cakeHeightOptions.map((height) => (
+                              <SelectItem key={height} value={height}>{height}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
 
                       {/* Flavor selection for each tier if not using same flavor */}

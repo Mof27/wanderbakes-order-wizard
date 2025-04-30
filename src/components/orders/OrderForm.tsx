@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useApp } from "@/context/AppContext";
 import { Customer, Order, Ingredient, Address, TierDetail, PackingItem, CakeColor, CoverType } from "@/types";
@@ -86,6 +85,7 @@ const OrderForm = ({ order }: OrderFormProps) => {
       tier: i + 1,
       shape: "Round",
       size: "16 CM",
+      height: "2 Layer - 10 CM", // Initialize with default height
       flavor: cakeFlavor,
       coverType: "buttercream",
       coverColor: { type: 'solid', color: baseColors[0].value }
@@ -161,6 +161,7 @@ const OrderForm = ({ order }: OrderFormProps) => {
           ...updatedTierDetails[0],
           shape: formData.cakeShape,
           size: formData.cakeSize,
+          height: "2 Layer - 10 CM", // Default height
           flavor: useSameFlavor ? cakeFlavor : "",
           coverType: formData.coverType || "buttercream",
           coverColor: formData.coverColor
@@ -173,6 +174,7 @@ const OrderForm = ({ order }: OrderFormProps) => {
             tier: tierIndex + 1,
             shape: "Round", // Default shape for additional tiers
             size: "16 CM",  // Default size for additional tiers
+            height: "2 Layer - 10 CM", // Default height
             flavor: useSameFlavor ? cakeFlavor : "",
             coverType: formData.coverType || "buttercream",
             coverColor: formData.coverColor
@@ -190,6 +192,7 @@ const OrderForm = ({ order }: OrderFormProps) => {
               tier: newDetails.length + 1,
               shape: "Round",
               size: "16 CM",
+              height: "2 Layer - 10 CM", // Default height
               flavor: useSameFlavor ? cakeFlavor : "",
               coverType: formData.coverType || "buttercream",
               coverColor: formData.coverColor
@@ -443,7 +446,7 @@ const OrderForm = ({ order }: OrderFormProps) => {
       const tiersFilled = tierDetails
         .slice(0, formData.cakeTier)
         .every(tier => 
-          tier.shape && tier.size && 
+          tier.shape && tier.size && tier.height && // Added height check
           (useSameFlavor || tier.flavor) &&
           tier.coverType && 
           tier.coverColor

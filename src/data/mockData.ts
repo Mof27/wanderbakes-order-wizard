@@ -164,6 +164,7 @@ export const mockOrders: Order[] = [
         tier: 1, 
         shape: "Round", 
         size: "22 CM", 
+        height: "3 Layer - 15 CM", // Added height
         flavor: "Vanilla",
         coverType: "buttercream" as CoverType,
         coverColor: createSolidColor("#D3E4FD")
@@ -172,6 +173,7 @@ export const mockOrders: Order[] = [
         tier: 2, 
         shape: "Round", 
         size: "16 CM", 
+        height: "2 Layer - 10 CM", // Added height
         flavor: "Double Chocolate",
         coverType: "buttercream" as CoverType,
         coverColor: createSolidColor("#FFD1DC")
@@ -264,6 +266,7 @@ export const mockOrders: Order[] = [
         tier: 1, 
         shape: "Square", 
         size: "24 CM", 
+        height: "4 Layer - 20 CM", // Added height
         flavor: "Vanilla",
         coverType: "buttercream" as CoverType,
         coverColor: createSolidColor("#40E0D0")
@@ -272,6 +275,7 @@ export const mockOrders: Order[] = [
         tier: 2, 
         shape: "Square", 
         size: "18 CM", 
+        height: "3 Layer - 15 CM", // Added height
         flavor: "Vanilla",
         coverType: "buttercream" as CoverType,
         coverColor: createSolidColor("#40E0D0") 
@@ -280,6 +284,7 @@ export const mockOrders: Order[] = [
         tier: 3, 
         shape: "Square", 
         size: "12 CM", 
+        height: "2 Layer - 10 CM", // Added height
         flavor: "Vanilla",
         coverType: "buttercream" as CoverType,
         coverColor: createSolidColor("#40E0D0")

@@ -29,6 +29,7 @@ export type TierDetail = {
   tier: number;
   shape: string;
   size: string;
+  height?: string; // Added height property
   flavor?: string;
   coverType: CoverType;
   coverColor: CakeColor;
