@@ -1,12 +1,13 @@
 
 import { useState, useEffect } from "react";
 import { CakeColor, ColorType, SolidColor, GradientColor, CustomColor, CoverType } from "@/types";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import SolidColorPicker from "./SolidColorPicker";
 import GradientColorPicker from "./GradientColorPicker";
 import CustomColorPicker from "./CustomColorPicker";
 import { baseColors } from "@/data/colorData";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Check, Droplets, Palette } from "lucide-react";
 
 interface ColorPickerProps {
   value: CakeColor;
@@ -58,29 +59,30 @@ const ColorPicker = ({ value, onChange, coverType }: ColorPickerProps) => {
 
   return (
     <div className="space-y-4">
-      <RadioGroup
+      <ToggleGroup
+        type="single"
         value={colorType}
-        onValueChange={(value) => handleColorTypeChange(value as ColorType)}
-        className="flex flex-wrap gap-4"
+        onValueChange={(value) => value && handleColorTypeChange(value as ColorType)}
+        className="justify-start"
       >
-        <div className="flex items-center space-x-2">
-          <RadioGroupItem value="solid" id="solid" />
-          <Label htmlFor="solid">Solid Color</Label>
-        </div>
+        <ToggleGroupItem value="solid" aria-label="Solid Color" className="px-4 py-2 flex gap-2 items-center">
+          <Check className="h-4 w-4" />
+          <span>Solid Color</span>
+        </ToggleGroupItem>
         
         {/* Only show gradient option for buttercream */}
         {(!coverType || coverType === 'buttercream') && (
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="gradient" id="gradient" />
-            <Label htmlFor="gradient">Gradient</Label>
-          </div>
+          <ToggleGroupItem value="gradient" aria-label="Gradient" className="px-4 py-2 flex gap-2 items-center">
+            <Droplets className="h-4 w-4" />
+            <span>Gradient</span>
+          </ToggleGroupItem>
         )}
         
-        <div className="flex items-center space-x-2">
-          <RadioGroupItem value="custom" id="custom" />
-          <Label htmlFor="custom">Custom</Label>
-        </div>
-      </RadioGroup>
+        <ToggleGroupItem value="custom" aria-label="Custom" className="px-4 py-2 flex gap-2 items-center">
+          <Palette className="h-4 w-4" />
+          <span>Custom</span>
+        </ToggleGroupItem>
+      </ToggleGroup>
 
       {coverType === 'fondant' && colorType === 'gradient' && (
         <div className="text-sm text-destructive">

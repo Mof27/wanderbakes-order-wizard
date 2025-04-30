@@ -1,13 +1,13 @@
-
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { CakeColor, TierDetail, CoverType } from "@/types";
 import ColorPicker from "./ColorPicker/ColorPicker";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Brush, Droplet } from "lucide-react";
 
 interface CakeDetailsSectionProps {
   formData: {
@@ -155,23 +155,24 @@ const CakeDetailsSection = ({
                   </Select>
                 </div>
 
-                {/* Cover type selection for single tier */}
+                {/* Cover type selection for single tier - replaced RadioGroup with ToggleGroup */}
                 <div className="space-y-2">
                   <Label>Cover Type *</Label>
-                  <RadioGroup 
+                  <ToggleGroup
+                    type="single"
                     value={formData.coverType || "buttercream"}
-                    onValueChange={(value) => handleCoverTypeChange(value as CoverType)}
-                    className="flex space-x-4"
+                    onValueChange={(value) => value && handleCoverTypeChange(value as CoverType)}
+                    className="justify-start"
                   >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="buttercream" id="buttercream" />
-                      <Label htmlFor="buttercream">Buttercream</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="fondant" id="fondant" />
-                      <Label htmlFor="fondant">Fondant</Label>
-                    </div>
-                  </RadioGroup>
+                    <ToggleGroupItem value="buttercream" aria-label="Buttercream" className="px-4 py-2 flex gap-2 items-center">
+                      <Droplet className="h-4 w-4" />
+                      <span>Buttercream</span>
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="fondant" aria-label="Fondant" className="px-4 py-2 flex gap-2 items-center">
+                      <Brush className="h-4 w-4" />
+                      <span>Fondant</span>
+                    </ToggleGroupItem>
+                  </ToggleGroup>
                 </div>
 
                 {/* Cover color for single tier */}
@@ -215,20 +216,21 @@ const CakeDetailsSection = ({
                     
                     <div className="space-y-2">
                       <Label>Cover Type *</Label>
-                      <RadioGroup 
+                      <ToggleGroup 
+                        type="single"
                         value={formData.coverType || "buttercream"}
-                        onValueChange={(value) => handleCoverTypeChange(value as CoverType)}
-                        className="flex space-x-4"
+                        onValueChange={(value) => value && handleCoverTypeChange(value as CoverType)}
+                        className="justify-start"
                       >
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="buttercream" id="all-buttercream" />
-                          <Label htmlFor="all-buttercream">Buttercream</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="fondant" id="all-fondant" />
-                          <Label htmlFor="all-fondant">Fondant</Label>
-                        </div>
-                      </RadioGroup>
+                        <ToggleGroupItem value="buttercream" aria-label="Buttercream" className="px-4 py-2 flex gap-2 items-center">
+                          <Droplet className="h-4 w-4" />
+                          <span>Buttercream</span>
+                        </ToggleGroupItem>
+                        <ToggleGroupItem value="fondant" aria-label="Fondant" className="px-4 py-2 flex gap-2 items-center">
+                          <Brush className="h-4 w-4" />
+                          <span>Fondant</span>
+                        </ToggleGroupItem>
+                      </ToggleGroup>
                     </div>
                     
                     <div className="space-y-2">
@@ -308,20 +310,21 @@ const CakeDetailsSection = ({
                         <div className="space-y-4 mt-3">
                           <div className="space-y-2">
                             <Label>Cover Type for Tier {index + 1} *</Label>
-                            <RadioGroup 
+                            <ToggleGroup 
+                              type="single"
                               value={tierDetails[index]?.coverType || "buttercream"}
-                              onValueChange={(value) => handleTierDetailChange(index, "coverType", value as CoverType)}
-                              className="flex space-x-4"
+                              onValueChange={(value) => value && handleTierDetailChange(index, "coverType", value as CoverType)}
+                              className="justify-start"
                             >
-                              <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="buttercream" id={`tier-${index}-buttercream`} />
-                                <Label htmlFor={`tier-${index}-buttercream`}>Buttercream</Label>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="fondant" id={`tier-${index}-fondant`} />
-                                <Label htmlFor={`tier-${index}-fondant`}>Fondant</Label>
-                              </div>
-                            </RadioGroup>
+                              <ToggleGroupItem value="buttercream" aria-label="Buttercream" className="px-4 py-2 flex gap-2 items-center">
+                                <Droplet className="h-4 w-4" />
+                                <span>Buttercream</span>
+                              </ToggleGroupItem>
+                              <ToggleGroupItem value="fondant" aria-label="Fondant" className="px-4 py-2 flex gap-2 items-center">
+                                <Brush className="h-4 w-4" />
+                                <span>Fondant</span>
+                              </ToggleGroupItem>
+                            </ToggleGroup>
                           </div>
 
                           <div className="space-y-2">
