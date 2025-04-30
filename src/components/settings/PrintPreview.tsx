@@ -45,37 +45,46 @@ const PrintPreview: React.FC<PrintPreviewProps> = ({
     `,
   });
 
-  // Sample data for preview
+  // Sample data for preview - updated to match the Order type correctly
   const sampleOrder = {
     id: "ORD12345",
-    status: "confirmed",
+    status: "confirmed" as const,
     orderDate: new Date(),
     deliveryDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
     customer: {
+      id: "CUST123",
       name: "Sample Customer",
       whatsappNumber: "62812345678",
-      email: "sample@email.com"
+      email: "sample@email.com",
+      addresses: [],
+      createdAt: new Date(),
+      // The following are optional per the type definition
+      totalOrders: 1,
+      totalSpend: 350000,
+      lastOrderDate: new Date()
     },
     cakeFlavor: "Chocolate",
     cakeSize: "18 CM",
     cakeShape: "Round",
     cakeTier: 1,
-    coverType: "buttercream",
-    coverColor: { type: "solid", color: "#FFCDD2" },
+    coverType: "buttercream" as const,
+    coverColor: { type: "solid" as const, color: "#FFCDD2" },
     cakeDesign: "Floral Pattern",
     cakeText: "Happy Birthday",
     deliveryAddress: "Sample Street No. 123",
     deliveryArea: "Jakarta",
     deliveryAddressNotes: "Near the park",
-    deliveryMethod: "flat-rate",
-    deliveryTimeSlot: "slot1",
+    deliveryMethod: "flat-rate" as const,
+    deliveryTimeSlot: "slot1" as const,
     cakePrice: 350000,
     deliveryPrice: 30000,
     notes: "Please be careful with the delivery.",
     packingItems: [
       { id: "1", name: "Cake Box", checked: true },
       { id: "2", name: "Candles", checked: true }
-    ]
+    ],
+    createdAt: new Date(),
+    updatedAt: new Date()
   };
 
   return (
