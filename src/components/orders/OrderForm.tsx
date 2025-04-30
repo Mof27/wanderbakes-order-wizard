@@ -1,6 +1,7 @@
+
 import { useState, useEffect } from "react";
 import { useApp } from "@/context/AppContext";
-import { Customer, Order, Ingredient, Address, TierDetail, PackingItem, CakeColor, CoverType, SettingsData } from "@/types";
+import { Customer, Order, Ingredient, Address, TierDetail, PackingItem, CakeColor, CoverType, SettingsData, DeliveryMethod } from "@/types";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/components/ui/sonner";
@@ -11,7 +12,8 @@ import { baseColors } from "@/data/colorData";
 // Import component sections
 import CustomerSection from "./OrderFormComponents/CustomerSection";
 import DateSelectionSection from "./OrderFormComponents/DateSelectionSection";
-import PriceSection from "./OrderFormComponents/PriceSection";
+import CakePriceSection from "./OrderFormComponents/CakePriceSection";
+import DeliveryOptionsSection from "./OrderFormComponents/DeliveryOptionsSection";
 import AddressSection from "./OrderFormComponents/AddressSection";
 import CakeDetailsSection from "./OrderFormComponents/CakeDetailsSection";
 import OptionalDetailsSection from "./OrderFormComponents/OptionalDetailsSection";
@@ -61,6 +63,17 @@ const OrderForm = ({ order, settings }: OrderFormProps) => {
     ? { type: 'solid' as const, color: order.coverColor } 
     : order?.coverColor || { type: 'solid' as const, color: defaultColor };
   
+  // State for delivery options
+  const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>(
+    order?.deliveryMethod || "flat-rate"
+  );
+  const [deliveryTimeSlot, setDeliveryTimeSlot] = useState<string>(
+    order?.deliveryTimeSlot || "slot1"
+  );
+  const [deliveryPrice, setDeliveryPrice] = useState<number>(
+    order?.deliveryPrice || 0
+  );
+  
   // State for address handling
   const [selectedAddressId, setSelectedAddressId] = useState<string | "new">(
     order?.deliveryAddress ? "existing" : "new"
@@ -86,7 +99,7 @@ const OrderForm = ({ order, settings }: OrderFormProps) => {
     cakeText: order?.cakeText || "",
     greetingCard: order?.greetingCard || "",
     notes: order?.notes || "",
-    totalPrice: order?.totalPrice || 300000,
+    cakePrice: order?.cakePrice || 300000,
   });
 
   // State for managing tier details
@@ -245,6 +258,22 @@ const OrderForm = ({ order, settings }: OrderFormProps) => {
         };
         return updated;
       });
+    }
+  };
+
+  // Handler for cake price changes
+  const handleCakePriceChange = (price: number) => {
+    setFormData(prev => ({ ...prev, cakePrice: price }));
+  };
+
+  // Handler for delivery method changes
+  const handleDeliveryMethodChange = (method: DeliveryMethod) => {
+    setDeliveryMethod(method);
+    // Reset time slot when switching to/from flat rate
+    if (method === "flat-rate") {
+      setDeliveryTimeSlot("slot1");
+    } else if (deliveryTimeSlot.startsWith("slot")) {
+      setDeliveryTimeSlot("12.00 WIB");
     }
   };
 
@@ -435,7 +464,10 @@ const OrderForm = ({ order, settings }: OrderFormProps) => {
       useSameFlavor,
       useSameCover,
       packingItems,
-      customShape: formData.cakeShape === "Custom" ? formData.customShape : undefined, // Include custom shape
+      customShape: formData.cakeShape === "Custom" ? formData.customShape : undefined,
+      deliveryMethod,
+      deliveryTimeSlot,
+      deliveryPrice,
       ...formData,
     };
 
@@ -464,7 +496,10 @@ const OrderForm = ({ order, settings }: OrderFormProps) => {
       useSameFlavor,
       useSameCover,
       packingItems,
-      customShape: formData.cakeShape === "Custom" ? formData.customShape : undefined, // Include custom shape
+      customShape: formData.cakeShape === "Custom" ? formData.customShape : undefined,
+      deliveryMethod,
+      deliveryTimeSlot,
+      deliveryPrice,
       ...formData,
     };
 
@@ -494,7 +529,10 @@ const OrderForm = ({ order, settings }: OrderFormProps) => {
       cakeFlavor &&
       formData.coverColor &&
       formData.coverType &&
-      formData.cakeDesign
+      formData.cakeDesign &&
+      deliveryMethod &&
+      deliveryTimeSlot &&
+      formData.cakePrice > 0
     );
 
     // If multi-tier, check that all tiers have required fields
@@ -539,9 +577,18 @@ const OrderForm = ({ order, settings }: OrderFormProps) => {
                 setDeliveryDate={setDeliveryDate}
               />
 
-              <PriceSection 
-                totalPrice={formData.totalPrice} 
-                handleInputChange={handleInputChange} 
+              <DeliveryOptionsSection
+                deliveryMethod={deliveryMethod}
+                deliveryTimeSlot={deliveryTimeSlot}
+                deliveryPrice={deliveryPrice}
+                onMethodChange={handleDeliveryMethodChange}
+                onTimeSlotChange={setDeliveryTimeSlot}
+                onPriceChange={setDeliveryPrice}
+              />
+
+              <CakePriceSection 
+                cakePrice={formData.cakePrice} 
+                onPriceChange={handleCakePriceChange} 
               />
 
               <AddressSection 

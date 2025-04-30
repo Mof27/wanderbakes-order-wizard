@@ -1,3 +1,4 @@
+
 export type Address = {
   id: string;
   text: string;
@@ -61,6 +62,10 @@ export interface CustomColor {
 
 export type CakeColor = SolidColor | GradientColor | CustomColor;
 
+export type DeliveryMethod = 'flat-rate' | 'lalamove' | 'self-pickup';
+
+export type FlatRateTimeSlot = 'slot1' | 'slot2' | 'slot3';
+
 export type Order = {
   id: string;
   customer: Customer;
@@ -89,7 +94,10 @@ export type Order = {
   createdAt: Date;
   updatedAt: Date;
   ingredients?: Ingredient[];
-  totalPrice: number;
+  cakePrice: number;
+  deliveryMethod?: DeliveryMethod;
+  deliveryTimeSlot?: string;
+  deliveryPrice?: number;
 };
 
 export type Ingredient = {

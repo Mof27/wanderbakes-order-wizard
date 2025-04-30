@@ -13,6 +13,18 @@ export class MockOrderRepository implements OrderRepository {
 
   constructor(initialData: Order[] = []) {
     this.orders = [...initialData];
+    
+    // Transform any legacy data
+    this.orders = this.orders.map(order => {
+      // Handle conversion from totalPrice to cakePrice
+      if (!order.cakePrice && (order as any).totalPrice) {
+        return {
+          ...order,
+          cakePrice: (order as any).totalPrice
+        };
+      }
+      return order;
+    });
   }
 
   async getAll(): Promise<Order[]> {
