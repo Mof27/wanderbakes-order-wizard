@@ -49,7 +49,7 @@ const DeliveryLabelPrintButton = ({ order, showPrintCount = true }: DeliveryLabe
         toast.error("Print preparation failed");
         setIsPrinting(false);
       }
-    }, 300);
+    }, 500); // Increased delay to 500ms
   };
 
   const handlePrint = useReactToPrint({
@@ -89,19 +89,35 @@ const DeliveryLabelPrintButton = ({ order, showPrintCount = true }: DeliveryLabe
     },
     pageStyle: `
       @page {
-        size: 4in 6in portrait;
-        margin: 2mm;
+        size: 4in 6in;
+        margin: 0;
       }
       @media print {
-        body {
+        html, body {
+          margin: 0;
+          padding: 0;
+          width: 4in;
+          height: 6in;
+        }
+        body * {
+          visibility: hidden;
           margin: 0;
           padding: 0;
         }
+        .print-delivery-label,
+        .print-delivery-label * {
+          visibility: visible;
+          box-sizing: border-box !important;
+        }
         .print-delivery-label {
-          width: 100% !important;
-          height: 100% !important;
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 4in !important;
+          height: 6in !important;
+          padding: 0 !important;
           margin: 0 !important;
-          padding: 2mm !important;
+          overflow: visible !important;
           box-shadow: none !important;
         }
         /* Text styling for printed content */
@@ -118,6 +134,7 @@ const DeliveryLabelPrintButton = ({ order, showPrintCount = true }: DeliveryLabe
         .italic { font-style: italic !important; }
       }
     `,
+    removeAfterPrint: false,
   });
 
   return (
@@ -137,7 +154,11 @@ const DeliveryLabelPrintButton = ({ order, showPrintCount = true }: DeliveryLabe
       </Button>
       
       <div className="hidden">
-        <DeliveryLabelView ref={printRef} order={order} preloadedSettings={settings} />
+        <DeliveryLabelView 
+          ref={printRef} 
+          order={order} 
+          preloadedSettings={settings}
+        />
       </div>
     </>
   );

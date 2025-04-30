@@ -1,5 +1,5 @@
 
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useEffect } from 'react';
 import { Order, SettingsData } from '@/types';
 import { dataService } from '@/services';
 import { useQuery } from '@tanstack/react-query';
@@ -22,16 +22,29 @@ const DeliveryLabelView = forwardRef<HTMLDivElement, DeliveryLabelViewProps>(
 
     const settings = preloadedSettings || fetchedSettings;
     
+    useEffect(() => {
+      console.log("DeliveryLabelView mounted with order:", order.id);
+      
+      return () => {
+        console.log("DeliveryLabelView unmounted");
+      };
+    }, [order.id]);
+    
     console.log("DeliveryLabelView rendering", { 
       hasPreloadedSettings: !!preloadedSettings,
       hasSettings: !!settings,
-      isLoading
+      isLoading,
+      templateSections: settings?.deliveryLabelTemplate?.sections?.length
     });
 
     if (isLoading || !settings) {
       console.log("Showing skeleton while loading settings");
       return (
-        <div ref={ref} className="print-delivery-label bg-white p-4 shadow-lg" style={{ width: '4in', height: '6in' }}>
+        <div 
+          ref={ref} 
+          className="print-delivery-label bg-white p-4 shadow-lg" 
+          style={{ width: '4in', height: '6in', boxSizing: 'border-box' }}
+        >
           <Skeleton className="h-full w-full" />
         </div>
       );
@@ -43,11 +56,16 @@ const DeliveryLabelView = forwardRef<HTMLDivElement, DeliveryLabelViewProps>(
     });
 
     return (
-      <DeliveryLabelTemplateRenderer
-        ref={ref}
-        template={settings.deliveryLabelTemplate}
-        order={order}
-      />
+      <div 
+        ref={ref} 
+        className="print-delivery-label"
+        style={{ width: '4in', height: '6in' }}
+      >
+        <DeliveryLabelTemplateRenderer
+          template={settings.deliveryLabelTemplate}
+          order={order}
+        />
+      </div>
     );
   }
 );

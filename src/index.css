@@ -68,6 +68,7 @@
     visibility: hidden;
   }
   
+  /* Order form print styles */
   .print-container,
   .print-container * {
     visibility: visible;
@@ -79,9 +80,37 @@
     top: 0;
   }
   
+  /* Delivery label print styles */
+  .print-delivery-label,
+  .print-delivery-label * {
+    visibility: visible;
+  }
+  
+  .print-delivery-label {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 4in !important;
+    height: 6in !important;
+    margin: 0 !important;
+    padding: 0.25in !important; 
+    box-shadow: none !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    background-color: white !important;
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+  }
+  
+  /* Different page sizes for different documents */
   @page {
     size: A5 landscape;
     margin: 5mm;
+  }
+  
+  @page :first {
+    size: 4in 6in;
+    margin: 0;
   }
   
   /* Ensure QR codes print clearly */
@@ -139,4 +168,13 @@
 
 .italic {
   font-style: italic;
+}
+
+/* Specific styles for delivery label */
+.print-delivery-label {
+  width: 4in;
+  height: 6in;
+  box-sizing: border-box;
+  background-color: white;
+  overflow: hidden;
 }

@@ -184,11 +184,10 @@ export const DeliveryLabelTemplateRenderer = forwardRef<HTMLDivElement, Delivery
 
     return (
       <div 
-        ref={ref}
-        className="print-delivery-label bg-white p-4 shadow-lg overflow-auto"
+        className="bg-white p-4 overflow-auto"
         style={{ 
-          width: '4in', 
-          height: '6in',
+          width: '100%', 
+          height: '100%',
           margin: '0 auto',
           boxSizing: 'border-box'
         }}
