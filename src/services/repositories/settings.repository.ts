@@ -23,10 +23,14 @@ export class MockSettingsRepository implements SettingsRepository {
   
   constructor() {
     // Initialize with data from the mock data files
+    console.log("Initializing MockSettingsRepository...");
     this.settings = this.loadInitialSettings();
+    console.log("Settings initialized:", this.settings);
   }
   
   private loadInitialSettings(): SettingsData {
+    console.log("Loading initial settings...");
+    
     // Convert from existing data format to settings format
     const initialSettings: SettingsData = {
       cakeSizes: cakeSizes.map(size => ({
@@ -66,19 +70,22 @@ export class MockSettingsRepository implements SettingsRepository {
       try {
         const savedSettings = localStorage.getItem('cakeShopSettings');
         if (savedSettings) {
-          return JSON.parse(savedSettings, (key, value) => {
+          const parsedSettings = JSON.parse(savedSettings, (key, value) => {
             // Convert date strings back to Date objects
             if (key === 'createdAt' || key === 'updatedAt') {
               return new Date(value);
             }
             return value;
           });
+          console.log("Loaded settings from localStorage:", parsedSettings);
+          return parsedSettings;
         }
       } catch (error) {
         console.error('Failed to load settings from localStorage', error);
       }
     }
     
+    console.log("Using default settings");
     return initialSettings;
   }
 
@@ -382,6 +389,7 @@ export class MockSettingsRepository implements SettingsRepository {
   }
   
   async getAll(): Promise<SettingsData> {
+    console.log("Getting all settings:", this.settings);
     return this.settings;
   }
   

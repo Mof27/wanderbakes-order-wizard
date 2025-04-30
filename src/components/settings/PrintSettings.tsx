@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { PrintSection, PrintTemplate, PrintField, PrintFieldType } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -59,8 +58,15 @@ const PrintSettings = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
+        console.log("Loading print template settings...");
         const settings = await dataService.settings.getAll();
-        setTemplate(settings.printTemplate);
+        console.log("Settings loaded:", settings);
+        if (settings && settings.printTemplate) {
+          setTemplate(settings.printTemplate);
+        } else {
+          console.error("Print template not found in settings");
+          toast.error("Failed to load print template: Template not found");
+        }
       } catch (error) {
         console.error("Failed to load print template settings", error);
         toast.error("Failed to load print template settings");
@@ -355,9 +361,16 @@ const PrintSettings = () => {
           <CardHeader>
             <CardTitle>Print Form Layout</CardTitle>
             <CardDescription>
-              Loading...
+              Loading print template settings...
             </CardDescription>
           </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-center p-8">
+              <div className="text-center">
+                <p className="text-muted-foreground">Please wait while we load your template settings...</p>
+              </div>
+            </div>
+          </CardContent>
         </Card>
       </TabsContent>
     );
@@ -373,6 +386,14 @@ const PrintSettings = () => {
               Failed to load template settings.
             </CardDescription>
           </CardHeader>
+          <CardContent>
+            <div className="flex flex-col items-center justify-center gap-4 p-8">
+              <p className="text-muted-foreground">We couldn't load your print template settings.</p>
+              <Button onClick={() => window.location.reload()}>
+                Refresh Page
+              </Button>
+            </div>
+          </CardContent>
         </Card>
       </TabsContent>
     );
