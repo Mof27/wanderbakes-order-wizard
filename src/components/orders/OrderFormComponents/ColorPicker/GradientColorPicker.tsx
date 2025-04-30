@@ -92,7 +92,7 @@ const GradientColorPicker = ({
                     <span style={{
                 color: textColor,
                 fontWeight: "500"
-              }} className="text-xs">
+              }} className="text-xs text-center">
                       {color.name}
                     </span>
                   </div>;
