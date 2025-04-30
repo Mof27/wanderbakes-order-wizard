@@ -14,9 +14,12 @@ const DeliveryLabelPreview = ({ template, open, onOpenChange }: DeliveryLabelPre
   const sampleOrder = {
     id: "ORD12345",
     customer: {
+      id: "cust123",
       name: "John Doe",
       whatsappNumber: "+62 812 3456 7890",
-      email: "john@example.com"
+      email: "john@example.com",
+      addresses: [], // Add required addresses array
+      createdAt: new Date(), // Add required createdAt date
     },
     deliveryAddress: "123 Main Street",
     deliveryArea: "Jakarta",
@@ -25,14 +28,14 @@ const DeliveryLabelPreview = ({ template, open, onOpenChange }: DeliveryLabelPre
     cakeShape: "Round",
     cakeFlavor: "Chocolate",
     cakeTier: 2,
-    coverType: "buttercream",
+    coverType: "buttercream" as const, // Use const assertion for literal type
     cakeDesign: "Birthday theme",
     cakeText: "Happy Birthday John!",
     orderDate: new Date(),
     deliveryDate: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
     cakePrice: 500000,
-    deliveryMethod: "flat-rate",
-    deliveryTimeSlot: "slot1",
+    deliveryMethod: "flat-rate" as const, // Use const assertion for literal type
+    deliveryTimeSlot: "slot1" as const, // Use const assertion for literal type
     deliveryPrice: 50000
   };
 
