@@ -13,17 +13,17 @@ interface PrintTemplateRendererProps {
 export const PrintTemplateRenderer = forwardRef<HTMLDivElement, PrintTemplateRendererProps>(
   ({ template, order, isPreviewing = false }, ref) => {
     // Get nested properties safely
-    const getFieldValue = (fieldKey?: string): any => {
+    const getFieldValue = (fieldKey?: string): string | number | React.ReactNode => {
       if (!fieldKey) return "";
       
       // Special handler for total price (calculated field)
       if (fieldKey === "totalPrice") {
-        return (order.cakePrice || 0) + (order.deliveryPrice || 0);
+        return formatCurrency((order.cakePrice || 0) + (order.deliveryPrice || 0));
       }
       
       // Special handler for print date
       if (fieldKey === "printDate") {
-        return new Date();
+        return formatDate(new Date());
       }
       
       // Special handler for delivery time slot
@@ -39,7 +39,7 @@ export const PrintTemplateRenderer = forwardRef<HTMLDivElement, PrintTemplateRen
         if (method === "flat-rate") return "Flat Rate";
         if (method === "lalamove") return "Lalamove";
         if (method === "self-pickup") return "Self-Pickup";
-        return method;
+        return method || "";
       }
       
       // Special handler for cover color
@@ -88,7 +88,20 @@ export const PrintTemplateRenderer = forwardRef<HTMLDivElement, PrintTemplateRen
         return formatCurrency(value);
       }
       
-      return value || "";
+      // Important: Convert all values to string to avoid rendering objects directly
+      if (value instanceof Date) {
+        return formatDate(value);
+      }
+      
+      if (value === null || value === undefined) {
+        return "";
+      }
+      
+      if (typeof value === 'object') {
+        return JSON.stringify(value);
+      }
+      
+      return value.toString();
     };
 
     // Render a single field
