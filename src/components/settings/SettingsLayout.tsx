@@ -23,11 +23,12 @@ const SettingsLayout = ({
         onValueChange={onTabChange}
         className="w-full"
       >
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="cake-sizes">Cake Sizes</TabsTrigger>
           <TabsTrigger value="cake-shapes">Cake Shapes</TabsTrigger>
           <TabsTrigger value="cake-flavors">Cake Flavors</TabsTrigger>
           <TabsTrigger value="colors">Colors</TabsTrigger>
+          <TabsTrigger value="print-form">Print Form</TabsTrigger>
         </TabsList>
         
         {children}

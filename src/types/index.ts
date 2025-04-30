@@ -137,9 +137,37 @@ export interface ShapeSettingItem extends SettingItem {
   customFields?: boolean; // Whether this shape requires additional custom fields
 }
 
+// New types for print form customization
+export type PrintFieldType = 'section-title' | 'text' | 'field' | 'separator' | 'spacer';
+
+export interface PrintField {
+  id: string;
+  type: PrintFieldType;
+  label?: string;
+  value?: string;
+  fieldKey?: string; // References Order object field path
+  enabled: boolean;
+  order: number;
+}
+
+export interface PrintSection {
+  id: string;
+  title: string;
+  fields: PrintField[];
+  enabled: boolean;
+  order: number;
+}
+
+export interface PrintTemplate {
+  title: string;
+  orientation: 'portrait' | 'landscape';
+  sections: PrintSection[];
+}
+
 export type SettingsData = {
   cakeSizes: SettingItem[];
   cakeShapes: ShapeSettingItem[];
   cakeFlavors: SettingItem[];
   colors: ColorSettingItem[];
+  printTemplate: PrintTemplate;
 };

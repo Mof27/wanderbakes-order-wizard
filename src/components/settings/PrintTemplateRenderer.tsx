@@ -1,0 +1,188 @@
+
+import React, { forwardRef } from "react";
+import { PrintTemplate, Order, PrintSection, PrintField } from "@/types";
+import { formatCurrency, formatDate, formatTimeSlot } from "@/lib/utils";
+import { get } from "lodash";
+
+interface PrintTemplateRendererProps {
+  template: PrintTemplate;
+  order: Partial<Order>;
+  isPreviewing?: boolean;
+}
+
+export const PrintTemplateRenderer = forwardRef<HTMLDivElement, PrintTemplateRendererProps>(
+  ({ template, order, isPreviewing = false }, ref) => {
+    // Get nested properties safely
+    const getFieldValue = (fieldKey?: string): any => {
+      if (!fieldKey) return "";
+      
+      // Special handler for total price (calculated field)
+      if (fieldKey === "totalPrice") {
+        return (order.cakePrice || 0) + (order.deliveryPrice || 0);
+      }
+      
+      // Special handler for print date
+      if (fieldKey === "printDate") {
+        return new Date();
+      }
+      
+      // Special handler for delivery time slot
+      if (fieldKey === "deliveryTimeSlot" && order.deliveryTimeSlot) {
+        return order.deliveryTimeSlot.startsWith("slot") 
+          ? formatTimeSlot(order.deliveryTimeSlot)
+          : order.deliveryTimeSlot;
+      }
+      
+      // Special handler for delivery method display
+      if (fieldKey === "deliveryMethod") {
+        const method = order.deliveryMethod;
+        if (method === "flat-rate") return "Flat Rate";
+        if (method === "lalamove") return "Lalamove";
+        if (method === "self-pickup") return "Self-Pickup";
+        return method;
+      }
+      
+      // Special handler for cover color
+      if (fieldKey === "coverColor") {
+        const coverColor = order.coverColor;
+        if (!coverColor) return "";
+        if (typeof coverColor === "string") return coverColor;
+        
+        if (coverColor.type === "solid") return coverColor.color;
+        if (coverColor.type === "gradient") return "Gradient";
+        if (coverColor.type === "custom") return "Custom";
+        return "";
+      }
+      
+      // Special handler for cake shape with custom shape
+      if (fieldKey === "cakeShape") {
+        const shape = order.cakeShape;
+        const customShape = order.customShape;
+        if (shape === "Custom" && customShape) {
+          return `${shape} (${customShape})`;
+        }
+        return shape || "";
+      }
+      
+      // Special handler for packing items
+      if (fieldKey === "packingItems") {
+        const packingItems = order.packingItems;
+        if (!packingItems || packingItems.length === 0) return "";
+        
+        const checkedItems = packingItems.filter(item => item.checked);
+        if (checkedItems.length === 0) return "";
+        
+        return checkedItems.map(item => item.name).join(", ");
+      }
+      
+      // Get value from order object using lodash get for nested paths
+      const value = get(order, fieldKey);
+      
+      // Format dates
+      if (fieldKey.includes("Date") && value instanceof Date) {
+        return formatDate(value);
+      }
+      
+      // Format prices
+      if ((fieldKey.includes("Price") || fieldKey === "totalPrice") && typeof value === 'number') {
+        return formatCurrency(value);
+      }
+      
+      return value || "";
+    };
+
+    // Render a single field
+    const renderField = (field: PrintField): React.ReactNode => {
+      if (!field.enabled) return null;
+      
+      switch (field.type) {
+        case 'section-title':
+          return (
+            <h3 className="text-lg font-semibold">{field.label || field.value}</h3>
+          );
+          
+        case 'text':
+          return <p className="text-sm">{field.value}</p>;
+          
+        case 'field': {
+          const value = getFieldValue(field.fieldKey);
+          if (!value && !isPreviewing) return null;
+          
+          return (
+            <div className="grid grid-cols-2 gap-1 items-start text-sm">
+              <div className="font-medium">{field.label}:</div>
+              <div className="text-sm">
+                {isPreviewing && !value ? "(No data)" : value}
+              </div>
+            </div>
+          );
+        }
+          
+        case 'separator':
+          return <hr className="my-2 border-gray-200" />;
+          
+        case 'spacer':
+          return <div className="h-4" />;
+          
+        default:
+          return null;
+      }
+    };
+
+    // Render a section
+    const renderSection = (section: PrintSection): React.ReactNode => {
+      if (!section.enabled) return null;
+      
+      const enabledFields = section.fields.filter(f => f.enabled);
+      if (enabledFields.length === 0) return null;
+      
+      return (
+        <div key={section.id} className="mb-4">
+          <h2 className="text-lg font-semibold border-b pb-1 mb-2">{section.title}</h2>
+          <div className="space-y-2">
+            {enabledFields
+              .sort((a, b) => a.order - b.order)
+              .map((field, index) => (
+                <div key={field.id}>{renderField(field)}</div>
+              ))}
+          </div>
+        </div>
+      );
+    };
+
+    return (
+      <div 
+        ref={ref}
+        className="print-container bg-white p-8 shadow-lg overflow-auto"
+        style={{ 
+          width: template.orientation === 'landscape' ? '210mm' : '148mm', 
+          height: template.orientation === 'landscape' ? '148mm' : '210mm',
+          margin: '0 auto',
+          boxSizing: 'border-box'
+        }}
+      >
+        <div className="text-center mb-4">
+          <h1 className="text-2xl font-bold">{template.title}</h1>
+          {order.id && (
+            <p className="text-sm text-muted-foreground">Order #{order.id}</p>
+          )}
+        </div>
+
+        <div className="space-y-4">
+          {template.sections
+            .filter(section => section.enabled)
+            .sort((a, b) => a.order - b.order)
+            .map(renderSection)}
+        </div>
+        
+        <div className="text-center text-xs text-gray-500 mt-6 pt-2 border-t">
+          <p>Printed on {formatDate(new Date())}</p>
+        </div>
+      </div>
+    );
+  }
+);
+
+PrintTemplateRenderer.displayName = "PrintTemplateRenderer";
+
+export default PrintTemplateRenderer;
