@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { DeliveryMethod, FlatRateTimeSlot } from "@/types";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Clock10, Package, UserRound } from "lucide-react";
+import { TimePickerInput } from "../OrderFormComponents/TimePickerInput";
 
 // Define time slots
 const TIME_SLOTS = {
@@ -65,54 +66,6 @@ const DeliveryOptionsSection = ({
     }
   };
 
-  // Generate time options for the hour and minute selectors
-  const generateTimeOptions = () => {
-    const hours = [];
-    const minutes = ["00", "30"];
-    
-    for (let i = 6; i <= 23; i++) {
-      hours.push(i.toString().padStart(2, "0"));
-    }
-    
-    return { hours, minutes };
-  };
-  
-  const { hours, minutes } = generateTimeOptions();
-  
-  // Parse the current time slot for custom time selection
-  const parseTimeSlot = () => {
-    if (deliveryMethod === "flat-rate" || TIME_SLOTS[deliveryTimeSlot as keyof typeof TIME_SLOTS]) {
-      return { hour: "06", minute: "00" };
-    }
-    
-    // Parse the time from format like "14.30 WIB"
-    const timeMatch = deliveryTimeSlot.match(/(\d{2})\.(\d{2})/);
-    if (timeMatch) {
-      return { hour: timeMatch[1], minute: timeMatch[2] };
-    }
-    
-    return { hour: "06", minute: "00" };
-  };
-  
-  const [selectedHour, setSelectedHour] = useState<string>(parseTimeSlot().hour);
-  const [selectedMinute, setSelectedMinute] = useState<string>(parseTimeSlot().minute);
-  
-  // Update the time slot when hour or minute changes
-  useEffect(() => {
-    if (deliveryMethod !== "flat-rate") {
-      onTimeSlotChange(`${selectedHour}.${selectedMinute} WIB`);
-    }
-  }, [selectedHour, selectedMinute, deliveryMethod, onTimeSlotChange]);
-  
-  // Update hour and minute when delivery time slot changes externally
-  useEffect(() => {
-    if (deliveryMethod !== "flat-rate") {
-      const { hour, minute } = parseTimeSlot();
-      setSelectedHour(hour);
-      setSelectedMinute(minute);
-    }
-  }, [deliveryTimeSlot, deliveryMethod]);
-
   return (
     <div className="space-y-4">
       <h3 className="font-medium">Delivery Options *</h3>
@@ -160,41 +113,12 @@ const DeliveryOptionsSection = ({
             </SelectContent>
           </Select>
         ) : (
-          <div className="flex space-x-2">
-            <div className="w-1/2">
-              <Select 
-                value={selectedHour} 
-                onValueChange={setSelectedHour}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Hour" />
-                </SelectTrigger>
-                <SelectContent>
-                  {hours.map((hour) => (
-                    <SelectItem key={hour} value={hour}>{hour}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="w-1/2">
-              <Select 
-                value={selectedMinute} 
-                onValueChange={setSelectedMinute}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Minute" />
-                </SelectTrigger>
-                <SelectContent>
-                  {minutes.map((minute) => (
-                    <SelectItem key={minute} value={minute}>{minute}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center">
-              <span className="text-sm text-muted-foreground">WIB</span>
-            </div>
-          </div>
+          <TimePickerInput 
+            value={deliveryTimeSlot} 
+            onChange={onTimeSlotChange}
+            minHour={6}
+            maxHour={23}
+          />
         )}
       </div>
 
