@@ -29,10 +29,11 @@ export type TierDetail = {
   tier: number;
   shape: string;
   size: string;
-  height?: string; // Added height property
+  height?: string;
   flavor?: string;
   coverType: CoverType;
   coverColor: CakeColor;
+  customShape?: string; // Add customShape field for custom shapes
 };
 
 export type PackingItem = {
@@ -74,6 +75,7 @@ export type Order = {
   cakeFlavor: string;
   cakeSize: string;
   cakeShape: string;
+  customShape?: string; // Add customShape field for the order
   cakeTier: number;
   tierDetails?: TierDetail[];
   useSameFlavor: boolean;

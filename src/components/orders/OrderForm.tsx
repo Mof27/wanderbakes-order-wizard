@@ -70,6 +70,7 @@ const OrderForm = ({ order }: OrderFormProps) => {
     cakeDesign: order?.cakeDesign || "",
     cakeSize: order?.cakeSize || "",
     cakeShape: order?.cakeShape || "Round",
+    customShape: order?.customShape || "", // Add customShape field
     cakeTier: order?.cakeTier || 1,
     coverColor: initialCoverColor,
     coverType: order?.coverType || "buttercream" as CoverType,
@@ -85,10 +86,11 @@ const OrderForm = ({ order }: OrderFormProps) => {
       tier: i + 1,
       shape: "Round",
       size: "16 CM",
-      height: "2 Layer - 10 CM", // Initialize with default height
+      height: "2 Layer - 10 CM",
       flavor: cakeFlavor,
       coverType: "buttercream",
-      coverColor: { type: 'solid', color: baseColors[0].value }
+      coverColor: { type: 'solid', color: baseColors[0].value },
+      customShape: "" // Add customShape field for each tier
     }))
   );
 
@@ -164,7 +166,8 @@ const OrderForm = ({ order }: OrderFormProps) => {
           height: updatedTierDetails[0]?.height || "2 Layer - 10 CM", // Keep existing height or use default
           flavor: cakeFlavor,
           coverType: formData.coverType || "buttercream",
-          coverColor: formData.coverColor
+          coverColor: formData.coverColor,
+          customShape: formData.cakeShape === "Custom" ? formData.customShape : "" // Transfer custom shape
         };
         
         setTierDetails(updatedTierDetails.slice(0, 1));
@@ -179,7 +182,8 @@ const OrderForm = ({ order }: OrderFormProps) => {
           height: updatedTierDetails[0]?.height || "2 Layer - 10 CM", // Keep existing height or use default
           flavor: useSameFlavor ? cakeFlavor : "",
           coverType: formData.coverType || "buttercream",
-          coverColor: formData.coverColor
+          coverColor: formData.coverColor,
+          customShape: formData.cakeShape === "Custom" ? formData.customShape : "" // Transfer custom shape
         };
         
         // Initialize remaining tiers
@@ -192,7 +196,8 @@ const OrderForm = ({ order }: OrderFormProps) => {
             height: "2 Layer - 10 CM", // Default height
             flavor: useSameFlavor ? cakeFlavor : "",
             coverType: formData.coverType || "buttercream",
-            coverColor: formData.coverColor
+            coverColor: formData.coverColor,
+            customShape: "" // Initialize empty custom shape
           });
         }
         
@@ -210,7 +215,8 @@ const OrderForm = ({ order }: OrderFormProps) => {
               height: "2 Layer - 10 CM", // Default height
               flavor: useSameFlavor ? cakeFlavor : "",
               coverType: formData.coverType || "buttercream",
-              coverColor: formData.coverColor
+              coverColor: formData.coverColor,
+              customShape: "" // Initialize empty custom shape
             });
           }
           return newDetails.slice(0, tierCount);
@@ -224,7 +230,9 @@ const OrderForm = ({ order }: OrderFormProps) => {
         const updated = [...prev];
         updated[0] = {
           ...updated[0],
-          [name === "cakeShape" ? "shape" : "size"]: value
+          [name === "cakeShape" ? "shape" : "size"]: value,
+          // Clear custom shape if shape is not Custom
+          ...(name === "cakeShape" && value !== "Custom" ? { customShape: "" } : {})
         };
         return updated;
       });
@@ -249,7 +257,6 @@ const OrderForm = ({ order }: OrderFormProps) => {
 
   // Update dialog open state to initialize the form values correctly
   const openNewAddressDialog = () => {
-    // Pre-populate the dialog with the current form values
     setNewAddress({
       text: formData.deliveryAddress,
       area: formData.deliveryArea,
@@ -335,6 +342,16 @@ const OrderForm = ({ order }: OrderFormProps) => {
           return newDetails;
         }
       }
+
+      // Special handling for shape - clear custom shape if changing to non-custom
+      if (field === "shape" && value !== "Custom") {
+        newDetails[tierIndex] = {
+          ...newDetails[tierIndex],
+          shape: value as string,
+          customShape: "" // Clear custom shape when changing to non-custom
+        };
+        return newDetails;
+      }
       
       newDetails[tierIndex] = {
         ...newDetails[tierIndex],
@@ -409,6 +426,7 @@ const OrderForm = ({ order }: OrderFormProps) => {
       useSameFlavor,
       useSameCover,
       packingItems,
+      customShape: formData.cakeShape === "Custom" ? formData.customShape : undefined, // Include custom shape
       ...formData,
     };
 
@@ -437,6 +455,7 @@ const OrderForm = ({ order }: OrderFormProps) => {
       useSameFlavor,
       useSameCover,
       packingItems,
+      customShape: formData.cakeShape === "Custom" ? formData.customShape : undefined, // Include custom shape
       ...formData,
     };
 
@@ -462,6 +481,7 @@ const OrderForm = ({ order }: OrderFormProps) => {
       formData.deliveryAddress &&
       formData.cakeSize &&
       formData.cakeShape &&
+      (formData.cakeShape !== "Custom" || formData.customShape) && // Check custom shape is filled if selected
       cakeFlavor &&
       formData.coverColor &&
       formData.coverType &&
@@ -473,7 +493,10 @@ const OrderForm = ({ order }: OrderFormProps) => {
       const tiersFilled = tierDetails
         .slice(0, formData.cakeTier)
         .every(tier => 
-          tier.shape && tier.size && tier.height && // Added height check
+          tier.shape && 
+          (tier.shape !== "Custom" || tier.customShape) && // Check custom shape is filled if selected
+          tier.size && 
+          tier.height && 
           (useSameFlavor || tier.flavor) &&
           tier.coverType && 
           tier.coverColor
@@ -534,6 +557,7 @@ const OrderForm = ({ order }: OrderFormProps) => {
                 cakeDesign: formData.cakeDesign,
                 cakeSize: formData.cakeSize,
                 cakeShape: formData.cakeShape,
+                customShape: formData.customShape,
                 cakeTier: formData.cakeTier,
                 coverColor: formData.coverColor,
                 coverType: formData.coverType,
