@@ -1,6 +1,6 @@
 
 import React, { forwardRef } from 'react';
-import { DeliveryLabelTemplate, Order } from '@/types';
+import { Order } from '@/types';
 import { dataService } from '@/services';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';

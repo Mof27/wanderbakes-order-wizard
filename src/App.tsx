@@ -89,7 +89,7 @@ const App = () => {
                     <CustomerOrdersPage />
                   </MainLayout>
                 } />
-                <Route path="/settings" element={
+                <Route path="/settings/*" element={
                   <MainLayout>
                     <SettingsPage />
                   </MainLayout>
