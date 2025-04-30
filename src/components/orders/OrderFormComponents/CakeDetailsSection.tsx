@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CakeColor, TierDetail } from "@/types";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { CakeColor, TierDetail, CoverType } from "@/types";
 import ColorPicker from "./ColorPicker/ColorPicker";
 
 interface CakeDetailsSectionProps {
@@ -14,21 +15,25 @@ interface CakeDetailsSectionProps {
     cakeSize: string;
     cakeShape: string;
     cakeTier: number;
-    coverColor: string | CakeColor;
+    coverColor: CakeColor;
+    coverType?: CoverType;
   };
   cakeFlavor: string;
   setCakeFlavor: (value: string) => void;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   handleSelectChange: (name: string, value: string | number) => void;
   handleCoverColorChange: (value: CakeColor) => void;
+  handleCoverTypeChange: (value: CoverType) => void;
   cakeFlavors: string[];
   cakeSizes: string[];
   cakeShapes: string[];
   cakeTiers: number[];
   tierDetails: TierDetail[];
   useSameFlavor: boolean;
+  useSameCover: boolean;
   handleToggleSameFlavor: (checked: boolean) => void;
-  handleTierDetailChange: (tierIndex: number, field: keyof TierDetail, value: string) => void;
+  handleToggleSameCover: (checked: boolean) => void;
+  handleTierDetailChange: (tierIndex: number, field: keyof TierDetail, value: string | CakeColor | CoverType) => void;
   setActiveTab: (tab: string) => void;
 }
 
@@ -39,21 +44,22 @@ const CakeDetailsSection = ({
   handleInputChange,
   handleSelectChange,
   handleCoverColorChange,
+  handleCoverTypeChange,
   cakeFlavors,
   cakeSizes,
   cakeShapes,
   cakeTiers,
   tierDetails,
   useSameFlavor,
+  useSameCover,
   handleToggleSameFlavor,
+  handleToggleSameCover,
   handleTierDetailChange,
   setActiveTab
 }: CakeDetailsSectionProps) => {
   // Convert legacy string color to CakeColor object if needed
-  const coverColor: CakeColor = typeof formData.coverColor === 'string' 
-    ? { type: 'solid', color: formData.coverColor } 
-    : formData.coverColor as CakeColor;
-
+  const coverColor = formData.coverColor;
+  
   return (
     <div className="space-y-6">
       <Card>
@@ -131,35 +137,110 @@ const CakeDetailsSection = ({
 
             {/* Single tier cake size - only show if it's a single tier */}
             {formData.cakeTier === 1 && (
-              <div className="space-y-2">
-                <Label htmlFor="cakeSize">Cake Size *</Label>
-                <Select 
-                  value={formData.cakeSize} 
-                  onValueChange={(value) => handleSelectChange("cakeSize", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select cake size" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {cakeSizes.map((size) => (
-                      <SelectItem key={size} value={size}>{size}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="cakeSize">Cake Size *</Label>
+                  <Select 
+                    value={formData.cakeSize} 
+                    onValueChange={(value) => handleSelectChange("cakeSize", value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select cake size" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {cakeSizes.map((size) => (
+                        <SelectItem key={size} value={size}>{size}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Cover type selection for single tier */}
+                <div className="space-y-2">
+                  <Label>Cover Type *</Label>
+                  <RadioGroup 
+                    value={formData.coverType || "buttercream"}
+                    onValueChange={(value) => handleCoverTypeChange(value as CoverType)}
+                    className="flex space-x-4"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="buttercream" id="buttercream" />
+                      <Label htmlFor="buttercream">Buttercream</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="fondant" id="fondant" />
+                      <Label htmlFor="fondant">Fondant</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+
+                {/* Cover color for single tier */}
+                <div className="space-y-2">
+                  <Label htmlFor="coverColor">Cover Color *</Label>
+                  <ColorPicker 
+                    value={coverColor}
+                    onChange={handleCoverColorChange}
+                    coverType={formData.coverType}
+                  />
+                </div>
+              </>
             )}
 
             {/* Multi-tier cake details */}
             {formData.cakeTier > 1 && (
               <div className="space-y-4 mt-4">
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="sameFlavor" 
-                    checked={useSameFlavor}
-                    onCheckedChange={handleToggleSameFlavor}
-                  />
-                  <Label htmlFor="sameFlavor">Use same flavor for all tiers</Label>
+                <div className="flex flex-col space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="sameFlavor" 
+                      checked={useSameFlavor}
+                      onCheckedChange={handleToggleSameFlavor}
+                    />
+                    <Label htmlFor="sameFlavor">Use same flavor for all tiers</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="sameCover" 
+                      checked={useSameCover}
+                      onCheckedChange={handleToggleSameCover}
+                    />
+                    <Label htmlFor="sameCover">Use same cover for all tiers</Label>
+                  </div>
                 </div>
+
+                {/* If using same cover for all tiers, show the main cover options */}
+                {useSameCover && (
+                  <div className="space-y-4 border rounded-md p-4">
+                    <h4 className="font-medium">Cover for All Tiers</h4>
+                    
+                    <div className="space-y-2">
+                      <Label>Cover Type *</Label>
+                      <RadioGroup 
+                        value={formData.coverType || "buttercream"}
+                        onValueChange={(value) => handleCoverTypeChange(value as CoverType)}
+                        className="flex space-x-4"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="buttercream" id="all-buttercream" />
+                          <Label htmlFor="all-buttercream">Buttercream</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="fondant" id="all-fondant" />
+                          <Label htmlFor="all-fondant">Fondant</Label>
+                        </div>
+                      </RadioGroup>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="coverColor">Cover Color *</Label>
+                      <ColorPicker 
+                        value={coverColor}
+                        onChange={handleCoverColorChange}
+                        coverType={formData.coverType}
+                      />
+                    </div>
+                  </div>
+                )}
 
                 {/* Tier details section */}
                 <div className="space-y-4 border rounded-md p-4">
@@ -221,19 +302,43 @@ const CakeDetailsSection = ({
                           </Select>
                         </div>
                       )}
+
+                      {/* Cover type and color for this tier if not using same cover */}
+                      {!useSameCover && (
+                        <div className="space-y-4 mt-3">
+                          <div className="space-y-2">
+                            <Label>Cover Type for Tier {index + 1} *</Label>
+                            <RadioGroup 
+                              value={tierDetails[index]?.coverType || "buttercream"}
+                              onValueChange={(value) => handleTierDetailChange(index, "coverType", value as CoverType)}
+                              className="flex space-x-4"
+                            >
+                              <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="buttercream" id={`tier-${index}-buttercream`} />
+                                <Label htmlFor={`tier-${index}-buttercream`}>Buttercream</Label>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="fondant" id={`tier-${index}-fondant`} />
+                                <Label htmlFor={`tier-${index}-fondant`}>Fondant</Label>
+                              </div>
+                            </RadioGroup>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>Cover Color for Tier {index + 1} *</Label>
+                            <ColorPicker 
+                              value={tierDetails[index]?.coverColor || { type: 'solid', color: '#FFFFFF' }}
+                              onChange={(color) => handleTierDetailChange(index, "coverColor", color)}
+                              coverType={tierDetails[index]?.coverType}
+                            />
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
               </div>
             )}
-
-            <div className="space-y-2">
-              <Label htmlFor="coverColor">Cover Color *</Label>
-              <ColorPicker 
-                value={coverColor}
-                onChange={handleCoverColorChange}
-              />
-            </div>
           </div>
         </CardContent>
       </Card>

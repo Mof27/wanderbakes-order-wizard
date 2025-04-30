@@ -1,10 +1,11 @@
+
 import { useState, useEffect } from "react";
 import { useApp } from "@/context/AppContext";
-import { Customer, Order, Ingredient, Address, TierDetail, PackingItem, CakeColor } from "@/types";
+import { Customer, Order, Ingredient, Address, TierDetail, PackingItem, CakeColor, CoverType } from "@/types";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/components/ui/sonner";
-import { cakeFlavors, cakeSizes, cakeColors, mockIngredients, areaOptions, cakeShapes, cakeTiers, defaultPackingItems } from "@/data/mockData";
+import { cakeFlavors, cakeSizes, mockIngredients, areaOptions, cakeShapes, cakeTiers, defaultPackingItems } from "@/data/mockData";
 import { Button } from "@/components/ui/button";
 import { baseColors } from "@/data/colorData";
 
@@ -42,6 +43,7 @@ const OrderForm = ({ order }: OrderFormProps) => {
   const [ingredients, setIngredients] = useState<Ingredient[]>(order?.ingredients || []);
   const [activeTab, setActiveTab] = useState("required");
   const [useSameFlavor, setUseSameFlavor] = useState(order?.useSameFlavor !== false);
+  const [useSameCover, setUseSameCover] = useState(order?.useSameCover !== false);
   const [packingItems, setPackingItems] = useState<PackingItem[]>(
     order?.packingItems || [...defaultPackingItems]
   );
@@ -71,6 +73,7 @@ const OrderForm = ({ order }: OrderFormProps) => {
     cakeShape: order?.cakeShape || "Round",
     cakeTier: order?.cakeTier || 1,
     coverColor: initialCoverColor,
+    coverType: order?.coverType || "buttercream" as CoverType,
     cakeText: order?.cakeText || "",
     greetingCard: order?.greetingCard || "",
     notes: order?.notes || "",
@@ -83,7 +86,9 @@ const OrderForm = ({ order }: OrderFormProps) => {
       tier: i + 1,
       shape: "Round",
       size: "16 CM",
-      flavor: cakeFlavor
+      flavor: cakeFlavor,
+      coverType: "buttercream",
+      coverColor: { type: 'solid', color: baseColors[0].value }
     }))
   );
 
@@ -124,6 +129,19 @@ const OrderForm = ({ order }: OrderFormProps) => {
     }
   }, [cakeFlavor, useSameFlavor]);
 
+  // Update tier cover details when main cover changes and useSameCover is true
+  useEffect(() => {
+    if (useSameCover) {
+      setTierDetails(prev => 
+        prev.map(tier => ({ 
+          ...tier, 
+          coverType: formData.coverType || "buttercream",
+          coverColor: formData.coverColor
+        }))
+      );
+    }
+  }, [formData.coverType, formData.coverColor, useSameCover]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -143,7 +161,9 @@ const OrderForm = ({ order }: OrderFormProps) => {
           ...updatedTierDetails[0],
           shape: formData.cakeShape,
           size: formData.cakeSize,
-          flavor: useSameFlavor ? cakeFlavor : ""
+          flavor: useSameFlavor ? cakeFlavor : "",
+          coverType: formData.coverType || "buttercream",
+          coverColor: formData.coverColor
         };
         
         // Initialize remaining tiers
@@ -153,7 +173,9 @@ const OrderForm = ({ order }: OrderFormProps) => {
             tier: tierIndex + 1,
             shape: "Round", // Default shape for additional tiers
             size: "16 CM",  // Default size for additional tiers
-            flavor: useSameFlavor ? cakeFlavor : ""
+            flavor: useSameFlavor ? cakeFlavor : "",
+            coverType: formData.coverType || "buttercream",
+            coverColor: formData.coverColor
           });
         }
         
@@ -168,7 +190,9 @@ const OrderForm = ({ order }: OrderFormProps) => {
               tier: newDetails.length + 1,
               shape: "Round",
               size: "16 CM",
-              flavor: useSameFlavor ? cakeFlavor : ""
+              flavor: useSameFlavor ? cakeFlavor : "",
+              coverType: formData.coverType || "buttercream",
+              coverColor: formData.coverColor
             });
           }
           return newDetails.slice(0, tierCount);
@@ -180,6 +204,17 @@ const OrderForm = ({ order }: OrderFormProps) => {
   // Handler for cover color changes
   const handleCoverColorChange = (value: CakeColor) => {
     setFormData(prev => ({ ...prev, coverColor: value }));
+  };
+
+  // Handler for cover type changes
+  const handleCoverTypeChange = (value: CoverType) => {
+    setFormData(prev => ({ ...prev, coverType: value }));
+
+    // If switching to fondant and using gradient, switch to solid
+    if (value === "fondant" && formData.coverColor.type === "gradient") {
+      const color = (formData.coverColor as any).colors?.[0] || baseColors[0].value;
+      handleCoverColorChange({ type: 'solid', color });
+    }
   };
 
   // Update dialog open state to initialize the form values correctly
@@ -250,9 +285,27 @@ const OrderForm = ({ order }: OrderFormProps) => {
   };
 
   // Handle tier detail changes
-  const handleTierDetailChange = (tierIndex: number, field: keyof TierDetail, value: string) => {
+  const handleTierDetailChange = (tierIndex: number, field: keyof TierDetail, value: string | CakeColor | CoverType) => {
     setTierDetails(prev => {
       const newDetails = [...prev];
+      
+      // Special handling for coverType
+      if (field === "coverType") {
+        const newType = value as CoverType;
+        const currentColor = newDetails[tierIndex].coverColor;
+        
+        // If switching to fondant and using gradient, switch to solid
+        if (newType === "fondant" && currentColor.type === "gradient") {
+          const color = (currentColor as any).colors?.[0] || baseColors[0].value;
+          newDetails[tierIndex] = {
+            ...newDetails[tierIndex],
+            coverType: newType,
+            coverColor: { type: 'solid', color }
+          };
+          return newDetails;
+        }
+      }
+      
       newDetails[tierIndex] = {
         ...newDetails[tierIndex],
         [field]: value
@@ -268,6 +321,21 @@ const OrderForm = ({ order }: OrderFormProps) => {
       // Set all tiers to the main cake flavor
       setTierDetails(prev => 
         prev.map(tier => ({ ...tier, flavor: cakeFlavor }))
+      );
+    }
+  };
+
+  // Toggle same cover for all tiers
+  const handleToggleSameCover = (checked: boolean) => {
+    setUseSameCover(checked);
+    if (checked) {
+      // Set all tiers to the main cover type and color
+      setTierDetails(prev => 
+        prev.map(tier => ({ 
+          ...tier, 
+          coverType: formData.coverType || "buttercream",
+          coverColor: formData.coverColor
+        }))
       );
     }
   };
@@ -309,6 +377,7 @@ const OrderForm = ({ order }: OrderFormProps) => {
       status: "draft" as const,
       tierDetails: formData.cakeTier > 1 ? tierDetails.slice(0, formData.cakeTier) : undefined,
       useSameFlavor,
+      useSameCover,
       packingItems,
       ...formData,
     };
@@ -336,6 +405,7 @@ const OrderForm = ({ order }: OrderFormProps) => {
       status: "confirmed" as const,
       tierDetails: formData.cakeTier > 1 ? tierDetails.slice(0, formData.cakeTier) : undefined,
       useSameFlavor,
+      useSameCover,
       packingItems,
       ...formData,
     };
@@ -364,6 +434,7 @@ const OrderForm = ({ order }: OrderFormProps) => {
       formData.cakeShape &&
       cakeFlavor &&
       formData.coverColor &&
+      formData.coverType &&
       formData.cakeDesign
     );
 
@@ -372,7 +443,10 @@ const OrderForm = ({ order }: OrderFormProps) => {
       const tiersFilled = tierDetails
         .slice(0, formData.cakeTier)
         .every(tier => 
-          tier.shape && tier.size && (useSameFlavor || tier.flavor)
+          tier.shape && tier.size && 
+          (useSameFlavor || tier.flavor) &&
+          tier.coverType && 
+          tier.coverColor
         );
       return baseRequirements && tiersFilled;
     }
@@ -432,19 +506,23 @@ const OrderForm = ({ order }: OrderFormProps) => {
                 cakeShape: formData.cakeShape,
                 cakeTier: formData.cakeTier,
                 coverColor: formData.coverColor,
+                coverType: formData.coverType,
               }}
               cakeFlavor={cakeFlavor}
               setCakeFlavor={setCakeFlavor}
               handleInputChange={handleInputChange}
               handleSelectChange={handleSelectChange}
               handleCoverColorChange={handleCoverColorChange}
+              handleCoverTypeChange={handleCoverTypeChange}
               cakeFlavors={cakeFlavors}
               cakeSizes={cakeSizes}
               cakeShapes={cakeShapes}
               cakeTiers={cakeTiers}
               tierDetails={tierDetails}
               useSameFlavor={useSameFlavor}
+              useSameCover={useSameCover}
               handleToggleSameFlavor={handleToggleSameFlavor}
+              handleToggleSameCover={handleToggleSameCover}
               handleTierDetailChange={handleTierDetailChange}
               setActiveTab={setActiveTab}
             />

@@ -1,3 +1,4 @@
+
 export type Address = {
   id: string;
   text: string;
@@ -22,11 +23,15 @@ export type Customer = {
   lastOrderDate?: Date;
 };
 
+export type CoverType = "buttercream" | "fondant";
+
 export type TierDetail = {
   tier: number;
   shape: string;
   size: string;
   flavor?: string;
+  coverType: CoverType;
+  coverColor: CakeColor;
 };
 
 export type PackingItem = {
@@ -35,7 +40,7 @@ export type PackingItem = {
   checked: boolean;
 };
 
-export type ColorType = 'solid' | 'gradient';
+export type ColorType = 'solid' | 'gradient' | 'custom';
 
 export interface SolidColor {
   type: 'solid';
@@ -47,7 +52,13 @@ export interface GradientColor {
   colors: string[];
 }
 
-export type CakeColor = SolidColor | GradientColor;
+export interface CustomColor {
+  type: 'custom';
+  notes: string;
+  imageUrl?: string;
+}
+
+export type CakeColor = SolidColor | GradientColor | CustomColor;
 
 export type Order = {
   id: string;
@@ -65,7 +76,9 @@ export type Order = {
   cakeTier: number;
   tierDetails?: TierDetail[];
   useSameFlavor: boolean;
-  coverColor: string | CakeColor; // Support both legacy string and new color structure
+  useSameCover?: boolean;
+  coverColor: CakeColor; // Support both legacy string and new color structure
+  coverType?: CoverType;
   cakeText?: string;
   greetingCard?: string;
   notes?: string;
