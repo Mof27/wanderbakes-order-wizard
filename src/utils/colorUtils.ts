@@ -38,3 +38,21 @@ export const getColorDisplayName = (color: string | CakeColor): string => {
     return `Custom: ${color.notes.substring(0, 20)}${color.notes.length > 20 ? '...' : ''}`;
   }
 };
+
+// New utility function to determine text color based on background color
+export const getContrastTextColor = (hexColor: string): string => {
+  // Remove the # if it exists
+  const hex = hexColor.replace('#', '');
+  
+  // Parse the color
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+  
+  // Calculate brightness
+  // Formula: (0.299*R + 0.587*G + 0.114*B)
+  const brightness = (r * 0.299 + g * 0.587 + b * 0.114);
+  
+  // Return white for dark colors and black for light colors
+  return brightness < 130 ? '#FFFFFF' : '#000000';
+};

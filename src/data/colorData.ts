@@ -2,9 +2,14 @@
 export const baseColors = [
   { name: "White", value: "#FFFFFF" },
   { name: "Pink", value: "#FFD1DC" },
-  { name: "Blue", value: "#D3E4FD" },
+  { name: "Light Blue", value: "#D3E4FD" },
   { name: "Gold", value: "#FFD700" },
   { name: "Black", value: "#000000" },
+  { name: "Soft Green", value: "#F2FCE2" },
+  { name: "Soft Yellow", value: "#FEF7CD" },
+  { name: "Soft Purple", value: "#E5DEFF" },
+  { name: "Soft Peach", value: "#FDE1D3" },
+  { name: "Ocean Blue", value: "#0EA5E9" },
 ];
 
 export const gradientPresets = [

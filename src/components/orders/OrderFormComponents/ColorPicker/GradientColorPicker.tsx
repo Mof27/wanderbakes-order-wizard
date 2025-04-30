@@ -3,6 +3,7 @@ import { useState } from "react";
 import { baseColors } from "@/data/colorData";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { getContrastTextColor } from "@/utils/colorUtils";
 
 interface GradientColorPickerProps {
   value: string[];
@@ -70,18 +71,24 @@ const GradientColorPicker = ({ value, onChange }: GradientColorPickerProps) => {
         {/* Top color picker */}
         <div className="space-y-2">
           <Label>Top Color</Label>
-          <div className="grid grid-cols-5 gap-2">
-            {baseColors.map((color) => (
-              <div
-                key={`top-${color.value}`}
-                className={`h-8 rounded-md cursor-pointer border-2 ${
-                  value[0] === color.value ? "border-primary" : "border-transparent"
-                }`}
-                style={{ backgroundColor: color.value }}
-                onClick={() => updateColor(0, color.value)}
-                title={color.name}
-              />
-            ))}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+            {baseColors.map((color) => {
+              const textColor = getContrastTextColor(color.value);
+              return (
+                <div
+                  key={`top-${color.value}`}
+                  className={`h-12 rounded-md cursor-pointer border-2 flex items-center justify-center ${
+                    value[0] === color.value ? "border-primary" : "border-transparent"
+                  }`}
+                  style={{ backgroundColor: color.value }}
+                  onClick={() => updateColor(0, color.value)}
+                >
+                  <span style={{ color: textColor, fontWeight: "500" }}>
+                    {color.name}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
 
@@ -89,18 +96,24 @@ const GradientColorPicker = ({ value, onChange }: GradientColorPickerProps) => {
         {colorCount === 3 && (
           <div className="space-y-2">
             <Label>Middle Color</Label>
-            <div className="grid grid-cols-5 gap-2">
-              {baseColors.map((color) => (
-                <div
-                  key={`middle-${color.value}`}
-                  className={`h-8 rounded-md cursor-pointer border-2 ${
-                    value[1] === color.value ? "border-primary" : "border-transparent"
-                  }`}
-                  style={{ backgroundColor: color.value }}
-                  onClick={() => updateColor(1, color.value)}
-                  title={color.name}
-                />
-              ))}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+              {baseColors.map((color) => {
+                const textColor = getContrastTextColor(color.value);
+                return (
+                  <div
+                    key={`middle-${color.value}`}
+                    className={`h-12 rounded-md cursor-pointer border-2 flex items-center justify-center ${
+                      value[1] === color.value ? "border-primary" : "border-transparent"
+                    }`}
+                    style={{ backgroundColor: color.value }}
+                    onClick={() => updateColor(1, color.value)}
+                  >
+                    <span style={{ color: textColor, fontWeight: "500" }}>
+                      {color.name}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
@@ -108,18 +121,24 @@ const GradientColorPicker = ({ value, onChange }: GradientColorPickerProps) => {
         {/* Bottom color picker */}
         <div className="space-y-2">
           <Label>Bottom Color</Label>
-          <div className="grid grid-cols-5 gap-2">
-            {baseColors.map((color) => (
-              <div
-                key={`bottom-${color.value}`}
-                className={`h-8 rounded-md cursor-pointer border-2 ${
-                  value[colorCount === 2 ? 1 : 2] === color.value ? "border-primary" : "border-transparent"
-                }`}
-                style={{ backgroundColor: color.value }}
-                onClick={() => updateColor(colorCount === 2 ? 1 : 2, color.value)}
-                title={color.name}
-              />
-            ))}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+            {baseColors.map((color) => {
+              const textColor = getContrastTextColor(color.value);
+              return (
+                <div
+                  key={`bottom-${color.value}`}
+                  className={`h-12 rounded-md cursor-pointer border-2 flex items-center justify-center ${
+                    value[colorCount === 2 ? 1 : 2] === color.value ? "border-primary" : "border-transparent"
+                  }`}
+                  style={{ backgroundColor: color.value }}
+                  onClick={() => updateColor(colorCount === 2 ? 1 : 2, color.value)}
+                >
+                  <span style={{ color: textColor, fontWeight: "500" }}>
+                    {color.name}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
