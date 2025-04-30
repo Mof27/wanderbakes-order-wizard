@@ -1,6 +1,6 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 
 interface SettingsLayoutProps {
@@ -17,6 +17,35 @@ const SettingsLayout = ({
   activeTab
 }: SettingsLayoutProps) => {
   const { category } = useParams<{ category: string }>();
+  const [selectedTab, setSelectedTab] = useState<string>(activeTab || getCategoryDefaultTab());
+  
+  // Get category-specific default tab
+  function getCategoryDefaultTab() {
+    switch (category) {
+      case "cake-properties":
+        return "cake-sizes";
+      case "printing-templates":
+        return "print-form";
+      default:
+        return defaultTab;
+    }
+  }
+
+  // Update the tab when the category changes
+  useEffect(() => {
+    const newDefaultTab = getCategoryDefaultTab();
+    setSelectedTab(newDefaultTab);
+    if (onTabChange) {
+      onTabChange(newDefaultTab);
+    }
+  }, [category]);
+
+  const handleTabChange = (value: string) => {
+    setSelectedTab(value);
+    if (onTabChange) {
+      onTabChange(value);
+    }
+  };
 
   // Determine which tabs to show based on the category
   const renderTabs = () => {
@@ -50,25 +79,12 @@ const SettingsLayout = ({
         );
     }
   };
-  
-  // Get category-specific default tab
-  const getCategoryDefaultTab = () => {
-    switch (category) {
-      case "cake-properties":
-        return "cake-sizes";
-      case "printing-templates":
-        return "print-form";
-      default:
-        return defaultTab;
-    }
-  };
 
   return (
     <div className="space-y-6">
       <Tabs 
-        defaultValue={getCategoryDefaultTab()} 
-        value={activeTab}
-        onValueChange={onTabChange}
+        value={selectedTab} 
+        onValueChange={handleTabChange}
         className="w-full"
       >
         {renderTabs()}

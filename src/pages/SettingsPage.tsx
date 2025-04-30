@@ -66,13 +66,8 @@ const SettingsDashboard = () => {
 };
 
 const SettingsPage = () => {
-  const [activeTab, setActiveTab] = useState<string>("cake-sizes");
   const location = useLocation();
   
-  const handleTabChange = (tab: string) => {
-    setActiveTab(tab);
-  };
-
   // On the main settings page, render the dashboard
   if (location.pathname === "/settings") {
     return <SettingsDashboard />;
