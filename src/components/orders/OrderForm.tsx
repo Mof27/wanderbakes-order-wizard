@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useApp } from "@/context/AppContext";
 import { Customer, Order, Ingredient, Address, TierDetail, PackingItem, CakeColor, CoverType, SettingsData, DeliveryMethod } from "@/types";
@@ -22,6 +21,7 @@ import NotesSection from "./OrderFormComponents/NotesSection";
 import IngredientsSection from "./OrderFormComponents/IngredientsSection";
 import AddNewAddressDialog from "./OrderFormComponents/AddNewAddressDialog";
 import ActionButtons from "./OrderFormComponents/ActionButtons";
+import OrderPrintButton from "./OrderPrintButton";
 
 interface OrderFormProps {
   order?: Order;
@@ -512,6 +512,25 @@ const OrderForm = ({ order, settings }: OrderFormProps) => {
     navigate("/orders");
   };
 
+  // Create a complete order object for printing
+  const getCompleteOrderData = (): Partial<Order> => {
+    return {
+      ...(order || {}),
+      id: order?.id,
+      customer,
+      orderDate,
+      deliveryDate,
+      cakeFlavor,
+      ingredients,
+      tierDetails: formData.cakeTier > 1 ? tierDetails.slice(0, formData.cakeTier) : undefined,
+      customShape: formData.cakeShape === "Custom" ? formData.customShape : undefined,
+      deliveryMethod,
+      deliveryTimeSlot,
+      deliveryPrice,
+      ...formData,
+    };
+  };
+
   // Find the selected address for display
   const selectedAddress = customer && selectedAddressId !== "new" 
     ? customer.addresses.find(addr => addr.id === selectedAddressId) 
@@ -606,6 +625,13 @@ const OrderForm = ({ order, settings }: OrderFormProps) => {
                 areaOptions={areaOptions}
                 openNewAddressDialog={openNewAddressDialog}
               />
+              
+              {/* Add print button for new orders */}
+              {!order && customer && deliveryDate && formData.cakePrice > 0 && (
+                <div className="mt-4">
+                  <OrderPrintButton order={getCompleteOrderData()} />
+                </div>
+              )}
             </div>
 
             <CakeDetailsSection 
@@ -694,6 +720,7 @@ const OrderForm = ({ order, settings }: OrderFormProps) => {
         isFormValid={areRequiredFieldsFilled()}
         handleSaveDraft={handleSaveDraft}
         handleSubmitOrder={handleSubmitOrder}
+        formData={getCompleteOrderData()}
       />
     </div>
   );

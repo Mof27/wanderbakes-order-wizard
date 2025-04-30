@@ -61,3 +61,26 @@
     @apply bg-primary text-primary-foreground font-medium;
   }
 }
+
+/* Print styles */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  
+  .print-container,
+  .print-container * {
+    visibility: visible;
+  }
+  
+  .print-container {
+    position: absolute;
+    left: 0;
+    top: 0;
+  }
+  
+  @page {
+    size: A5 portrait;
+    margin: 5mm;
+  }
+}
