@@ -1,5 +1,5 @@
 
-import React, { forwardRef } from "react";
+import React, { forwardRef, useEffect } from "react";
 import { DeliveryLabelTemplate, Order, DeliveryLabelSection, DeliveryLabelField } from "@/types";
 import { formatCurrency, formatDate, formatTimeSlot } from "@/lib/utils";
 import { get } from "lodash";
@@ -14,6 +14,19 @@ interface DeliveryLabelTemplateRendererProps {
 
 export const DeliveryLabelTemplateRenderer = forwardRef<HTMLDivElement, DeliveryLabelTemplateRendererProps>(
   ({ template, order, isPreviewing = false }, ref) => {
+    useEffect(() => {
+      console.log("DeliveryLabelTemplateRenderer mounted", { 
+        hasTemplate: !!template, 
+        templateSections: template?.sections?.length,
+        hasOrder: !!order,
+        isPreviewing
+      });
+      
+      return () => {
+        console.log("DeliveryLabelTemplateRenderer unmounted");
+      };
+    }, [template, order, isPreviewing]);
+    
     // Get nested properties safely
     const getFieldValue = (fieldKey?: string): string | number | React.ReactNode => {
       if (!fieldKey) return "";
