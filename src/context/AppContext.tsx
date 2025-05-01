@@ -10,6 +10,7 @@ interface AppContextProps {
   activeStatusFilter: FilterOption;
   activeTimeFilter: FilterOption;
   viewMode: ViewMode;
+  searchQuery: string;
   addCustomer: (customer: Omit<Customer, 'id' | 'createdAt'>) => Promise<Customer>;
   updateCustomer: (customer: Customer) => Promise<Customer>;
   findCustomerByWhatsApp: (whatsappNumber: string) => Promise<Customer | undefined>;
@@ -19,6 +20,7 @@ interface AppContextProps {
   setActiveStatusFilter: (filter: FilterOption) => void;
   setActiveTimeFilter: (filter: FilterOption) => void;
   setViewMode: (mode: ViewMode) => void;
+  setSearchQuery: (query: string) => void;
   filteredOrders: Order[];
   isLoading: boolean;
   getOrderById: (id: string) => Order | undefined;
@@ -32,6 +34,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [activeStatusFilter, setActiveStatusFilter] = useState<FilterOption>(statusFilterOptions[0]);
   const [activeTimeFilter, setActiveTimeFilter] = useState<FilterOption>(timeFilterOptions[0]);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // Load initial data
@@ -141,6 +144,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // Filter orders
   const filteredOrders = orders.filter((order) => {
+    // Search query filtering
+    if (searchQuery && !order.id.toLowerCase().includes(searchQuery.toLowerCase())) {
+      return false;
+    }
+
     // Status filtering
     if (activeStatusFilter.value !== 'all' && order.status !== activeStatusFilter.value) {
       return false;
@@ -182,6 +190,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     activeStatusFilter,
     activeTimeFilter,
     viewMode,
+    searchQuery,
     addCustomer,
     updateCustomer,
     findCustomerByWhatsApp,
@@ -191,6 +200,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setActiveStatusFilter,
     setActiveTimeFilter,
     setViewMode,
+    setSearchQuery,
     filteredOrders,
     isLoading,
     getOrderById,

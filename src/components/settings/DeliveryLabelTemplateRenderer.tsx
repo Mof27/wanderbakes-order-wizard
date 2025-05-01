@@ -1,4 +1,3 @@
-
 import React, { forwardRef, useEffect } from "react";
 import { DeliveryLabelTemplate, Order, DeliveryLabelSection, DeliveryLabelField } from "@/types";
 import { formatCurrency, formatDate, formatTimeSlot } from "@/lib/utils";
@@ -31,13 +30,10 @@ export const DeliveryLabelTemplateRenderer = forwardRef<HTMLDivElement, Delivery
     const getFieldValue = (fieldKey?: string): string | number | React.ReactNode => {
       if (!fieldKey) return "";
       
-      // Special handler for order URL (for QR code)
-      if (fieldKey === "orderUrl") {
-        const orderId = order.id;
-        if (!orderId && !isPreviewing) return "";
-        // Create an absolute URL to the order edit page
-        const baseUrl = window.location.origin;
-        return `${baseUrl}/orders/${orderId}/edit`;
+      // Special handler for order ID (for QR code)
+      if (fieldKey === "orderUrl" || fieldKey === "id") {
+        // Return just the order ID for QR code scanning and searching
+        return order.id || (isPreviewing ? "sample-id" : "");
       }
       
       // Special handler for customer phone with WhatsApp deep link

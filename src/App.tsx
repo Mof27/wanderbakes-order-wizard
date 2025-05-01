@@ -13,6 +13,7 @@ import EditOrderPage from "./pages/EditOrderPage";
 import CustomersPage from "./pages/CustomersPage";
 import CustomerOrdersPage from "./pages/CustomerOrdersPage";
 import SettingsPage from "./pages/SettingsPage";
+import ScanQrPage from "./pages/ScanQrPage";
 import NotFound from "./pages/NotFound";
 import { AppProvider } from "./context/AppContext";
 import { useEffect } from "react";
@@ -77,6 +78,11 @@ const App = () => {
                 <Route path="/orders/:id" element={
                   <MainLayout>
                     <EditOrderPage />
+                  </MainLayout>
+                } />
+                <Route path="/orders/scan" element={
+                  <MainLayout>
+                    <ScanQrPage />
                   </MainLayout>
                 } />
                 <Route path="/customers" element={

@@ -5,11 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Order } from "@/types";
 import OrderCard from "./OrderCard";
 import OrderTableRow from "./OrderTableRow";
-import { Plus, List, LayoutGrid } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Plus, List, LayoutGrid, Search, QrCode } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { statusFilterOptions, timeFilterOptions } from "@/data/mockData";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
 
 const OrderList = () => {
   const { 
@@ -19,8 +20,19 @@ const OrderList = () => {
     setActiveStatusFilter, 
     setActiveTimeFilter,
     viewMode,
-    setViewMode
+    setViewMode,
+    searchQuery,
+    setSearchQuery,
   } = useApp();
+  const navigate = useNavigate();
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const clearSearch = () => {
+    setSearchQuery("");
+  };
 
   return (
     <div className="space-y-4">
@@ -32,6 +44,32 @@ const OrderList = () => {
             New Order
           </Button>
         </Link>
+      </div>
+
+      {/* Search input */}
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search order by ID..."
+            className="pl-8"
+            value={searchQuery}
+            onChange={handleSearchChange}
+          />
+        </div>
+        {searchQuery && (
+          <Button variant="ghost" onClick={clearSearch} className="h-10">
+            Clear
+          </Button>
+        )}
+        <Button
+          variant="outline"
+          className="flex gap-2"
+          onClick={() => navigate("/orders/scan")}
+        >
+          <QrCode className="h-4 w-4" />
+          <span className="hidden sm:inline">Scan QR Code</span>
+        </Button>
       </div>
 
       <div className="flex flex-col space-y-4 md:flex-row md:space-y-0 md:space-x-2">
