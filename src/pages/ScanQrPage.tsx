@@ -1,14 +1,15 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, QrCode } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import QrCodeScannerDialog from "@/components/orders/QrCodeScannerDialog";
 
-// This component is no longer needed as we're now using native camera apps
-// but we'll keep a simplified version that just redirects to orders with search
 const ScanQrPage = () => {
   const [orderIdInput, setOrderIdInput] = useState("");
+  const [isQrScannerOpen, setIsQrScannerOpen] = useState(false);
   const navigate = useNavigate();
   
   const handleGoBack = () => {
@@ -19,6 +20,12 @@ const ScanQrPage = () => {
     e.preventDefault();
     if (orderIdInput.trim()) {
       navigate(`/orders?id=${orderIdInput.trim()}`);
+    }
+  };
+
+  const handleScanSuccess = (orderId: string) => {
+    if (orderId) {
+      navigate(`/orders?id=${orderId}`);
     }
   };
 
@@ -34,13 +41,32 @@ const ScanQrPage = () => {
       
       <Card className="max-w-md mx-auto">
         <CardHeader>
-          <CardTitle>Enter Order ID</CardTitle>
+          <CardTitle>Find an Order</CardTitle>
           <CardDescription>
-            For a better experience, scan QR codes directly with your phone's camera app.
+            Scan a QR code directly or enter an order ID manually.
             Order IDs are in MM-YY-XXX format (e.g., 05-25-001 for May 2025, order #1).
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
+          <Button 
+            onClick={() => setIsQrScannerOpen(true)} 
+            className="w-full flex items-center justify-center gap-2"
+          >
+            <QrCode className="h-4 w-4" />
+            Scan QR Code
+          </Button>
+          
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">
+                Or
+              </span>
+            </div>
+          </div>
+          
           <form onSubmit={handleSearch} className="space-y-4">
             <div className="space-y-2">
               <label htmlFor="orderId" className="text-sm font-medium">
@@ -54,12 +80,19 @@ const ScanQrPage = () => {
               />
             </div>
             
-            <Button type="submit" className="w-full">
+            <Button type="submit" variant="outline" className="w-full">
               Search Order
             </Button>
           </form>
         </CardContent>
       </Card>
+
+      {/* QR Scanner Dialog */}
+      <QrCodeScannerDialog
+        isOpen={isQrScannerOpen}
+        onClose={() => setIsQrScannerOpen(false)}
+        onScanSuccess={handleScanSuccess}
+      />
     </div>
   );
 };

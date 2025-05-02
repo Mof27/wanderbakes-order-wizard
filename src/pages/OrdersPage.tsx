@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useApp } from "@/context/AppContext";
 import { toast } from "@/components/ui/sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Check, X } from "lucide-react";
+import { Check, X, QrCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const OrdersPage = () => {
@@ -77,6 +77,7 @@ const OrdersPage = () => {
       <p className="text-muted-foreground mb-4">
         Order IDs now show month and year (MM-YY-XXX format) to easily track when orders were placed.
         QR codes on printed orders can be scanned with any phone's camera app to quickly find them here.
+        Click the <QrCode className="inline h-3 w-3 mx-1" /> icon to scan QR codes directly in the app.
       </p>
       <OrderList />
     </div>

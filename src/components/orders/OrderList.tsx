@@ -1,16 +1,16 @@
-
 import { useState } from "react";
 import { useApp } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
 import { Order } from "@/types";
 import OrderCard from "./OrderCard";
 import OrderTableRow from "./OrderTableRow";
-import { Plus, List, LayoutGrid, Search, X } from "lucide-react";
+import { Plus, List, LayoutGrid, Search, X, QrCode } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { statusFilterOptions, timeFilterOptions } from "@/data/mockData";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
+import QrCodeScannerDialog from "./QrCodeScannerDialog";
 
 const OrderList = () => {
   const { 
@@ -25,6 +25,7 @@ const OrderList = () => {
     setSearchQuery,
   } = useApp();
   const navigate = useNavigate();
+  const [isQrScannerOpen, setIsQrScannerOpen] = useState(false);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
@@ -36,6 +37,13 @@ const OrderList = () => {
     const currentUrl = new URL(window.location.href);
     if (currentUrl.searchParams.has('id')) {
       navigate('/orders');
+    }
+  };
+
+  const handleScanSuccess = (orderId: string) => {
+    if (orderId) {
+      setSearchQuery(orderId);
+      // Close the scanner dialog (already handled in component)
     }
   };
 
@@ -51,24 +59,35 @@ const OrderList = () => {
         </Link>
       </div>
 
-      {/* Search input */}
-      <div className="relative">
-        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search order by ID or customer name..."
-          className="pl-8"
-          value={searchQuery}
-          onChange={handleSearchChange}
-          autoFocus={!!searchQuery} // Auto focus if there's a search query
-        />
-        {searchQuery && (
-          <button 
-            onClick={clearSearch}
-            className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        )}
+      {/* Search input with QR button */}
+      <div className="relative flex items-center gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search order by ID or customer name..."
+            className="pl-8"
+            value={searchQuery}
+            onChange={handleSearchChange}
+            autoFocus={!!searchQuery} // Auto focus if there's a search query
+          />
+          {searchQuery && (
+            <button 
+              onClick={clearSearch}
+              className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+        <Button
+          variant="outline"
+          size="icon"
+          className="flex-shrink-0"
+          onClick={() => setIsQrScannerOpen(true)}
+          title="Scan QR Code"
+        >
+          <QrCode className="h-4 w-4" />
+        </Button>
       </div>
 
       <div className="flex flex-col space-y-4 md:flex-row md:space-y-0 md:space-x-2">
@@ -168,6 +187,13 @@ const OrderList = () => {
           </>
         )}
       </div>
+
+      {/* QR Scanner Dialog */}
+      <QrCodeScannerDialog
+        isOpen={isQrScannerOpen}
+        onClose={() => setIsQrScannerOpen(false)}
+        onScanSuccess={handleScanSuccess}
+      />
     </div>
   );
 };
