@@ -1,4 +1,3 @@
-
 import { Order, OrderStatus, PrintEvent } from "@/types";
 import { BaseRepository } from "./base.repository";
 
@@ -13,28 +12,51 @@ export class MockOrderRepository implements OrderRepository {
   private orders: Order[] = [];
 
   constructor(initialData: Order[] = []) {
-    this.orders = [...initialData];
-    
-    // Transform any legacy data
-    this.orders = this.orders.map(order => {
+    // First, transform any legacy data
+    const transformedOrders = initialData.map(order => {
       // Handle conversion from totalPrice to cakePrice
-      if (!order.cakePrice && (order as any).totalPrice) {
-        return {
-          ...order,
-          cakePrice: (order as any).totalPrice
+      let updatedOrder = order;
+      if (!updatedOrder.cakePrice && (updatedOrder as any).totalPrice) {
+        updatedOrder = {
+          ...updatedOrder,
+          cakePrice: (updatedOrder as any).totalPrice
         };
       }
       
       // Ensure printHistory exists
-      if (!order.printHistory) {
-        return {
-          ...order,
+      if (!updatedOrder.printHistory) {
+        updatedOrder = {
+          ...updatedOrder,
           printHistory: []
         };
       }
       
-      return order;
+      // Convert old order ID format (o1, o2, etc.) to the new MM-YY-XXX format
+      if (updatedOrder.id && (updatedOrder.id.startsWith('o') || !updatedOrder.id.includes('-'))) {
+        const createdAt = updatedOrder.createdAt || new Date();
+        const month = String(createdAt.getMonth() + 1).padStart(2, '0');
+        const year = String(createdAt.getFullYear()).slice(-2);
+        
+        // Extract number from old format or use index if not available
+        let sequenceNum = 1;
+        if (updatedOrder.id.startsWith('o')) {
+          sequenceNum = parseInt(updatedOrder.id.substring(1)) || 1;
+        }
+        
+        const sequence = String(sequenceNum).padStart(3, '0');
+        updatedOrder = {
+          ...updatedOrder,
+          id: `${month}-${year}-${sequence}`
+        };
+      }
+      
+      return updatedOrder;
     });
+    
+    // Sort by createdAt to ensure newer orders come first
+    this.orders = transformedOrders.sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
   }
 
   async getAll(): Promise<Order[]> {
