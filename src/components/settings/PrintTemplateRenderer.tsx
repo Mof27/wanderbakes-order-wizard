@@ -19,11 +19,8 @@ export const PrintTemplateRenderer = forwardRef<HTMLDivElement, PrintTemplateRen
       
       // Special handler for order URL (for QR code)
       if (fieldKey === "orderUrl") {
-        const orderId = order.id;
-        if (!orderId && !isPreviewing) return "";
-        // Create an absolute URL to the order edit page
-        const baseUrl = window.location.origin;
-        return `${baseUrl}/orders/${orderId}/edit`;
+        // Just use the order ID for QR code instead of deep link
+        return order.id || (isPreviewing ? "05-25-001" : "");
       }
       
       // Special handler for total price (calculated field)
@@ -209,9 +206,7 @@ export const PrintTemplateRenderer = forwardRef<HTMLDivElement, PrintTemplateRen
 
     // Fixed header with QR code at top right
     const renderFixedHeader = () => {
-      const orderId = order.id || (isPreviewing ? "ORD12345" : "");
-      // Make sure we use an absolute URL with origin
-      const orderUrl = `${window.location.origin}/orders/${orderId}/edit`;
+      const orderId = order.id || (isPreviewing ? "05-25-001" : "");
       
       return (
         <div className="flex justify-between items-start mb-4 border-b pb-3">
@@ -224,7 +219,7 @@ export const PrintTemplateRenderer = forwardRef<HTMLDivElement, PrintTemplateRen
           
           <div className="flex flex-col items-end">
             <QRCodeSVG 
-              value={orderUrl} 
+              value={orderId} 
               size={80} 
               level="M"
               className="border p-1 bg-white"
@@ -248,7 +243,7 @@ export const PrintTemplateRenderer = forwardRef<HTMLDivElement, PrintTemplateRen
       >
         {/* Fixed header with title and QR */}
         {renderFixedHeader()}
-
+        
         {/* Custom sections */}
         <div className="space-y-4">
           {template.sections

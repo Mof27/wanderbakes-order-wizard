@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Order } from "@/types";
 import OrderCard from "./OrderCard";
 import OrderTableRow from "./OrderTableRow";
-import { Plus, List, LayoutGrid, Search, QrCode } from "lucide-react";
+import { Plus, List, LayoutGrid, Search, QrCode, X } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { statusFilterOptions, timeFilterOptions } from "@/data/mockData";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +32,11 @@ const OrderList = () => {
 
   const clearSearch = () => {
     setSearchQuery("");
+    // Clear the URL param if it exists
+    const currentUrl = new URL(window.location.href);
+    if (currentUrl.searchParams.has('id')) {
+      navigate('/orders');
+    }
   };
 
   return (
@@ -56,12 +61,15 @@ const OrderList = () => {
             value={searchQuery}
             onChange={handleSearchChange}
           />
+          {searchQuery && (
+            <button 
+              onClick={clearSearch}
+              className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
-        {searchQuery && (
-          <Button variant="ghost" onClick={clearSearch} className="h-10">
-            Clear
-          </Button>
-        )}
         <Button
           variant="outline"
           className="flex gap-2"
@@ -130,7 +138,11 @@ const OrderList = () => {
       <div>
         {filteredOrders.length === 0 ? (
           <div className="text-center py-10">
-            <p className="text-muted-foreground">No orders found</p>
+            <p className="text-muted-foreground">
+              {searchQuery 
+                ? `No orders found for search "${searchQuery}"` 
+                : "No orders found with current filters"}
+            </p>
           </div>
         ) : (
           <>
