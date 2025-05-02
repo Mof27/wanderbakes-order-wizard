@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Order } from "@/types";
 import OrderCard from "./OrderCard";
 import OrderTableRow from "./OrderTableRow";
-import { Plus, List, LayoutGrid, Search, QrCode, X } from "lucide-react";
+import { Plus, List, LayoutGrid, Search, X } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { statusFilterOptions, timeFilterOptions } from "@/data/mockData";
 import { Badge } from "@/components/ui/badge";
@@ -52,32 +52,23 @@ const OrderList = () => {
       </div>
 
       {/* Search input */}
-      <div className="flex gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search order by ID..."
-            className="pl-8"
-            value={searchQuery}
-            onChange={handleSearchChange}
-          />
-          {searchQuery && (
-            <button 
-              onClick={clearSearch}
-              className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          )}
-        </div>
-        <Button
-          variant="outline"
-          className="flex gap-2"
-          onClick={() => navigate("/orders/scan")}
-        >
-          <QrCode className="h-4 w-4" />
-          <span className="hidden sm:inline">Scan QR Code</span>
-        </Button>
+      <div className="relative">
+        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search order by ID or customer name..."
+          className="pl-8"
+          value={searchQuery}
+          onChange={handleSearchChange}
+          autoFocus={!!searchQuery} // Auto focus if there's a search query
+        />
+        {searchQuery && (
+          <button 
+            onClick={clearSearch}
+            className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
       <div className="flex flex-col space-y-4 md:flex-row md:space-y-0 md:space-x-2">

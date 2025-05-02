@@ -19,8 +19,14 @@ export const PrintTemplateRenderer = forwardRef<HTMLDivElement, PrintTemplateRen
       
       // Special handler for order URL (for QR code)
       if (fieldKey === "orderUrl") {
-        // Just use the order ID for QR code instead of deep link
-        return order.id || (isPreviewing ? "05-25-001" : "");
+        // Generate a complete URL that can be directly opened when scanned
+        const orderId = order.id || (isPreviewing ? "05-25-001" : "");
+        // Use window.location to get the base URL of the app
+        const baseUrl = typeof window !== 'undefined' ? 
+          `${window.location.protocol}//${window.location.host}` : 
+          'https://app.example.com';
+        
+        return `${baseUrl}/orders?id=${orderId}`;
       }
       
       // Special handler for total price (calculated field)
@@ -174,6 +180,11 @@ export const PrintTemplateRenderer = forwardRef<HTMLDivElement, PrintTemplateRen
                   />
                 }
               </div>
+              {field.fieldKey === "orderUrl" && (
+                <div className="text-xs text-gray-500 mt-1">
+                  Scan with any camera app
+                </div>
+              )}
             </div>
           );
         }
@@ -208,6 +219,12 @@ export const PrintTemplateRenderer = forwardRef<HTMLDivElement, PrintTemplateRen
     const renderFixedHeader = () => {
       const orderId = order.id || (isPreviewing ? "05-25-001" : "");
       
+      // Generate the full URL for the QR code
+      const baseUrl = typeof window !== 'undefined' ? 
+        `${window.location.protocol}//${window.location.host}` : 
+        'https://app.example.com';
+      const orderUrl = `${baseUrl}/orders?id=${orderId}`;
+      
       return (
         <div className="flex justify-between items-start mb-4 border-b pb-3">
           <div className="text-left">
@@ -219,12 +236,12 @@ export const PrintTemplateRenderer = forwardRef<HTMLDivElement, PrintTemplateRen
           
           <div className="flex flex-col items-end">
             <QRCodeSVG 
-              value={orderId} 
+              value={orderUrl} 
               size={80} 
               level="M"
               className="border p-1 bg-white"
             />
-            <p className="text-xs text-center mt-1">Order QR</p>
+            <p className="text-xs text-center mt-1">Scan with camera app</p>
           </div>
         </div>
       );

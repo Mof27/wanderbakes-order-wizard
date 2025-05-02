@@ -28,6 +28,8 @@ const OrdersPage = () => {
       
       if (!orderExists) {
         toast.error(`Order with ID ${idFromQR} not found`);
+      } else {
+        toast.success(`Order #${idFromQR} found`);
       }
     }
   }, [idFromQR, setSearchQuery, getOrderById]);
@@ -74,7 +76,7 @@ const OrdersPage = () => {
       
       <p className="text-muted-foreground mb-4">
         Order IDs now show month and year (MM-YY-XXX format) to easily track when orders were placed.
-        Scan the QR code on order forms to quickly find orders.
+        QR codes on printed orders can be scanned with any phone's camera app to quickly find them here.
       </p>
       <OrderList />
     </div>
