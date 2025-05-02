@@ -47,13 +47,29 @@ export class MockOrderRepository implements OrderRepository {
 
   async create(order: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>): Promise<Order> {
     const now = new Date();
+    
+    // Generate a month-year based ID: MM-YY-XXX
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const year = String(now.getFullYear()).slice(-2);
+    
+    // Count existing orders in this month/year to determine the sequence number
+    const monthYearPrefix = `${month}-${year}`;
+    const existingOrdersThisMonth = this.orders.filter(o => 
+      o.id.startsWith(monthYearPrefix)
+    ).length;
+    
+    // Create sequence number with padding (e.g., 001, 002, etc.)
+    const sequence = String(existingOrdersThisMonth + 1).padStart(3, '0');
+    const orderId = `${monthYearPrefix}-${sequence}`;
+    
     const newOrder = {
       ...order,
-      id: `o${this.orders.length + 1}`,
+      id: orderId,
       createdAt: now,
       updatedAt: now,
       printHistory: []
     };
+    
     this.orders.unshift(newOrder); // Add to the beginning for newest first
     return newOrder;
   }

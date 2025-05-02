@@ -18,6 +18,10 @@ const OrdersPage = () => {
 
   return (
     <div className="space-y-6">
+      <h1 className="text-2xl font-semibold">Orders</h1>
+      <p className="text-muted-foreground mb-4">
+        Order IDs now show month and year (MM-YY-XXX format) to easily track when orders were placed.
+      </p>
       <OrderList />
     </div>
   );
