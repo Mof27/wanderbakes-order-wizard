@@ -3,7 +3,7 @@ import { Order } from "@/types";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Edit, Trash2, Upload } from "lucide-react";
+import { Edit, Truck, Trash2, Upload, CheckCircle2 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { formatDate, formatCurrency } from "@/lib/utils";
 import OrderStatusDropdown from "./OrderStatusDropdown";
@@ -14,16 +14,20 @@ interface OrderCardProps {
 
 const getStatusColor = (status: string) => {
   switch (status) {
-    case "draft":
+    case "incomplete":
       return "bg-gray-200 text-gray-800";
     case "in-queue":
       return "bg-blue-100 text-blue-800";
     case "in-kitchen":
       return "bg-yellow-100 text-yellow-800";
-    case "ready":
-      return "bg-green-100 text-green-800";
-    case "delivered":
+    case "waiting-photo":
       return "bg-purple-100 text-purple-800";
+    case "ready-to-deliver":
+      return "bg-green-100 text-green-800";
+    case "in-delivery":
+      return "bg-orange-100 text-orange-800";
+    case "delivery-confirmed":
+      return "bg-teal-100 text-teal-800";
     case "cancelled":
       return "bg-red-100 text-red-800";
     default:
@@ -34,8 +38,43 @@ const getStatusColor = (status: string) => {
 const OrderCard = ({ order }: OrderCardProps) => {
   const { deleteOrder } = useApp();
   
-  // Determine if this order is waiting for photos to be uploaded
-  const isWaitingPhoto = order.status === "waiting-photo";
+  // Determine context-specific action button based on status
+  const getActionButton = () => {
+    switch (order.status) {
+      case "waiting-photo":
+        return (
+          <Link to={`/orders/${order.id}?tab=delivery-recap`}>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="bg-purple-100 text-purple-800 hover:bg-purple-200"
+            >
+              <Upload className="h-4 w-4 mr-1" /> Upload Photos
+            </Button>
+          </Link>
+        );
+      case "in-delivery":
+        return (
+          <Link to={`/orders/${order.id}?tab=delivery-recap`}>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="bg-orange-100 text-orange-800 hover:bg-orange-200"
+            >
+              <Truck className="h-4 w-4 mr-1" /> Confirm Delivery
+            </Button>
+          </Link>
+        );
+      default:
+        return (
+          <Link to={`/orders/${order.id}`}>
+            <Button variant="outline" size="sm" className="bg-cake-primary hover:bg-cake-primary/80 text-cake-text">
+              <Edit className="h-4 w-4 mr-1" /> Edit
+            </Button>
+          </Link>
+        );
+    }
+  };
 
   return (
     <Card className="overflow-hidden">
@@ -92,23 +131,7 @@ const OrderCard = ({ order }: OrderCardProps) => {
           <Trash2 className="h-4 w-4" />
         </Button>
         
-        {isWaitingPhoto ? (
-          <Link to={`/orders/${order.id}?tab=delivery-recap`}>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="bg-purple-100 text-purple-800 hover:bg-purple-200"
-            >
-              <Upload className="h-4 w-4 mr-1" /> Upload Photos
-            </Button>
-          </Link>
-        ) : (
-          <Link to={`/orders/${order.id}`}>
-            <Button variant="outline" size="sm" className="bg-cake-primary hover:bg-cake-primary/80 text-cake-text">
-              <Edit className="h-4 w-4 mr-1" /> Edit
-            </Button>
-          </Link>
-        )}
+        {getActionButton()}
       </CardFooter>
     </Card>
   );

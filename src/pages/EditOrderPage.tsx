@@ -16,7 +16,7 @@ const EditOrderPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { orders } = useApp();
+  const { orders, updateOrder } = useApp();
   const [order, setOrder] = useState(id ? orders.find(o => o.id === id) : null);
   const [settings, setSettings] = useState<SettingsData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -46,6 +46,19 @@ const EditOrderPage = () => {
       setOrder(currentOrder || null);
     }
   }, [id, orders]);
+
+  const handleStatusUpdate = async (newStatus) => {
+    if (order) {
+      try {
+        await updateOrder({
+          ...order,
+          status: newStatus
+        });
+      } catch (error) {
+        console.error("Failed to update order status", error);
+      }
+    }
+  };
 
   if (!order) {
     return (
@@ -107,7 +120,12 @@ const EditOrderPage = () => {
         </div>
       )}
       
-      <OrderForm order={order} settings={settings} defaultTab={defaultTab} />
+      <OrderForm 
+        order={order} 
+        settings={settings} 
+        defaultTab={defaultTab}
+        onStatusChange={handleStatusUpdate} 
+      />
     </div>
   );
 };

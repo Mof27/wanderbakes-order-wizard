@@ -11,6 +11,14 @@ export const matchesStatus = (orderStatus: OrderStatus, targetStatus: string): b
     return orderStatus === "in-queue";
   }
   
+  if (targetStatus === "ready") {
+    return orderStatus === "ready-to-deliver";
+  }
+  
+  if (targetStatus === "delivered") {
+    return orderStatus === "delivery-confirmed";
+  }
+  
   // Direct comparison for other statuses
   return orderStatus === targetStatus as OrderStatus;
 };

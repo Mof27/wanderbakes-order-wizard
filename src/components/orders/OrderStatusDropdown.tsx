@@ -28,10 +28,12 @@ const getStatusColor = (status: string) => {
       return "bg-yellow-100 text-yellow-800";
     case "waiting-photo":
       return "bg-purple-100 text-purple-800";
-    case "ready":
+    case "ready-to-deliver":
       return "bg-green-100 text-green-800";
-    case "delivered":
-      return "bg-purple-100 text-purple-800";
+    case "in-delivery":
+      return "bg-orange-100 text-orange-800";
+    case "delivery-confirmed":
+      return "bg-teal-100 text-teal-800";
     case "cancelled":
       return "bg-red-100 text-red-800";
     default:
@@ -45,8 +47,9 @@ const statusOptions: OrderStatus[] = [
   "in-queue",
   "in-kitchen",
   "waiting-photo",
-  "ready",
-  "delivered", 
+  "ready-to-deliver",
+  "in-delivery",
+  "delivery-confirmed",
   "cancelled"
 ];
 
@@ -55,7 +58,7 @@ const OrderStatusDropdown = ({ order }: OrderStatusDropdownProps) => {
   const [isUpdating, setIsUpdating] = useState(false);
   
   // Determine if status change is locked based on current status
-  const isStatusLocked = ['in-kitchen', 'waiting-photo', 'ready'].includes(order.status);
+  const isStatusLocked = ['in-kitchen', 'waiting-photo', 'in-delivery'].includes(order.status);
   
   // Function to determine if a status is allowed to change to based on current status
   const canChangeTo = (targetStatus: OrderStatus): boolean => {
@@ -69,13 +72,20 @@ const OrderStatusDropdown = ({ order }: OrderStatusDropdownProps) => {
       return true;
     }
     
-    // Special rule for in-kitchen: only allow cancellation
-    if (order.status === 'in-kitchen') {
-      return targetStatus === 'cancelled';
-    }
+    // Define allowed status transitions
+    const allowedTransitions: Record<OrderStatus, OrderStatus[]> = {
+      'incomplete': ['in-queue', 'cancelled'],
+      'in-queue': ['in-kitchen', 'cancelled'],
+      'in-kitchen': ['waiting-photo', 'cancelled'],
+      'waiting-photo': ['ready-to-deliver', 'cancelled'],
+      'ready-to-deliver': ['in-delivery', 'cancelled'],
+      'in-delivery': ['delivery-confirmed', 'cancelled'],
+      'delivery-confirmed': ['cancelled'],
+      'cancelled': []
+    };
     
-    // For other locked statuses, only allow cancellation
-    return targetStatus === 'cancelled';
+    // Check if the target status is allowed for the current status
+    return allowedTransitions[order.status]?.includes(targetStatus) || false;
   };
   
   const handleStatusChange = async (status: OrderStatus) => {
@@ -87,12 +97,20 @@ const OrderStatusDropdown = ({ order }: OrderStatusDropdownProps) => {
         ...order,
         status
       });
-      toast.success(`Status updated to ${status}`);
+      toast.success(`Status updated to ${status.replace('-', ' ')}`);
     } catch (error) {
       toast.error("Failed to update status");
     } finally {
       setIsUpdating(false);
     }
+  };
+
+  // Helper function to format status for display
+  const formatStatusLabel = (status: string): string => {
+    return status
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
   };
 
   return (
@@ -108,7 +126,7 @@ const OrderStatusDropdown = ({ order }: OrderStatusDropdownProps) => {
             isUpdating ? "opacity-70" : ""
           )}
         >
-          {order.status.charAt(0).toUpperCase() + order.status.slice(1).replace("-", " ")}
+          {formatStatusLabel(order.status)}
           <ChevronDown className="h-3 w-3 opacity-70" />
         </Badge>
       </DropdownMenuTrigger>
@@ -126,7 +144,7 @@ const OrderStatusDropdown = ({ order }: OrderStatusDropdownProps) => {
           >
             {order.status === status && <Check className="h-4 w-4 text-primary" />}
             <span className={order.status === status ? "ml-0" : "ml-6"}>
-              {status.charAt(0).toUpperCase() + status.slice(1).replace("-", " ")}
+              {formatStatusLabel(status)}
             </span>
           </DropdownMenuItem>
         ))}

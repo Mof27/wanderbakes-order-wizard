@@ -122,7 +122,15 @@ export type Ingredient = {
   unit: string;
 };
 
-export type OrderStatus = 'incomplete' | 'in-queue' | 'in-kitchen' | 'ready' | 'delivered' | 'cancelled' | 'waiting-photo';
+export type OrderStatus = 
+  'incomplete' | 
+  'in-queue' | 
+  'in-kitchen' | 
+  'waiting-photo' | 
+  'ready-to-deliver' | 
+  'in-delivery' | 
+  'delivery-confirmed' | 
+  'cancelled';
 
 // Kitchen-specific status types
 export type KitchenOrderStatus = 
