@@ -5,10 +5,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { formatDate } from '@/lib/utils';
 import NextStatusButton from './NextStatusButton';
+import StartProductionButton from './StartProductionButton';
 
 interface KitchenOrderCardProps {
   order: Order;
   isCompact?: boolean;
+  isInQueue?: boolean;
 }
 
 // Function to derive kitchen status from order status
@@ -94,21 +96,36 @@ const getStatusDisplayName = (status: KitchenOrderStatus): string => {
   }
 };
 
-const KitchenOrderCard: React.FC<KitchenOrderCardProps> = ({ order, isCompact = false }) => {
+const KitchenOrderCard: React.FC<KitchenOrderCardProps> = ({ 
+  order, 
+  isCompact = false, 
+  isInQueue = false
+}) => {
   const urgencyClass = getUrgencyClass(order.deliveryDate);
   const layerInfo = getCakeLayerInfo(order);
   const currentKitchenStatus = deriveKitchenStatus(order);
   
   return (
-    <Card className={`mb-2 ${urgencyClass} hover:shadow-md transition-shadow`}>
+    <Card className={`mb-2 ${urgencyClass} hover:shadow-md transition-shadow ${
+      isInQueue ? 'bg-blue-50 border-blue-200' : ''
+    }`}>
       <CardContent className={`${isCompact ? 'p-3' : 'p-4'} space-y-2`}>
         <div className="flex justify-between items-start">
           <div className="font-medium text-sm">{order.id}</div>
-          <Badge 
-            className={`${getKitchenStatusColor(currentKitchenStatus)}`}
-          >
-            {getStatusDisplayName(currentKitchenStatus)}
-          </Badge>
+          
+          {!isInQueue && (
+            <Badge 
+              className={`${getKitchenStatusColor(currentKitchenStatus)}`}
+            >
+              {getStatusDisplayName(currentKitchenStatus)}
+            </Badge>
+          )}
+          
+          {isInQueue && (
+            <Badge className="bg-blue-100 text-blue-800">
+              In Queue
+            </Badge>
+          )}
         </div>
         
         <div className="space-y-1">
@@ -170,12 +187,16 @@ const KitchenOrderCard: React.FC<KitchenOrderCardProps> = ({ order, isCompact = 
             </div>
           )}
           
-          {/* Add Next Status Button */}
+          {/* Display appropriate button based on order status */}
           <div className="mt-3">
-            <NextStatusButton 
-              order={order} 
-              currentKitchenStatus={currentKitchenStatus} 
-            />
+            {isInQueue ? (
+              <StartProductionButton order={order} />
+            ) : (
+              <NextStatusButton 
+                order={order} 
+                currentKitchenStatus={currentKitchenStatus} 
+              />
+            )}
           </div>
         </div>
       </CardContent>

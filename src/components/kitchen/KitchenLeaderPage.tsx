@@ -1,14 +1,23 @@
+
 import { useState, useEffect } from "react";
 import { useApp } from "@/context/AppContext";
 import { Helmet } from "react-helmet-async";
 import { Order, KitchenOrderStatus } from "@/types";
+import { matchesStatus } from "@/lib/statusHelpers";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import KitchenOrderCard from "@/components/kitchen/KitchenOrderCard";
 import { formatDate } from "@/lib/utils";
-import { Archive, Check, ChevronDown, Filter } from "lucide-react";
+import { Archive, Check, ChevronDown, Filter, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // Function to derive kitchen status from order status
 const deriveKitchenStatus = (order: Order): KitchenOrderStatus => {
@@ -31,23 +40,80 @@ const deriveKitchenStatus = (order: Order): KitchenOrderStatus => {
   }
 };
 
+type TimeFilter = 'all' | 'today' | 'tomorrow' | 'this-week' | 'later';
+
 const KitchenLeaderPage = () => {
   const { orders } = useApp();
   const [view, setView] = useState<"all" | "byDate">("all");
-  const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>("all");
+  const [inQueueOrders, setInQueueOrders] = useState<Order[]>([]);
+  const [inKitchenOrders, setInKitchenOrders] = useState<Order[]>([]);
   const [activeFilter, setActiveFilter] = useState<KitchenOrderStatus | "all">("all");
   
-  // Filter orders that are relevant for kitchen production
-  // These are orders in in-queue or in-kitchen status
+  // Filter and sort orders for kitchen production
   useEffect(() => {
+    // Get all relevant orders
     const relevantOrders = orders.filter(order => 
       order.status === 'in-queue' || 
       order.status === 'in-kitchen' || 
       order.status === 'waiting-photo'
     );
     
-    setFilteredOrders(relevantOrders);
-  }, [orders]);
+    // Split into in-queue and in-kitchen orders
+    const queueOrders = relevantOrders.filter(order => order.status === 'in-queue');
+    const kitchenOrders = relevantOrders.filter(order => 
+      order.status === 'in-kitchen' || order.status === 'waiting-photo'
+    );
+    
+    // Apply time filter if needed
+    const filteredQueueOrders = applyTimeFilter(queueOrders, timeFilter);
+    
+    // Sort by delivery date (soonest first)
+    const sortedQueueOrders = filteredQueueOrders.sort(
+      (a, b) => new Date(a.deliveryDate).getTime() - new Date(b.deliveryDate).getTime()
+    );
+    
+    const sortedKitchenOrders = kitchenOrders.sort(
+      (a, b) => new Date(a.deliveryDate).getTime() - new Date(b.deliveryDate).getTime()
+    );
+    
+    setInQueueOrders(sortedQueueOrders);
+    setInKitchenOrders(sortedKitchenOrders);
+  }, [orders, timeFilter]);
+
+  // Apply time filter to orders
+  const applyTimeFilter = (orders: Order[], filter: TimeFilter): Order[] => {
+    if (filter === 'all') {
+      return orders;
+    }
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    const nextWeek = new Date(today);
+    nextWeek.setDate(nextWeek.getDate() + 7);
+    
+    return orders.filter(order => {
+      const deliveryDate = new Date(order.deliveryDate);
+      deliveryDate.setHours(0, 0, 0, 0);
+      
+      switch (filter) {
+        case 'today':
+          return deliveryDate.getTime() === today.getTime();
+        case 'tomorrow':
+          return deliveryDate.getTime() === tomorrow.getTime();
+        case 'this-week':
+          return deliveryDate > today && deliveryDate < nextWeek;
+        case 'later':
+          return deliveryDate >= nextWeek;
+        default:
+          return true;
+      }
+    });
+  };
 
   // Handle status filter changes
   const handleFilterChange = (status: KitchenOrderStatus | "all") => {
@@ -55,12 +121,12 @@ const KitchenLeaderPage = () => {
   };
 
   // Get the filtered orders based on kitchen status
-  const getFilteredOrders = () => {
+  const getFilteredInKitchenOrders = () => {
     if (activeFilter === "all") {
-      return filteredOrders;
+      return inKitchenOrders;
     }
     
-    return filteredOrders.filter(order => {
+    return inKitchenOrders.filter(order => {
       // Get the proper kitchen status based on the new field or legacy approach
       const kitchenStatus = deriveKitchenStatus(order);
       return kitchenStatus === activeFilter;
@@ -115,10 +181,9 @@ const KitchenLeaderPage = () => {
     }
   };
 
-  const getOrdersByDeliveryDate = () => {
+  const getOrdersByDeliveryDate = (ordersToGroup: Order[]) => {
     // Group filtered orders by delivery date
-    const displayOrders = getFilteredOrders();
-    const ordersByDate = displayOrders.reduce((acc, order) => {
+    const ordersByDate = ordersToGroup.reduce((acc, order) => {
       const date = formatDate(order.deliveryDate);
       if (!acc[date]) {
         acc[date] = [];
@@ -149,20 +214,59 @@ const KitchenLeaderPage = () => {
     </div>
   );
 
-  const renderAllOrders = () => {
-    const displayOrders = getFilteredOrders();
+  const renderTimeFilter = () => (
+    <div className="mb-4 flex items-center gap-2">
+      <div className="text-sm font-medium text-muted-foreground">Delivery:</div>
+      <Select 
+        value={timeFilter} 
+        onValueChange={(value) => setTimeFilter(value as TimeFilter)}
+      >
+        <SelectTrigger className="w-[180px]">
+          <SelectValue placeholder="Filter by delivery" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All timeframes</SelectItem>
+          <SelectItem value="today">Today</SelectItem>
+          <SelectItem value="tomorrow">Tomorrow</SelectItem>
+          <SelectItem value="this-week">This week</SelectItem>
+          <SelectItem value="later">Later</SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
+  );
+
+  const renderAllOrders = (orders: Order[], isQueue: boolean) => {
+    if (orders.length === 0) {
+      return (
+        <div className="text-center p-8 bg-gray-50 rounded-md">
+          <p className="text-muted-foreground">No orders found</p>
+        </div>
+      );
+    }
     
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {displayOrders.map(order => (
-          <KitchenOrderCard key={order.id} order={order} />
+        {orders.map(order => (
+          <KitchenOrderCard 
+            key={order.id} 
+            order={order} 
+            isInQueue={isQueue} 
+          />
         ))}
       </div>
     );
   };
 
-  const renderOrdersByDate = () => {
-    const ordersByDate = getOrdersByDeliveryDate();
+  const renderOrdersByDate = (orders: Order[], isQueue: boolean) => {
+    const ordersByDate = getOrdersByDeliveryDate(orders);
+    
+    if (Object.keys(ordersByDate).length === 0) {
+      return (
+        <div className="text-center p-8 bg-gray-50 rounded-md">
+          <p className="text-muted-foreground">No orders found</p>
+        </div>
+      );
+    }
     
     return (
       <div className="space-y-6">
@@ -177,7 +281,12 @@ const KitchenLeaderPage = () => {
               </CardHeader>
               <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {dateOrders.map(order => (
-                  <KitchenOrderCard key={order.id} order={order} isCompact={true} />
+                  <KitchenOrderCard 
+                    key={order.id} 
+                    order={order} 
+                    isCompact={true} 
+                    isInQueue={isQueue} 
+                  />
                 ))}
               </CardContent>
             </Card>
@@ -218,9 +327,42 @@ const KitchenLeaderPage = () => {
         Manage your cake production workflow. View orders ready to be baked, track progress, and update status.
       </p>
       
-      {renderFilterChips()}
-      
-      {view === "all" ? renderAllOrders() : renderOrdersByDate()}
+      <Tabs defaultValue="queue" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="queue" className="text-center">
+            Production Queue ({inQueueOrders.length})
+          </TabsTrigger>
+          <TabsTrigger value="in-kitchen" className="text-center">
+            In Production ({inKitchenOrders.length})
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="queue" className="pt-4">
+          <div className="mb-4">
+            <p className="text-sm text-muted-foreground mb-4">
+              Orders waiting to start production. Use the delivery filter to view cakes by date.
+            </p>
+            {renderTimeFilter()}
+          </div>
+          
+          {view === "all" 
+            ? renderAllOrders(inQueueOrders, true)
+            : renderOrdersByDate(inQueueOrders, true)}
+        </TabsContent>
+
+        <TabsContent value="in-kitchen" className="pt-4">
+          <div className="mb-4">
+            <p className="text-sm text-muted-foreground mb-4">
+              Orders currently in production. Filter by kitchen status to see orders at each stage.
+            </p>
+            {renderFilterChips()}
+          </div>
+          
+          {view === "all" 
+            ? renderAllOrders(getFilteredInKitchenOrders(), false)
+            : renderOrdersByDate(getFilteredInKitchenOrders(), false)}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
