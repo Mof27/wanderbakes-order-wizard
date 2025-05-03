@@ -272,7 +272,7 @@ const CustomerDetail = ({ customer }: CustomerDetailProps) => {
                         <TableCell>
                           <div className={`px-2 py-1 rounded-full text-xs inline-block
                             ${order.status === 'confirmed' ? 'bg-blue-100 text-blue-800' :
-                              order.status === 'in-progress' ? 'bg-yellow-100 text-yellow-800' :
+                              order.status === 'in-kitchen' ? 'bg-yellow-100 text-yellow-800' :
                               order.status === 'ready' ? 'bg-green-100 text-green-800' :
                               order.status === 'delivered' ? 'bg-purple-100 text-purple-800' :
                               order.status === 'cancelled' ? 'bg-red-100 text-red-800' :

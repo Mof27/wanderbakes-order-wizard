@@ -13,7 +13,7 @@ const Dashboard = () => {
   // Order statistics
   const totalOrders = orders.length;
   const confirmedOrders = orders.filter(order => order.status === "confirmed").length;
-  const inProgressOrders = orders.filter(order => order.status === "in-progress").length;
+  const inProgressOrders = orders.filter(order => order.status === "in-kitchen").length;
   const readyOrders = orders.filter(order => order.status === "ready").length;
   const deliveredOrders = orders.filter(order => order.status === "delivered").length;
   return <div className="space-y-6">
