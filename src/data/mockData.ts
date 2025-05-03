@@ -1,3 +1,4 @@
+
 import { Customer, FilterOption, Ingredient, Order, OrderStatus, Address, PackingItem, CakeColor, CoverType, TierDetail } from "../types";
 import { baseColors } from "./colorData";
 
@@ -220,7 +221,7 @@ export const mockOrders: Order[] = [
   {
     id: "o4",
     customer: mockCustomers[3],
-    status: "ready",
+    status: "waiting-photo", // Updated status
     deliveryDate: new Date('2024-05-03'),
     deliveryAddress: mockCustomers[3].addresses[0].text,
     deliveryAddressNotes: mockCustomers[3].addresses[0].deliveryNotes,
@@ -306,6 +307,55 @@ export const mockOrders: Order[] = [
     ingredients: mockIngredients["Vanilla"],
     cakePrice: 300000,
   },
+  // Add a few more orders with different kitchen-relevant statuses
+  {
+    id: "o6",
+    customer: mockCustomers[0],
+    status: "in-progress", // This could be in "waiting-crumbcoat" kitchen status
+    deliveryDate: new Date('2024-05-07'),
+    deliveryAddress: mockCustomers[0].addresses[0].text,
+    deliveryAddressNotes: mockCustomers[0].addresses[0].deliveryNotes,
+    deliveryArea: mockCustomers[0].addresses[0].area,
+    cakeDesign: "Classic buttercream swirls",
+    cakeFlavor: "Vanilla",
+    cakeSize: "18 CM",
+    cakeShape: "Round",
+    cakeTier: 1,
+    useSameFlavor: true,
+    coverColor: createSolidColor("#E6E6FA"), // Lavender
+    coverType: "buttercream" as CoverType,
+    cakeText: "Happy Mother's Day!",
+    notes: "Extra smooth buttercream finish, please",
+    packingItems: defaultPackingItems,
+    createdAt: new Date('2024-04-30'),
+    updatedAt: new Date('2024-04-30'),
+    ingredients: mockIngredients["Vanilla"],
+    cakePrice: 320000,
+  },
+  {
+    id: "o7",
+    customer: mockCustomers[2],
+    status: "in-progress", // This could be in "waiting-cover" kitchen status
+    deliveryDate: new Date('2024-05-06'),
+    deliveryAddress: mockCustomers[2].addresses[0].text,
+    deliveryAddressNotes: mockCustomers[2].addresses[0].deliveryNotes,
+    deliveryArea: mockCustomers[2].addresses[0].area,
+    cakeDesign: "Galaxy theme with stars",
+    cakeFlavor: "Double Chocolate",
+    cakeSize: "22 CM",
+    cakeShape: "Round",
+    cakeTier: 1,
+    useSameFlavor: true,
+    coverColor: createGradientColor(["#000033", "#191970", "#4B0082"]), // Dark blue to purple
+    coverType: "buttercream" as CoverType,
+    cakeText: "You're out of this world!",
+    notes: "Use edible glitter for stars",
+    packingItems: defaultPackingItems,
+    createdAt: new Date('2024-04-29'),
+    updatedAt: new Date('2024-04-29'),
+    ingredients: mockIngredients["Double Chocolate"],
+    cakePrice: 375000,
+  }
 ];
 
 // Filter Options
@@ -314,6 +364,7 @@ export const statusFilterOptions: FilterOption[] = [
   { id: "draft", label: "Draft", value: "draft" },
   { id: "confirmed", label: "Confirmed", value: "confirmed" },
   { id: "in-progress", label: "In Progress", value: "in-progress" },
+  { id: "waiting-photo", label: "Waiting Photo", value: "waiting-photo" },
   { id: "ready", label: "Ready", value: "ready" },
   { id: "delivered", label: "Delivered", value: "delivered" },
   { id: "cancelled", label: "Cancelled", value: "cancelled" },

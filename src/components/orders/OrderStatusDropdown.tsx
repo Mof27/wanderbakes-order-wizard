@@ -25,6 +25,8 @@ const getStatusColor = (status: string) => {
       return "bg-blue-100 text-blue-800";
     case "in-progress":
       return "bg-yellow-100 text-yellow-800";
+    case "waiting-photo":
+      return "bg-purple-100 text-purple-800";
     case "ready":
       return "bg-green-100 text-green-800";
     case "delivered":
@@ -41,6 +43,7 @@ const statusOptions: OrderStatus[] = [
   "draft",
   "confirmed", 
   "in-progress",
+  "waiting-photo",
   "ready",
   "delivered", 
   "cancelled"
@@ -77,7 +80,7 @@ const OrderStatusDropdown = ({ order }: OrderStatusDropdownProps) => {
             isUpdating ? "opacity-70" : ""
           )}
         >
-          {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+          {order.status.charAt(0).toUpperCase() + order.status.slice(1).replace("-", " ")}
           <ChevronDown className="h-3 w-3 opacity-70" />
         </Badge>
       </DropdownMenuTrigger>
@@ -93,7 +96,7 @@ const OrderStatusDropdown = ({ order }: OrderStatusDropdownProps) => {
           >
             {order.status === status && <Check className="h-4 w-4 text-primary" />}
             <span className={order.status === status ? "ml-0" : "ml-6"}>
-              {status.charAt(0).toUpperCase() + status.slice(1)}
+              {status.charAt(0).toUpperCase() + status.slice(1).replace("-", " ")}
             </span>
           </DropdownMenuItem>
         ))}

@@ -114,7 +114,15 @@ export type Ingredient = {
   unit: string;
 };
 
-export type OrderStatus = 'draft' | 'confirmed' | 'in-progress' | 'ready' | 'delivered' | 'cancelled';
+export type OrderStatus = 'draft' | 'confirmed' | 'in-progress' | 'ready' | 'delivered' | 'cancelled' | 'waiting-photo';
+
+// New kitchen-specific status types
+export type KitchenOrderStatus = 
+  'waiting-baker' |  // Cake not baked yet or not in stock
+  'waiting-crumbcoat' | 
+  'waiting-cover' | 
+  'in-progress' |  // Currently being worked on
+  'done-waiting-approval';  // Done but needs approval
 
 export type FilterOption = {
   id: string;
