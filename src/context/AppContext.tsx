@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, ReactNode, useEffect } from "react";
 import { Customer, FilterOption, Order, ViewMode } from "../types";
 import { statusFilterOptions, timeFilterOptions } from "../data/mockData";
@@ -167,9 +166,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       return false;
     }
 
-    // Status filtering - check if "all" is selected or if the specific status is in activeStatusFilters
-    const isAllSelected = activeStatusFilters.some(filter => filter.value === 'all');
-    if (!isAllSelected && !activeStatusFilters.some(filter => filter.value === order.status)) {
+    // Status filtering - now using single-select status filter
+    if (activeStatusFilter.value !== 'all' && order.status !== activeStatusFilter.value) {
       return false;
     }
 
@@ -185,33 +183,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       
       if (orderDate < startDate || orderDate > endDate) {
         return false;
-      }
-    }
-
-    // Legacy time filtering - if date range is not set
-    if (!dateRange[0] && !dateRange[1] && activeTimeFilter.value !== 'all') {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const orderDate = new Date(order.createdAt);
-      orderDate.setHours(0, 0, 0, 0);
-
-      if (activeTimeFilter.value === 'today' && orderDate.getTime() !== today.getTime()) {
-        return false;
-      }
-
-      if (activeTimeFilter.value === 'this-week') {
-        const startOfWeek = new Date(today);
-        startOfWeek.setDate(today.getDate() - today.getDay());
-        if (orderDate < startOfWeek) {
-          return false;
-        }
-      }
-
-      if (activeTimeFilter.value === 'this-month') {
-        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-        if (orderDate < startOfMonth) {
-          return false;
-        }
       }
     }
 

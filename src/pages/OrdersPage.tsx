@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Check, X, QrCode, LayoutGrid, List, Search, FilterX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import DateRangePicker from "@/components/orders/DateRangePicker";
+import DateFilterBar from "@/components/orders/DateFilterBar";
 import StatusFilterDropdown from "@/components/orders/StatusFilterDropdown";
 import { statusFilterOptions } from "@/data/mockData";
 import { Separator } from "@/components/ui/separator";
@@ -22,10 +22,9 @@ const OrdersPage = () => {
     searchQuery,
     viewMode,
     setViewMode,
-    activeStatusFilters,
-    setActiveStatusFilters,
+    activeStatusFilter,
+    setActiveStatusFilter,
     dateRange,
-    setDateRange,
     resetFilters,
     filteredOrders
   } = useApp();
@@ -74,12 +73,10 @@ const OrdersPage = () => {
     }
   };
 
-  // Calculate the total number of active filters
-  const activeFilterCount = (
-    (dateRange[0] && dateRange[1] ? 1 : 0) + 
-    (searchQuery ? 1 : 0) +
-    (activeStatusFilters.length === 1 && activeStatusFilters[0].value === 'all' ? 0 : activeStatusFilters.length)
-  );
+  // Calculate if any filters are active
+  const hasActiveFilters = searchQuery || 
+    (dateRange[0] && dateRange[1]) || 
+    (activeStatusFilter.value !== "all");
 
   return (
     <div className="space-y-6">
@@ -154,14 +151,10 @@ const OrdersPage = () => {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Date Filter Section */}
           <div className="rounded-md border p-3 bg-gray-50">
-            <h3 className="font-medium mb-2 text-sm text-muted-foreground">Filter by Date</h3>
-            <DateRangePicker 
-              dateRange={dateRange}
-              onDateRangeChange={setDateRange}
-            />
+            <DateFilterBar />
           </div>
 
           {/* Status Filter Section */}
@@ -169,57 +162,51 @@ const OrdersPage = () => {
             <h3 className="font-medium mb-2 text-sm text-muted-foreground">Filter by Status</h3>
             <StatusFilterDropdown 
               options={statusFilterOptions}
-              selectedOptions={activeStatusFilters}
-              onChange={setActiveStatusFilters}
+              selectedOption={activeStatusFilter}
+              onChange={setActiveStatusFilter}
             />
           </div>
+        </div>
 
-          {/* View Options & Reset Filters */}
-          <div className="rounded-md border p-3 bg-gray-50 flex flex-col">
-            <h3 className="font-medium mb-2 text-sm text-muted-foreground">View Options</h3>
-            <div className="flex items-center gap-2">
-              <div className="flex border rounded-md">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={cn(
-                    "rounded-r-none border-r",
-                    viewMode === "list" ? "bg-muted" : ""
-                  )}
-                  onClick={() => setViewMode("list")}
-                >
-                  <List className="h-4 w-4 mr-1" /> List
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={cn(
-                    "rounded-l-none",
-                    viewMode === "grid" ? "bg-muted" : ""
-                  )}
-                  onClick={() => setViewMode("grid")}
-                >
-                  <LayoutGrid className="h-4 w-4 mr-1" /> Grid
-                </Button>
-              </div>
-            </div>
-            
-            {/* Reset Filters Button */}
-            {activeFilterCount > 0 && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={resetFilters}
-                className="mt-auto flex gap-2"
-              >
-                <FilterX className="h-4 w-4" /> 
-                Clear all filters
-                <span className="ml-auto bg-muted rounded-full h-5 w-5 flex items-center justify-center text-xs">
-                  {activeFilterCount}
-                </span>
-              </Button>
-            )}
+        {/* View Options & Reset Filters */}
+        <div className="flex flex-wrap justify-between items-center">
+          <div className="flex border rounded-md">
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "rounded-r-none border-r",
+                viewMode === "list" ? "bg-muted" : ""
+              )}
+              onClick={() => setViewMode("list")}
+            >
+              <List className="h-4 w-4 mr-1" /> List
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "rounded-l-none",
+                viewMode === "grid" ? "bg-muted" : ""
+              )}
+              onClick={() => setViewMode("grid")}
+            >
+              <LayoutGrid className="h-4 w-4 mr-1" /> Grid
+            </Button>
           </div>
+            
+          {/* Reset Filters Button */}
+          {hasActiveFilters && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={resetFilters}
+              className="flex gap-2"
+            >
+              <FilterX className="h-4 w-4" /> 
+              Clear all filters
+            </Button>
+          )}
         </div>
       </div>
 
@@ -227,9 +214,9 @@ const OrdersPage = () => {
       <div className="flex justify-between items-center border-b pb-2">
         <div className="text-sm text-muted-foreground">
           Showing {filteredOrders.length} of {orders.length} orders
-          {activeFilterCount > 0 && (
+          {hasActiveFilters && (
             <span className="ml-1">
-              with {activeFilterCount} active filter{activeFilterCount !== 1 ? 's' : ''}
+              with filters applied
             </span>
           )}
         </div>
