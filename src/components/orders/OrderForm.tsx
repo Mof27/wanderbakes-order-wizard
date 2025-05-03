@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useApp } from "@/context/AppContext";
-import { Customer, Order, Ingredient, Address, TierDetail, PackingItem, CakeColor, CoverType, SettingsData, DeliveryMethod } from "@/types";
+import { Customer, Order, Ingredient, Address, TierDetail, PackingItem, CakeColor, CoverType, SettingsData, DeliveryMethod, OrderTag } from "@/types";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/components/ui/sonner";
@@ -22,6 +22,7 @@ import IngredientsSection from "./OrderFormComponents/IngredientsSection";
 import AddNewAddressDialog from "./OrderFormComponents/AddNewAddressDialog";
 import ActionButtons from "./OrderFormComponents/ActionButtons";
 import OrderPrintButton from "./OrderPrintButton";
+import DeliveryRecapSection from "./OrderFormComponents/DeliveryRecapSection";
 
 interface OrderFormProps {
   order?: Order;
@@ -54,6 +55,12 @@ const OrderForm = ({ order, settings }: OrderFormProps) => {
   const [packingItems, setPackingItems] = useState<PackingItem[]>(
     order?.packingItems || [...defaultPackingItems]
   );
+  
+  // New states for Delivery & Data Recap tab
+  const [finishedCakePhotos, setFinishedCakePhotos] = useState<string[]>(order?.finishedCakePhotos || []);
+  const [actualDeliveryTime, setActualDeliveryTime] = useState<Date | undefined>(order?.actualDeliveryTime);
+  const [customerFeedback, setCustomerFeedback] = useState<string>(order?.customerFeedback || '');
+  const [orderTags, setOrderTags] = useState<OrderTag[]>(order?.orderTags || []);
   
   // Convert legacy string color to CakeColor object if needed
   const defaultColor = settings?.colors?.length && settings.colors[0].enabled ? 
@@ -459,7 +466,7 @@ const OrderForm = ({ order, settings }: OrderFormProps) => {
       deliveryDate,
       cakeFlavor,
       ingredients,
-      status: "incomplete" as const, // Changed from "draft" to "incomplete"
+      status: "incomplete" as const,
       tierDetails: formData.cakeTier > 1 ? tierDetails.slice(0, formData.cakeTier) : undefined,
       useSameFlavor,
       useSameCover,
@@ -468,6 +475,11 @@ const OrderForm = ({ order, settings }: OrderFormProps) => {
       deliveryMethod,
       deliveryTimeSlot,
       deliveryPrice,
+      // Add new fields for Delivery & Data Recap
+      finishedCakePhotos: finishedCakePhotos.length > 0 ? finishedCakePhotos : undefined,
+      actualDeliveryTime,
+      customerFeedback: customerFeedback || undefined,
+      orderTags: orderTags.length > 0 ? orderTags : undefined,
       ...formData,
     };
 
@@ -500,6 +512,11 @@ const OrderForm = ({ order, settings }: OrderFormProps) => {
       deliveryMethod,
       deliveryTimeSlot,
       deliveryPrice,
+      // Add new fields for Delivery & Data Recap
+      finishedCakePhotos: finishedCakePhotos.length > 0 ? finishedCakePhotos : undefined,
+      actualDeliveryTime,
+      customerFeedback: customerFeedback || undefined,
+      orderTags: orderTags.length > 0 ? orderTags : undefined,
       ...formData,
     };
 
@@ -527,6 +544,11 @@ const OrderForm = ({ order, settings }: OrderFormProps) => {
       deliveryMethod,
       deliveryTimeSlot,
       deliveryPrice,
+      // Add new fields for Delivery & Data Recap
+      finishedCakePhotos,
+      actualDeliveryTime,
+      customerFeedback,
+      orderTags,
       ...formData,
     };
   };
@@ -576,9 +598,10 @@ const OrderForm = ({ order, settings }: OrderFormProps) => {
   return (
     <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 mb-4">
+        <TabsList className="grid w-full grid-cols-3 mb-4">
           <TabsTrigger value="required">Required Information</TabsTrigger>
           <TabsTrigger value="optional">Additional Details</TabsTrigger>
+          <TabsTrigger value="delivery-recap">Delivery & Data Recap</TabsTrigger>
         </TabsList>
         
         <TabsContent value="required" className="space-y-6">
@@ -703,6 +726,19 @@ const OrderForm = ({ order, settings }: OrderFormProps) => {
               </div>
             </div>
           </div>
+        </TabsContent>
+        
+        <TabsContent value="delivery-recap" className="space-y-6">
+          <DeliveryRecapSection
+            finishedCakePhotos={finishedCakePhotos}
+            actualDeliveryTime={actualDeliveryTime}
+            customerFeedback={customerFeedback}
+            orderTags={orderTags}
+            onPhotosChange={setFinishedCakePhotos}
+            onDeliveryTimeChange={setActualDeliveryTime}
+            onFeedbackChange={setCustomerFeedback}
+            onTagsChange={setOrderTags}
+          />
         </TabsContent>
       </Tabs>
 

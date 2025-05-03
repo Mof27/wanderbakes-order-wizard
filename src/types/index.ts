@@ -1,4 +1,3 @@
-
 export type Address = {
   id: string;
   text: string;
@@ -73,6 +72,9 @@ export interface PrintEvent {
   user?: string; // Can be used for tracking who printed
 }
 
+// New type for order metadata/tags
+export type OrderTag = 'for-kids' | 'for-man' | 'for-woman' | 'anniversary' | 'birthday' | 'wedding' | 'other';
+
 export type Order = {
   id: string;
   customer: Customer;
@@ -107,6 +109,10 @@ export type Order = {
   deliveryTimeSlot?: string;
   deliveryPrice?: number;
   printHistory?: PrintEvent[]; // New field to track print history
+  finishedCakePhotos?: string[]; // URLs or base64 encoded images
+  actualDeliveryTime?: Date; // When the cake was actually delivered
+  customerFeedback?: string; // Any feedback or complaints
+  orderTags?: OrderTag[]; // Metadata tags for the order
 };
 
 export type Ingredient = {

@@ -8,6 +8,7 @@ interface KitchenOrdersColumnProps {
   title: string;
   orders: Order[];
   status: KitchenOrderStatus;
+  showStartButton?: boolean; // Add this prop to fix the error
 }
 
 const getColumnColor = (status: KitchenOrderStatus) => {
@@ -27,7 +28,12 @@ const getColumnColor = (status: KitchenOrderStatus) => {
   }
 };
 
-const KitchenOrdersColumn: React.FC<KitchenOrdersColumnProps> = ({ title, orders, status }) => {
+const KitchenOrdersColumn: React.FC<KitchenOrdersColumnProps> = ({ 
+  title, 
+  orders, 
+  status, 
+  showStartButton = false // Default to false if not provided
+}) => {
   return (
     <Card className={`bg-gray-50 ${getColumnColor(status)}`}>
       <CardHeader className="bg-muted py-3 px-4">
@@ -41,7 +47,11 @@ const KitchenOrdersColumn: React.FC<KitchenOrdersColumnProps> = ({ title, orders
       <CardContent className="p-2 h-[calc(100vh-220px)] overflow-auto space-y-2">
         {orders.length > 0 ? (
           orders.map((order) => (
-            <KitchenOrderCard key={order.id} order={order} />
+            <KitchenOrderCard 
+              key={order.id} 
+              order={order}
+              showStartButton={showStartButton} // Pass the prop to KitchenOrderCard
+            />
           ))
         ) : (
           <div className="flex items-center justify-center h-24 text-muted-foreground text-sm bg-white rounded-md border border-dashed">
