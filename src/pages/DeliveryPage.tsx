@@ -1,3 +1,4 @@
+
 import { useState, useMemo } from "react";
 import { useApp } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
@@ -5,10 +6,59 @@ import { Card } from "@/components/ui/card";
 import { Helmet } from "react-helmet-async";
 import DeliveryDateFilter from "@/components/delivery/DeliveryDateFilter";
 import DeliveryStatusFilter from "@/components/delivery/DeliveryStatusFilter";
-import DeliveryCard from "@/components/delivery/DeliveryCard";
 import { Order } from "@/types";
 import { matchesStatus } from "@/lib/statusHelpers";
 import { startOfDay, endOfDay, addDays, format } from "date-fns";
+import { Link } from "react-router-dom";
+import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Truck, CheckCircle2, Clock, CalendarClock } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+// Helper function to determine the time slot background color
+const getTimeSlotColor = (timeSlot?: string): string => {
+  if (!timeSlot) return "";
+  
+  if (timeSlot === "slot1") {
+    return "bg-purple-50 hover:bg-purple-100";
+  } else if (timeSlot === "slot2") {
+    return "bg-blue-50 hover:bg-blue-100";
+  } else if (timeSlot === "slot3") {
+    return "bg-indigo-50 hover:bg-indigo-100";
+  }
+  
+  // For custom time slots, check the time range
+  const timeMatch = timeSlot.match(/(\d{1,2})[:.]\d{2}/);
+  if (timeMatch) {
+    const hour = parseInt(timeMatch[1], 10);
+    
+    if (hour < 10) {
+      return "bg-purple-50 hover:bg-purple-100"; // Morning (like slot1)
+    } else if (hour < 15) {
+      return "bg-blue-50 hover:bg-blue-100"; // Afternoon (like slot2)
+    } else {
+      return "bg-indigo-50 hover:bg-indigo-100"; // Evening (like slot3)
+    }
+  }
+  
+  return "";
+};
+
+// Helper function to format time slot display
+const formatTimeSlotDisplay = (timeSlot?: string): string => {
+  if (!timeSlot) return "-";
+  
+  if (timeSlot === "slot1") {
+    return "10:00 - 13:00";
+  } else if (timeSlot === "slot2") {
+    return "13:00 - 16:00";
+  } else if (timeSlot === "slot3") {
+    return "16:00 - 20:00";
+  }
+  
+  // It's a custom time slot, return as is
+  return timeSlot;
+};
 
 const DeliveryPage = () => {
   const { orders } = useApp();
@@ -60,35 +110,38 @@ const DeliveryPage = () => {
     filtered = filterOrdersByDate(filtered, dateFilter);
     filtered = filterOrdersByStatus(filtered, statusFilter);
     
-    // Sort orders by delivery time (if available) or just by delivery date
+    // Sort orders by time slot and then by delivery time (if available)
     return filtered.sort((a, b) => {
-      const dateA = new Date(a.deliveryDate);
-      const dateB = new Date(b.deliveryDate);
+      // If time slots are the same, sort by ID
+      if (a.deliveryTimeSlot === b.deliveryTimeSlot) {
+        return a.id.localeCompare(b.id);
+      }
       
-      // If they have delivery time slots, compare those first
+      // If one has a time slot and the other doesn't
+      if (a.deliveryTimeSlot && !b.deliveryTimeSlot) return -1;
+      if (!a.deliveryTimeSlot && b.deliveryTimeSlot) return 1;
+      
+      // Sort standard slots in order
+      const slotOrder = { slot1: 1, slot2: 2, slot3: 3 };
+      
       if (a.deliveryTimeSlot && b.deliveryTimeSlot) {
+        // If both are standard slots
+        if (a.deliveryTimeSlot in slotOrder && b.deliveryTimeSlot in slotOrder) {
+          return slotOrder[a.deliveryTimeSlot as keyof typeof slotOrder] - 
+                 slotOrder[b.deliveryTimeSlot as keyof typeof slotOrder];
+        }
+        
+        // If only one is a standard slot
+        if (a.deliveryTimeSlot in slotOrder) return -1;
+        if (b.deliveryTimeSlot in slotOrder) return 1;
+        
+        // Both are custom times, compare them directly
         return a.deliveryTimeSlot.localeCompare(b.deliveryTimeSlot);
       }
       
-      // Otherwise compare by date
-      return dateA.getTime() - dateB.getTime();
+      return 0;
     });
   }, [orders, dateFilter, statusFilter]);
-
-  // Group orders by delivery area for better routing
-  const ordersByArea = useMemo(() => {
-    const grouped: Record<string, Order[]> = {};
-    
-    filteredOrders.forEach(order => {
-      const area = order.deliveryArea || 'Unknown Area';
-      if (!grouped[area]) {
-        grouped[area] = [];
-      }
-      grouped[area].push(order);
-    });
-    
-    return grouped;
-  }, [filteredOrders]);
 
   const dateTitles = {
     'today': `Today (${format(new Date(), 'dd MMM')})`,
@@ -131,21 +184,120 @@ const DeliveryPage = () => {
           {dateTitles[dateFilter]} • {filteredOrders.length} deliveries
         </h2>
         
-        {Object.entries(ordersByArea).map(([area, areaOrders]) => (
-          <div key={area} className="mb-8">
-            <div className="bg-muted px-4 py-2 rounded-lg mb-4">
-              <h3 className="font-medium">{area} ({areaOrders.length})</h3>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {areaOrders.map(order => (
-                <DeliveryCard key={order.id} order={order} />
-              ))}
-            </div>
+        {filteredOrders.length > 0 ? (
+          <div className="rounded-md border overflow-hidden">
+            <Table>
+              <TableHeader className="bg-muted">
+                <TableRow>
+                  <TableHead className="w-[80px]">Order ID</TableHead>
+                  <TableHead className="w-[120px]">Delivery Method</TableHead>
+                  <TableHead className="w-[150px]">
+                    <div className="flex items-center">
+                      <Clock className="h-4 w-4 mr-2" />
+                      Time Slot
+                    </div>
+                  </TableHead>
+                  <TableHead>Customer</TableHead>
+                  <TableHead className="hidden md:table-cell">Address</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredOrders.map((order) => {
+                  const isReady = matchesStatus(order.status, 'ready-to-deliver');
+                  const isInTransit = matchesStatus(order.status, 'in-delivery');
+                  const timeSlotClass = getTimeSlotColor(order.deliveryTimeSlot);
+                  
+                  return (
+                    <TableRow 
+                      key={order.id}
+                      className={cn(timeSlotClass)}
+                    >
+                      <TableCell className="font-medium">
+                        {order.id}
+                      </TableCell>
+                      <TableCell>
+                        {order.deliveryMethod ? (
+                          <Badge variant="outline" className="capitalize">
+                            {order.deliveryMethod === 'flat-rate' ? 'Shop Delivery' : order.deliveryMethod}
+                          </Badge>
+                        ) : (
+                          '-'
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center">
+                          <CalendarClock className="h-4 w-4 mr-2 text-muted-foreground" />
+                          <span className="font-medium">
+                            {formatTimeSlotDisplay(order.deliveryTimeSlot)}
+                          </span>
+                        </div>
+                        {order.deliveryArea && (
+                          <Badge variant="secondary" className="mt-1 text-xs">
+                            {order.deliveryArea}
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{order.customer.name}</div>
+                          <div className="text-sm text-muted-foreground">{order.customer.whatsappNumber}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        <div className="text-sm max-w-md truncate">
+                          {order.deliveryAddress}
+                          {order.deliveryAddressNotes && (
+                            <span className="text-muted-foreground block">
+                              Note: {order.deliveryAddressNotes}
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="outline" 
+                            size="sm"
+                            asChild
+                          >
+                            <Link to={`/orders/${order.id}`}>
+                              View Order
+                            </Link>
+                          </Button>
+                          
+                          {isReady && (
+                            <Button 
+                              size="sm"
+                              className="bg-orange-600 hover:bg-orange-700 text-white"
+                              asChild
+                            >
+                              <Link to={`/orders/${order.id}?tab=delivery-recap`}>
+                                <Truck className="h-4 w-4 mr-1" /> Start
+                              </Link>
+                            </Button>
+                          )}
+                          
+                          {isInTransit && (
+                            <Button 
+                              size="sm"
+                              className="bg-green-600 hover:bg-green-700 text-white"
+                              asChild
+                            >
+                              <Link to={`/orders/${order.id}?tab=delivery-recap`}>
+                                <CheckCircle2 className="h-4 w-4 mr-1" /> Complete
+                              </Link>
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
           </div>
-        ))}
-        
-        {filteredOrders.length === 0 && (
+        ) : (
           <Card className="p-8 text-center text-muted-foreground">
             <p>No deliveries found for the selected filters.</p>
           </Card>
