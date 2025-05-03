@@ -20,7 +20,7 @@ const deriveKitchenStatus = (order: Order): KitchenOrderStatus => {
   
   // If not, infer it based on the order status (legacy behavior)
   switch (order.status) {
-    case 'confirmed':
+    case 'in-queue': // Changed from 'confirmed' to 'in-queue'
       return 'waiting-baker';
     case 'waiting-photo':
       return 'done-waiting-approval';
@@ -39,10 +39,10 @@ const KitchenLeaderPage = () => {
   const [activeFilter, setActiveFilter] = useState<KitchenOrderStatus | "all">("all");
   
   // Filter orders that are relevant for kitchen production
-  // These are orders in confirmed or in-kitchen status
+  // These are orders in in-queue or in-kitchen status
   useEffect(() => {
     const relevantOrders = orders.filter(order => 
-      order.status === 'confirmed' || 
+      order.status === 'in-queue' || // Changed from 'confirmed' to 'in-queue'
       order.status === 'in-kitchen' || 
       order.status === 'waiting-photo'
     );

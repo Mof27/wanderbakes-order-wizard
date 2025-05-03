@@ -48,7 +48,7 @@ const PrintPreview: React.FC<PrintPreviewProps> = ({
   // Sample data for preview - updated to match the Order type correctly
   const sampleOrder = {
     id: "ORD12345",
-    status: "confirmed" as const,
+    status: "in-queue" as const, // Changed from confirmed to in-queue
     orderDate: new Date(),
     deliveryDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
     customer: {
