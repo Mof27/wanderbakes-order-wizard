@@ -11,6 +11,7 @@ interface KitchenOrderCardProps {
   order: Order;
   isCompact?: boolean;
   isInQueue?: boolean;
+  showStartButton?: boolean; // Add the missing prop
 }
 
 // Function to derive kitchen status from order status
@@ -99,7 +100,8 @@ const getStatusDisplayName = (status: KitchenOrderStatus): string => {
 const KitchenOrderCard: React.FC<KitchenOrderCardProps> = ({ 
   order, 
   isCompact = false, 
-  isInQueue = false
+  isInQueue = false,
+  showStartButton = false // Add default value
 }) => {
   const urgencyClass = getUrgencyClass(order.deliveryDate);
   const layerInfo = getCakeLayerInfo(order);
@@ -189,7 +191,7 @@ const KitchenOrderCard: React.FC<KitchenOrderCardProps> = ({
           
           {/* Display appropriate button based on order status */}
           <div className="mt-3">
-            {isInQueue ? (
+            {isInQueue || showStartButton ? (
               <StartProductionButton order={order} />
             ) : (
               <NextStatusButton 
