@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useContext, ReactNode, useEffect } from "react";
 import { Customer, FilterOption, Order, ViewMode } from "../types";
 import { statusFilterOptions, timeFilterOptions } from "../data/mockData";
@@ -11,6 +12,8 @@ interface AppContextProps {
   activeTimeFilter: FilterOption;
   viewMode: ViewMode;
   searchQuery: string;
+  dateRange: [Date | null, Date | null];
+  activeStatusFilters: FilterOption[];
   addCustomer: (customer: Omit<Customer, 'id' | 'createdAt'>) => Promise<Customer>;
   updateCustomer: (customer: Customer) => Promise<Customer>;
   findCustomerByWhatsApp: (whatsappNumber: string) => Promise<Customer | undefined>;
@@ -21,6 +24,9 @@ interface AppContextProps {
   setActiveTimeFilter: (filter: FilterOption) => void;
   setViewMode: (mode: ViewMode) => void;
   setSearchQuery: (query: string) => void;
+  setDateRange: (range: [Date | null, Date | null]) => void;
+  setActiveStatusFilters: (filters: FilterOption[]) => void;
+  resetFilters: () => void;
   filteredOrders: Order[];
   isLoading: boolean;
   getOrderById: (id: string) => Order | undefined;
@@ -33,8 +39,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [orders, setOrders] = useState<Order[]>([]);
   const [activeStatusFilter, setActiveStatusFilter] = useState<FilterOption>(statusFilterOptions[0]);
   const [activeTimeFilter, setActiveTimeFilter] = useState<FilterOption>(timeFilterOptions[0]);
+  const [activeStatusFilters, setActiveStatusFilters] = useState<FilterOption[]>([statusFilterOptions[0]]);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([null, null]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // Load initial data
@@ -56,6 +64,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     
     loadInitialData();
   }, []);
+
+  // Reset all filters to default values
+  const resetFilters = () => {
+    setActiveStatusFilter(statusFilterOptions[0]);
+    setActiveTimeFilter(timeFilterOptions[0]);
+    setActiveStatusFilters([statusFilterOptions[0]]);
+    setDateRange([null, null]);
+    setSearchQuery('');
+  };
 
   // Customer functions
   const addCustomer = async (customerData: Omit<Customer, 'id' | 'createdAt'>) => {
@@ -145,17 +162,34 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Filter orders
   const filteredOrders = orders.filter((order) => {
     // Search query filtering
-    if (searchQuery && !order.id.toLowerCase().includes(searchQuery.toLowerCase())) {
+    if (searchQuery && !order.id.toLowerCase().includes(searchQuery.toLowerCase()) && 
+        !order.customer.name.toLowerCase().includes(searchQuery.toLowerCase())) {
       return false;
     }
 
-    // Status filtering
-    if (activeStatusFilter.value !== 'all' && order.status !== activeStatusFilter.value) {
+    // Status filtering - check if "all" is selected or if the specific status is in activeStatusFilters
+    const isAllSelected = activeStatusFilters.some(filter => filter.value === 'all');
+    if (!isAllSelected && !activeStatusFilters.some(filter => filter.value === order.status)) {
       return false;
     }
 
-    // Time filtering
-    if (activeTimeFilter.value !== 'all') {
+    // Date range filtering
+    if (dateRange[0] && dateRange[1]) {
+      const orderDate = new Date(order.createdAt);
+      const startDate = new Date(dateRange[0]);
+      const endDate = new Date(dateRange[1]);
+      
+      // Set time to beginning and end of day for proper comparison
+      startDate.setHours(0, 0, 0, 0);
+      endDate.setHours(23, 59, 59, 999);
+      
+      if (orderDate < startDate || orderDate > endDate) {
+        return false;
+      }
+    }
+
+    // Legacy time filtering - if date range is not set
+    if (!dateRange[0] && !dateRange[1] && activeTimeFilter.value !== 'all') {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const orderDate = new Date(order.createdAt);
@@ -191,6 +225,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     activeTimeFilter,
     viewMode,
     searchQuery,
+    dateRange,
+    activeStatusFilters,
     addCustomer,
     updateCustomer,
     findCustomerByWhatsApp,
@@ -201,6 +237,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setActiveTimeFilter,
     setViewMode,
     setSearchQuery,
+    setDateRange,
+    setActiveStatusFilters,
+    resetFilters,
     filteredOrders,
     isLoading,
     getOrderById,
