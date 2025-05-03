@@ -459,7 +459,7 @@ const OrderForm = ({ order, settings }: OrderFormProps) => {
       deliveryDate,
       cakeFlavor,
       ingredients,
-      status: "draft" as const,
+      status: "incomplete" as const, // Changed from "draft" to "incomplete"
       tierDetails: formData.cakeTier > 1 ? tierDetails.slice(0, formData.cakeTier) : undefined,
       useSameFlavor,
       useSameCover,

@@ -1,4 +1,3 @@
-
 import { Customer, FilterOption, Ingredient, Order, OrderStatus, Address, PackingItem, CakeColor, CoverType, TierDetail } from "../types";
 import { baseColors } from "./colorData";
 
@@ -118,7 +117,7 @@ export const mockOrders: Order[] = [
   {
     id: "o1",
     customer: mockCustomers[0],
-    status: "confirmed",
+    status: "confirmed", // This will be updated
     deliveryDate: new Date('2024-05-05'),
     deliveryAddress: mockCustomers[0].addresses[0].text,
     deliveryAddressNotes: mockCustomers[0].addresses[0].deliveryNotes,
@@ -198,7 +197,7 @@ export const mockOrders: Order[] = [
   {
     id: "o3",
     customer: mockCustomers[2],
-    status: "draft",
+    status: "incomplete", // Changed from 'draft' to 'incomplete'
     deliveryDate: new Date('2024-05-15'),
     deliveryAddress: mockCustomers[2].addresses[0].text,
     deliveryAddressNotes: mockCustomers[2].addresses[0].deliveryNotes,
@@ -363,7 +362,7 @@ export const mockOrders: Order[] = [
 // Filter Options
 export const statusFilterOptions: FilterOption[] = [
   { id: "all", label: "All Orders", value: "all" },
-  { id: "draft", label: "Draft", value: "draft" },
+  { id: "incomplete", label: "Incomplete", value: "incomplete" }, // Changed from 'draft' to 'incomplete'
   { id: "confirmed", label: "Confirmed", value: "confirmed" },
   { id: "in-kitchen", label: "In Kitchen", value: "in-kitchen" },
   { id: "waiting-photo", label: "Waiting Photo", value: "waiting-photo" },

@@ -20,8 +20,8 @@ const getNextKitchenStatus = (currentStatus: KitchenOrderStatus): KitchenOrderSt
     case 'waiting-crumbcoat':
       return 'waiting-cover';
     case 'waiting-cover':
-      return 'decorating'; // Changed from "in-progress" to "decorating"
-    case 'decorating': // Changed from "in-progress" to "decorating"
+      return 'decorating';
+    case 'decorating':
       return 'done-waiting-approval';
     case 'done-waiting-approval':
       return null; // No next status
@@ -36,7 +36,7 @@ const mapKitchenStatusToOrderStatus = (kitchenStatus: KitchenOrderStatus) => {
     case 'waiting-baker':
     case 'waiting-crumbcoat':
     case 'waiting-cover':
-    case 'decorating': // Changed from "in-progress" to "decorating"
+    case 'decorating':
       return 'in-kitchen';
     case 'done-waiting-approval':
       return 'waiting-photo';

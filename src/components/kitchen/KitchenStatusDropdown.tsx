@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Check, ChevronDown } from "lucide-react";
 import { useApp } from "@/context/AppContext";
@@ -26,7 +25,7 @@ const getKitchenStatusColor = (status: string) => {
       return "bg-yellow-100 text-yellow-800";
     case "waiting-cover":
       return "bg-blue-100 text-blue-800";
-    case "in-progress":
+    case "decorating":
       return "bg-purple-100 text-purple-800";
     case "done-waiting-approval":
       return "bg-green-100 text-green-800";
@@ -45,9 +44,9 @@ const deriveKitchenStatus = (order: Order): KitchenOrderStatus => {
     case 'waiting-photo':
       return 'done-waiting-approval';
     case 'in-kitchen':
-      // Default to in-progress, but this is where we would
+      // Default to decorating, but this is where we would
       // look at the kitchenStatus property once implemented
-      return 'in-progress';
+      return 'decorating';
     default:
       return 'waiting-baker';
   }
@@ -58,7 +57,7 @@ const kitchenStatusOptions: KitchenOrderStatus[] = [
   "waiting-baker",
   "waiting-crumbcoat",
   "waiting-cover",
-  "in-progress",
+  "decorating",
   "done-waiting-approval"
 ];
 
@@ -68,7 +67,7 @@ const mapKitchenStatusToOrderStatus = (kitchenStatus: KitchenOrderStatus) => {
     case 'waiting-baker':
     case 'waiting-crumbcoat':
     case 'waiting-cover':
-    case 'in-progress':
+    case 'decorating':
       return 'in-kitchen';
     case 'done-waiting-approval':
       return 'waiting-photo';
@@ -84,13 +83,10 @@ const getStatusDisplayName = (status: KitchenOrderStatus): string => {
       return 'Waiting Crumbcoat';
     case 'waiting-cover': 
       return 'Waiting Cover';
-    case 'in-progress': 
-      return 'In Progress';
+    case 'decorating': 
+      return 'Decorating';
     case 'done-waiting-approval': 
       return 'Done, Waiting Approval';
-    // The following case was causing the error because TypeScript correctly detected
-    // that this default case shouldn't be reachable (all possible values were covered)
-    // but the code was still trying to perform string operations on it
     default:
       // Provide a safe fallback - this should never happen
       // if the KitchenOrderStatus type is used correctly

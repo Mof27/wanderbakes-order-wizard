@@ -115,9 +115,9 @@ export type Ingredient = {
   unit: string;
 };
 
-export type OrderStatus = 'incomplete' | 'in-kitchen' | 'ready' | 'delivered' | 'cancelled' | 'waiting-photo';
+export type OrderStatus = 'incomplete' | 'confirmed' | 'in-kitchen' | 'ready' | 'delivered' | 'cancelled' | 'waiting-photo';
 
-// New kitchen-specific status types
+// Kitchen-specific status types
 export type KitchenOrderStatus = 
   'waiting-baker' |  // Cake not baked yet or not in stock
   'waiting-crumbcoat' | 
