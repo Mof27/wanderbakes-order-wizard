@@ -99,6 +99,7 @@ const KitchenLeaderPage = () => {
                       key={order.id}
                       orders={[order]}
                       showStartButton={true}
+                      title={`Order ${order.id}`}
                     />
                   ))}
                 </div>
