@@ -67,7 +67,7 @@ const getKitchenStatusColor = (status: KitchenOrderStatus) => {
       return "bg-yellow-100 text-yellow-800";
     case "waiting-cover":
       return "bg-blue-100 text-blue-800";
-    case "in-progress":
+    case "decorating": // Changed from "in-progress" to "decorating"
       return "bg-purple-100 text-purple-800";
     case "done-waiting-approval":
       return "bg-green-100 text-green-800";
@@ -85,8 +85,8 @@ const getStatusDisplayName = (status: KitchenOrderStatus): string => {
       return 'Waiting Crumbcoat';
     case 'waiting-cover': 
       return 'Waiting Cover';
-    case 'in-progress': 
-      return 'In Progress';
+    case 'decorating': // Changed from "in-progress" to "decorating"
+      return 'Decorating';
     case 'done-waiting-approval': 
       return 'Done, Waiting Approval';
     default:

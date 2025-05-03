@@ -18,7 +18,7 @@ const getColumnColor = (status: KitchenOrderStatus) => {
       return 'border-t-4 border-t-yellow-400';
     case 'waiting-cover':
       return 'border-t-4 border-t-blue-400';
-    case 'in-progress':
+    case 'decorating': // Changed from "in-progress" to "decorating"
       return 'border-t-4 border-t-purple-400';
     case 'done-waiting-approval':
       return 'border-t-4 border-t-green-400';

@@ -19,10 +19,8 @@ interface OrderStatusDropdownProps {
 // Status color mapping function - reused from OrderCard and OrderTableRow
 const getStatusColor = (status: string) => {
   switch (status) {
-    case "draft":
+    case "incomplete":
       return "bg-gray-200 text-gray-800";
-    case "confirmed":
-      return "bg-blue-100 text-blue-800";
     case "in-kitchen":
       return "bg-yellow-100 text-yellow-800";
     case "waiting-photo":
@@ -40,8 +38,7 @@ const getStatusColor = (status: string) => {
 
 // All available status options
 const statusOptions: OrderStatus[] = [
-  "draft",
-  "confirmed", 
+  "incomplete",
   "in-kitchen",
   "waiting-photo",
   "ready",
@@ -53,8 +50,19 @@ const OrderStatusDropdown = ({ order }: OrderStatusDropdownProps) => {
   const { updateOrder } = useApp();
   const [isUpdating, setIsUpdating] = useState(false);
   
+  // Determine if status change is locked based on current status
+  const isStatusLocked = ['in-kitchen', 'waiting-photo', 'ready'].includes(order.status);
+  
+  // Function to determine if a status is allowed to change to based on current status
+  const canChangeTo = (targetStatus: OrderStatus): boolean => {
+    if (!isStatusLocked) return true;
+    
+    // If status is locked, only allow changing to cancelled or incomplete
+    return targetStatus === 'cancelled' || targetStatus === 'incomplete';
+  };
+  
   const handleStatusChange = async (status: OrderStatus) => {
-    if (status === order.status || isUpdating) return;
+    if (status === order.status || isUpdating || !canChangeTo(status)) return;
     
     setIsUpdating(true);
     try {
@@ -90,8 +98,10 @@ const OrderStatusDropdown = ({ order }: OrderStatusDropdownProps) => {
             key={status}
             className={cn(
               "flex items-center gap-2 cursor-pointer",
-              order.status === status ? "bg-accent" : ""
+              order.status === status ? "bg-accent" : "",
+              !canChangeTo(status) && status !== order.status ? "opacity-50 cursor-not-allowed" : ""
             )}
+            disabled={!canChangeTo(status) && status !== order.status}
             onClick={() => handleStatusChange(status)}
           >
             {order.status === status && <Check className="h-4 w-4 text-primary" />}

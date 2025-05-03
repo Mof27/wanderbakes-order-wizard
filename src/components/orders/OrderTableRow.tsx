@@ -1,4 +1,3 @@
-
 import { Order } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,10 +13,8 @@ interface OrderTableRowProps {
 
 const getStatusColor = (status: string) => {
   switch (status) {
-    case "draft":
+    case "incomplete":
       return "bg-gray-200 text-gray-800";
-    case "confirmed":
-      return "bg-blue-100 text-blue-800";
     case "in-kitchen":
       return "bg-yellow-100 text-yellow-800";
     case "ready":

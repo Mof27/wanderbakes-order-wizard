@@ -1,4 +1,3 @@
-
 export type Address = {
   id: string;
   text: string;
@@ -116,14 +115,14 @@ export type Ingredient = {
   unit: string;
 };
 
-export type OrderStatus = 'draft' | 'confirmed' | 'in-kitchen' | 'ready' | 'delivered' | 'cancelled' | 'waiting-photo';
+export type OrderStatus = 'incomplete' | 'in-kitchen' | 'ready' | 'delivered' | 'cancelled' | 'waiting-photo';
 
 // New kitchen-specific status types
 export type KitchenOrderStatus = 
   'waiting-baker' |  // Cake not baked yet or not in stock
   'waiting-crumbcoat' | 
   'waiting-cover' | 
-  'in-progress' |  // Currently being worked on
+  'decorating' |  // Changed from 'in-progress' to 'decorating'
   'done-waiting-approval';  // Done but needs approval
 
 export type FilterOption = {

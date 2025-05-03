@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useApp } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,7 @@ const Dashboard = () => {
 
   // Order statistics
   const totalOrders = orders.length;
-  const confirmedOrders = orders.filter(order => order.status === "confirmed").length;
+  // Remove confirmed orders count
   const inProgressOrders = orders.filter(order => order.status === "in-kitchen").length;
   const readyOrders = orders.filter(order => order.status === "ready").length;
   const deliveredOrders = orders.filter(order => order.status === "delivered").length;
@@ -128,24 +129,16 @@ const Dashboard = () => {
             <div className="space-y-4">
               <div className="flex flex-col space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Draft</span>
+                  <span className="text-muted-foreground">Incomplete</span>
                   <div className="w-full max-w-[70%] bg-muted rounded-full h-2.5">
                     <div className="bg-gray-400 h-2.5 rounded-full" style={{
-                    width: `${orders.filter(o => o.status === "draft").length / totalOrders * 100}%`
+                    width: `${orders.filter(o => o.status === "incomplete").length / totalOrders * 100}%`
                   }}></div>
                   </div>
-                  <span className="ml-2 font-medium">{orders.filter(o => o.status === "draft").length}</span>
+                  <span className="ml-2 font-medium">{orders.filter(o => o.status === "incomplete").length}</span>
                 </div>
 
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Confirmed</span>
-                  <div className="w-full max-w-[70%] bg-muted rounded-full h-2.5">
-                    <div className="bg-blue-500 h-2.5 rounded-full" style={{
-                    width: `${confirmedOrders / totalOrders * 100}%`
-                  }}></div>
-                  </div>
-                  <span className="ml-2 font-medium">{confirmedOrders}</span>
-                </div>
+                {/* Remove Confirmed status bar */}
 
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">In Progress</span>

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Check, Timer, X } from "lucide-react";
 import { useApp } from "@/context/AppContext";
@@ -19,8 +20,8 @@ const getNextKitchenStatus = (currentStatus: KitchenOrderStatus): KitchenOrderSt
     case 'waiting-crumbcoat':
       return 'waiting-cover';
     case 'waiting-cover':
-      return 'in-progress';
-    case 'in-progress':
+      return 'decorating'; // Changed from "in-progress" to "decorating"
+    case 'decorating': // Changed from "in-progress" to "decorating"
       return 'done-waiting-approval';
     case 'done-waiting-approval':
       return null; // No next status
@@ -35,7 +36,7 @@ const mapKitchenStatusToOrderStatus = (kitchenStatus: KitchenOrderStatus) => {
     case 'waiting-baker':
     case 'waiting-crumbcoat':
     case 'waiting-cover':
-    case 'in-progress':
+    case 'decorating': // Changed from "in-progress" to "decorating"
       return 'in-kitchen';
     case 'done-waiting-approval':
       return 'waiting-photo';
@@ -51,8 +52,8 @@ const getStatusDisplayName = (status: KitchenOrderStatus): string => {
       return 'Waiting Crumbcoat';
     case 'waiting-cover': 
       return 'Waiting Cover';
-    case 'in-progress': 
-      return 'In Progress';
+    case 'decorating': // Changed from "in-progress" to "decorating"
+      return 'Decorating';
     case 'done-waiting-approval': 
       return 'Done, Waiting Approval';
     default:
