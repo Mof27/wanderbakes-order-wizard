@@ -1,16 +1,29 @@
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useApp } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { addDays, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
+import { 
+  addDays, 
+  startOfDay, 
+  endOfDay, 
+  startOfWeek, 
+  endOfWeek, 
+  startOfMonth, 
+  endOfMonth,
+  format
+} from "date-fns";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { CalendarIcon } from "lucide-react";
+import {
+  ToggleGroup,
+  ToggleGroupItem,
+} from "@/components/ui/toggle-group";
 
 type DateFilterOption = {
   id: string;
@@ -24,8 +37,6 @@ const dateFilterOptions: DateFilterOption[] = [
   { id: "tomorrow", label: "Tomorrow", value: "tomorrow" },
   { id: "this-week", label: "This Week", value: "this-week" },
   { id: "this-month", label: "This Month", value: "this-month" },
-  { id: "today-tomorrow", label: "Today & Tomorrow", value: "today-tomorrow" },
-  { id: "next-3-days", label: "Next 3 Days", value: "next-3-days" },
   { id: "custom", label: "Custom", value: "custom" },
 ];
 
@@ -34,6 +45,14 @@ const DateFilterBar = () => {
   const [activeDateFilter, setActiveDateFilter] = useState<string>("all");
   const [customDateRange, setCustomDateRange] = useState<[Date | null, Date | null]>([null, null]);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+
+  // Format the custom date range for display
+  const customDateRangeLabel = useMemo(() => {
+    if (dateRange[0] && dateRange[1] && activeDateFilter === "custom") {
+      return `${format(dateRange[0], "MMM d")} - ${format(dateRange[1], "MMM d")}`;
+    }
+    return "Custom";
+  }, [dateRange, activeDateFilter]);
 
   // Handle preset date filter selection
   const handleDateFilterClick = (filterId: string) => {
@@ -61,16 +80,6 @@ const DateFilterBar = () => {
       case "this-month":
         startDate = startOfMonth(now);
         endDate = endOfMonth(now);
-        break;
-
-      case "today-tomorrow":
-        startDate = startOfDay(now);
-        endDate = endOfDay(addDays(now, 1));
-        break;
-
-      case "next-3-days":
-        startDate = startOfDay(now);
-        endDate = endOfDay(addDays(now, 2)); // Today + 2 days = 3 days
         break;
 
       case "custom":
@@ -108,22 +117,26 @@ const DateFilterBar = () => {
   return (
     <div className="space-y-2">
       <h3 className="font-medium text-sm text-muted-foreground">Filter by Date</h3>
-      <div className="flex flex-wrap gap-2">
+      <ToggleGroup 
+        type="single" 
+        value={activeDateFilter}
+        onValueChange={(value) => value && handleDateFilterClick(value)}
+        className="flex flex-wrap gap-2"
+      >
         {dateFilterOptions.map((option) => (
           option.id === "custom" ? (
             <Popover key={option.id} open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
               <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
+                <ToggleGroupItem 
+                  value={option.id}
                   className={cn(
-                    activeDateFilter === option.id ? "bg-primary text-primary-foreground" : ""
+                    "data-[state=on]:bg-primary data-[state=on]:text-primary-foreground",
+                    "data-[state=on]:hover:bg-primary data-[state=on]:hover:text-primary-foreground"
                   )}
-                  onClick={() => handleDateFilterClick(option.id)}
                 >
                   <CalendarIcon className="h-4 w-4 mr-1" />
-                  {option.label}
-                </Button>
+                  {activeDateFilter === "custom" ? customDateRangeLabel : option.label}
+                </ToggleGroupItem>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
                 <div className="p-3">
@@ -161,20 +174,19 @@ const DateFilterBar = () => {
               </PopoverContent>
             </Popover>
           ) : (
-            <Button
+            <ToggleGroupItem
               key={option.id}
-              variant="outline"
-              size="sm"
+              value={option.id}
               className={cn(
-                activeDateFilter === option.id ? "bg-primary text-primary-foreground" : ""
+                "data-[state=on]:bg-primary data-[state=on]:text-primary-foreground",
+                "data-[state=on]:hover:bg-primary data-[state=on]:hover:text-primary-foreground"
               )}
-              onClick={() => handleDateFilterClick(option.id)}
             >
               {option.label}
-            </Button>
+            </ToggleGroupItem>
           )
         ))}
-      </div>
+      </ToggleGroup>
     </div>
   );
 };

@@ -1,4 +1,3 @@
-
 import OrderList from "@/components/orders/OrderList";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -9,7 +8,7 @@ import { Check, X, QrCode, LayoutGrid, List, Search, FilterX } from "lucide-reac
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import DateFilterBar from "@/components/orders/DateFilterBar";
-import StatusFilterDropdown from "@/components/orders/StatusFilterDropdown";
+import StatusFilterChips from "@/components/orders/StatusFilterChips";
 import { statusFilterOptions } from "@/data/mockData";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
@@ -159,8 +158,7 @@ const OrdersPage = () => {
 
           {/* Status Filter Section */}
           <div className="rounded-md border p-3 bg-gray-50">
-            <h3 className="font-medium mb-2 text-sm text-muted-foreground">Filter by Status</h3>
-            <StatusFilterDropdown 
+            <StatusFilterChips 
               options={statusFilterOptions}
               selectedOption={activeStatusFilter}
               onChange={setActiveStatusFilter}
