@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { toast } from "@/components/ui/sonner";
 
 interface OrderStatusDropdownProps {
   order: Order;
@@ -55,10 +56,23 @@ const OrderStatusDropdown = ({ order }: OrderStatusDropdownProps) => {
   
   // Function to determine if a status is allowed to change to based on current status
   const canChangeTo = (targetStatus: OrderStatus): boolean => {
-    if (!isStatusLocked) return true;
+    // If trying to change to 'incomplete', only allow it if already 'incomplete'
+    if (targetStatus === 'incomplete') {
+      return order.status === 'incomplete';
+    }
     
-    // If status is locked, only allow changing to cancelled or incomplete
-    return targetStatus === 'cancelled' || targetStatus === 'incomplete';
+    // If not in a locked status, we can change to any other status
+    if (!isStatusLocked) {
+      return true;
+    }
+    
+    // Special rule for in-kitchen: only allow cancellation
+    if (order.status === 'in-kitchen') {
+      return targetStatus === 'cancelled';
+    }
+    
+    // For other locked statuses, only allow cancellation
+    return targetStatus === 'cancelled';
   };
   
   const handleStatusChange = async (status: OrderStatus) => {
@@ -70,6 +84,9 @@ const OrderStatusDropdown = ({ order }: OrderStatusDropdownProps) => {
         ...order,
         status
       });
+      toast.success(`Status updated to ${status}`);
+    } catch (error) {
+      toast.error("Failed to update status");
     } finally {
       setIsUpdating(false);
     }
