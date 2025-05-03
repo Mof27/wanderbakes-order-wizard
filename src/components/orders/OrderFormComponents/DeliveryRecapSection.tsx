@@ -10,7 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { OrderStatus, OrderTag } from "@/types";
-import { Calendar as CalendarIcon, Upload, Truck, CheckCircle2 } from "lucide-react";
+import { Calendar as CalendarIcon, Upload, Truck, CheckCircle2, MessageSquare, Archive } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 
 interface DeliveryRecapSectionProps {
@@ -86,6 +86,14 @@ const DeliveryRecapSection: React.FC<DeliveryRecapSectionProps> = ({
     onTagsChange(newTags);
   };
 
+  // Check if all required fields for finishing are completed
+  const isFinishReady = () => {
+    return status === 'waiting-feedback' && 
+           customerFeedback && 
+           customerFeedback.trim().length > 0 &&
+           actualDeliveryTime !== undefined;
+  };
+
   // Handle status progression based on current status
   const handleStatusProgress = () => {
     if (!status || !onStatusChange) return;
@@ -103,6 +111,10 @@ const DeliveryRecapSection: React.FC<DeliveryRecapSectionProps> = ({
         const now = new Date();
         onDeliveryTimeChange(now);
       }
+    } else if (status === 'delivery-confirmed') {
+      newStatus = 'waiting-feedback';
+    } else if (status === 'waiting-feedback' && customerFeedback.trim()) {
+      newStatus = 'finished';
     }
 
     if (newStatus && onStatusChange) {
@@ -146,6 +158,27 @@ const DeliveryRecapSection: React.FC<DeliveryRecapSectionProps> = ({
             Confirm Delivery
           </Button>
         );
+      case 'delivery-confirmed':
+        return (
+          <Button 
+            className="bg-indigo-600 hover:bg-indigo-700" 
+            onClick={handleStatusProgress}
+          >
+            <MessageSquare className="mr-2 h-4 w-4" /> 
+            Request Feedback
+          </Button>
+        );
+      case 'waiting-feedback':
+        return (
+          <Button 
+            className="bg-lime-600 hover:bg-lime-700" 
+            onClick={handleStatusProgress}
+            disabled={!isFinishReady()}
+          >
+            <Archive className="mr-2 h-4 w-4" /> 
+            Finish Order
+          </Button>
+        );
       default:
         return null;
     }
@@ -153,8 +186,17 @@ const DeliveryRecapSection: React.FC<DeliveryRecapSectionProps> = ({
 
   // Show appropriate section based on status
   const showPhotosSection = status === 'waiting-photo' || photoPreview.length > 0;
-  const showDeliverySection = status === 'in-delivery' || status === 'delivery-confirmed' || actualDeliveryTime !== undefined;
-  const showFeedbackSection = status === 'delivery-confirmed' || customerFeedback !== '';
+  const showDeliverySection = status === 'in-delivery' || 
+                             status === 'delivery-confirmed' || 
+                             status === 'waiting-feedback' ||
+                             actualDeliveryTime !== undefined;
+  const showFeedbackSection = status === 'delivery-confirmed' || 
+                             status === 'waiting-feedback' || 
+                             status === 'finished' ||
+                             customerFeedback !== '';
+  
+  // Determine if feedback is required (highlighted UI)
+  const isFeedbackRequired = status === 'waiting-feedback';
   
   return (
     <div className="space-y-6">
@@ -162,6 +204,15 @@ const DeliveryRecapSection: React.FC<DeliveryRecapSectionProps> = ({
       {getActionButton() && (
         <div className="flex justify-end">
           {getActionButton()}
+        </div>
+      )}
+      
+      {/* Status indicator for waiting-feedback */}
+      {status === 'waiting-feedback' && (
+        <div className="p-4 border border-indigo-200 bg-indigo-50 rounded-md">
+          <p className="text-indigo-800 text-sm">
+            This order is waiting for customer feedback. Once feedback is collected, you can mark the order as finished.
+          </p>
         </div>
       )}
       
@@ -218,7 +269,8 @@ const DeliveryRecapSection: React.FC<DeliveryRecapSectionProps> = ({
                   variant="outline"
                   className={cn(
                     "w-full justify-start text-left font-normal",
-                    !actualDeliveryTime && "text-muted-foreground"
+                    !actualDeliveryTime && "text-muted-foreground",
+                    status === 'waiting-feedback' && !actualDeliveryTime && "border-red-500"
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
@@ -262,16 +314,28 @@ const DeliveryRecapSection: React.FC<DeliveryRecapSectionProps> = ({
       )}
       
       {/* Feedback section */}
-      {(showFeedbackSection || true) && (
+      {showFeedbackSection && (
         <div className="space-y-2">
-          <Label htmlFor="customer-feedback">Customer Feedback/Complaints</Label>
+          <Label 
+            htmlFor="customer-feedback" 
+            className={cn(isFeedbackRequired && !customerFeedback.trim() ? "text-red-500" : "")}
+          >
+            Customer Feedback/Complaints
+            {isFeedbackRequired && <span className="text-red-500 ml-1">*</span>}
+          </Label>
           <Textarea
             id="customer-feedback"
             value={customerFeedback}
             onChange={(e) => onFeedbackChange(e.target.value)}
-            placeholder="Enter any feedback or complaints from the customer"
-            className="min-h-[100px]"
+            placeholder={isFeedbackRequired ? "Feedback required to finish order" : "Enter any feedback or complaints from the customer"}
+            className={cn(
+              "min-h-[100px]",
+              isFeedbackRequired && !customerFeedback.trim() ? "border-red-500" : ""
+            )}
           />
+          {isFeedbackRequired && !customerFeedback.trim() && (
+            <p className="text-red-500 text-sm">Feedback is required to finish this order</p>
+          )}
         </div>
       )}
       
@@ -292,6 +356,15 @@ const DeliveryRecapSection: React.FC<DeliveryRecapSectionProps> = ({
           ))}
         </div>
       </div>
+      
+      {/* Finished order info */}
+      {status === 'finished' && (
+        <div className="p-4 border border-lime-200 bg-lime-50 rounded-md">
+          <p className="text-lime-800">
+            This order has been finished and archived. No further changes can be made unless reopened.
+          </p>
+        </div>
+      )}
     </div>
   );
 };

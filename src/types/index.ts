@@ -130,6 +130,8 @@ export type OrderStatus =
   'ready-to-deliver' | 
   'in-delivery' | 
   'delivery-confirmed' | 
+  'waiting-feedback' |  // New status
+  'finished' |          // New status
   'cancelled';
 
 // Kitchen-specific status types

@@ -3,7 +3,7 @@ import { Order } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Edit, Truck, Trash2, Upload, CheckCircle2 } from "lucide-react";
+import { Edit, Truck, Trash2, Upload, CheckCircle2, MessageSquare, Archive } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { formatDate, formatCurrency } from "@/lib/utils";
 import OrderStatusDropdown from "./OrderStatusDropdown";
@@ -28,6 +28,10 @@ const getStatusColor = (status: string) => {
       return "bg-orange-100 text-orange-800";
     case "delivery-confirmed":
       return "bg-teal-100 text-teal-800";
+    case "waiting-feedback":
+      return "bg-indigo-100 text-indigo-800";
+    case "finished":
+      return "bg-lime-100 text-lime-800";
     case "cancelled":
       return "bg-red-100 text-red-800";
     default:
@@ -62,6 +66,42 @@ const OrderTableRow = ({ order }: OrderTableRowProps) => {
               className="bg-orange-100 text-orange-800 hover:bg-orange-200 h-8 w-8 p-0"
             >
               <Truck className="h-4 w-4" />
+            </Button>
+          </Link>
+        );
+      case "delivery-confirmed":
+        return (
+          <Link to={`/orders/${order.id}?tab=delivery-recap`}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="bg-teal-100 text-teal-800 hover:bg-teal-200 h-8 w-8 p-0"
+            >
+              <MessageSquare className="h-4 w-4" />
+            </Button>
+          </Link>
+        );
+      case "waiting-feedback":
+        return (
+          <Link to={`/orders/${order.id}?tab=delivery-recap`}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="bg-indigo-100 text-indigo-800 hover:bg-indigo-200 h-8 w-8 p-0"
+            >
+              <CheckCircle2 className="h-4 w-4" />
+            </Button>
+          </Link>
+        );
+      case "finished":
+        return (
+          <Link to={`/orders/${order.id}?tab=delivery-recap`}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="bg-lime-100 text-lime-800 hover:bg-lime-200 h-8 w-8 p-0"
+            >
+              <Archive className="h-4 w-4" />
             </Button>
           </Link>
         );

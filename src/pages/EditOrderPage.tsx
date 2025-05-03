@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { dataService } from "@/services";
-import { SettingsData } from "@/types";
+import { OrderStatus, SettingsData } from "@/types";
 import OrderPrintButton from "@/components/orders/OrderPrintButton";
 import DeliveryLabelPrintButton from "@/components/orders/DeliveryLabelPrintButton";
 
@@ -47,7 +47,7 @@ const EditOrderPage = () => {
     }
   }, [id, orders]);
 
-  const handleStatusUpdate = async (newStatus) => {
+  const handleStatusUpdate = async (newStatus: OrderStatus) => {
     if (order) {
       try {
         await updateOrder({

@@ -34,6 +34,10 @@ const getStatusColor = (status: string) => {
       return "bg-orange-100 text-orange-800";
     case "delivery-confirmed":
       return "bg-teal-100 text-teal-800";
+    case "waiting-feedback":
+      return "bg-indigo-100 text-indigo-800";
+    case "finished":
+      return "bg-lime-100 text-lime-800";
     case "cancelled":
       return "bg-red-100 text-red-800";
     default:
@@ -50,6 +54,8 @@ const statusOptions: OrderStatus[] = [
   "ready-to-deliver",
   "in-delivery",
   "delivery-confirmed",
+  "waiting-feedback",
+  "finished",
   "cancelled"
 ];
 
@@ -80,7 +86,9 @@ const OrderStatusDropdown = ({ order }: OrderStatusDropdownProps) => {
       'waiting-photo': ['ready-to-deliver', 'cancelled'],
       'ready-to-deliver': ['in-delivery', 'cancelled'],
       'in-delivery': ['delivery-confirmed', 'cancelled'],
-      'delivery-confirmed': ['cancelled'],
+      'delivery-confirmed': ['waiting-feedback', 'cancelled'],
+      'waiting-feedback': ['finished', 'cancelled'],
+      'finished': ['cancelled'],
       'cancelled': []
     };
     

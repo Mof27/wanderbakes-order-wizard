@@ -16,7 +16,15 @@ export const matchesStatus = (orderStatus: OrderStatus, targetStatus: string): b
   }
   
   if (targetStatus === "delivered") {
-    return orderStatus === "delivery-confirmed";
+    return orderStatus === "delivery-confirmed" || orderStatus === "waiting-feedback";
+  }
+  
+  if (targetStatus === "finished") {
+    return orderStatus === "finished";
+  }
+  
+  if (targetStatus === "waiting-feedback") {
+    return orderStatus === "waiting-feedback";
   }
   
   // Direct comparison for other statuses
