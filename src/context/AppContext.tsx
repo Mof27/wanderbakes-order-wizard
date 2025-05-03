@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useContext, ReactNode, useEffect } from "react";
 import { ActivityAction, ActivityLog, Customer, FilterOption, Order, OrderStatus, ViewMode } from "../types";
 import { statusFilterOptions, timeFilterOptions } from "../data/mockData";
@@ -94,6 +95,19 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       console.error("Failed to log activity:", error);
       return null;
     }
+  };
+
+  // Log retrieval functions
+  const getLogs = async (): Promise<ActivityLog[]> => {
+    return await dataService.logs.getAll();
+  };
+
+  const getLogsByEntityId = async (entityId: string): Promise<ActivityLog[]> => {
+    return await dataService.logs.getByEntityId(entityId);
+  };
+
+  const getLogsByAction = async (action: ActivityAction): Promise<ActivityLog[]> => {
+    return await dataService.logs.getByAction(action);
   };
 
   // Customer functions

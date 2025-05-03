@@ -1,3 +1,4 @@
+
 import { MockDataProvider } from "./mock";
 import { LiveApiClient } from "./api";
 import { CustomerRepository } from "./repositories/customer.repository";
@@ -21,12 +22,12 @@ export class DataService {
   private liveApiClient: LiveApiClient | null = null;
   private mode: DataSourceMode = 'mock'; // Default to mock
   private settingsRepository: SettingsRepository;
-  private logs: LogRepository;
+  private logRepository: LogRepository;
 
   private constructor() {
     this.mockDataProvider = new MockDataProvider();
     this.settingsRepository = new MockSettingsRepository();
-    this.logs = new MockLogRepository();
+    this.logRepository = new MockLogRepository();
   }
 
   /**
@@ -93,7 +94,7 @@ export class DataService {
    * Get the log repository
    */
   public get logs(): LogRepository {
-    return this.logs;
+    return this.logRepository;
   }
 }
 
