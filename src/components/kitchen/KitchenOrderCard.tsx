@@ -4,12 +4,30 @@ import { Order, KitchenOrderStatus } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { formatDate } from '@/lib/utils';
-import KitchenStatusDropdown from './KitchenStatusDropdown';
+import NextStatusButton from './NextStatusButton';
 
 interface KitchenOrderCardProps {
   order: Order;
   isCompact?: boolean;
 }
+
+// Function to derive kitchen status from order status
+const deriveKitchenStatus = (order: Order): KitchenOrderStatus => {
+  // Eventually this will use a dedicated kitchenStatus field
+  // For now, infer it based on the order status
+  switch (order.status) {
+    case 'confirmed':
+      return 'waiting-baker';
+    case 'waiting-photo':
+      return 'done-waiting-approval';
+    case 'in-progress':
+      // Default to in-progress, but this is where we would
+      // look at the kitchenStatus property once implemented
+      return 'in-progress';
+    default:
+      return 'waiting-baker';
+  }
+};
 
 // Function to extract cake layer information from order
 const getCakeLayerInfo = (order: Order): string => {
@@ -37,16 +55,57 @@ const getUrgencyClass = (deliveryDate: Date): string => {
   }
 };
 
+// Kitchen status color mapping
+const getKitchenStatusColor = (status: string) => {
+  switch (status) {
+    case "waiting-baker":
+      return "bg-orange-100 text-orange-800";
+    case "waiting-crumbcoat":
+      return "bg-yellow-100 text-yellow-800";
+    case "waiting-cover":
+      return "bg-blue-100 text-blue-800";
+    case "in-progress":
+      return "bg-purple-100 text-purple-800";
+    case "done-waiting-approval":
+      return "bg-green-100 text-green-800";
+    default:
+      return "bg-gray-100 text-gray-800";
+  }
+};
+
+// Function to get a nice display name for the status
+const getStatusDisplayName = (status: KitchenOrderStatus): string => {
+  switch (status) {
+    case 'waiting-baker': 
+      return 'Waiting Baker';
+    case 'waiting-crumbcoat': 
+      return 'Waiting Crumbcoat';
+    case 'waiting-cover': 
+      return 'Waiting Cover';
+    case 'in-progress': 
+      return 'In Progress';
+    case 'done-waiting-approval': 
+      return 'Done, Waiting Approval';
+    default:
+      return 'Unknown Status';
+  }
+};
+
 const KitchenOrderCard: React.FC<KitchenOrderCardProps> = ({ order, isCompact = false }) => {
   const urgencyClass = getUrgencyClass(order.deliveryDate);
   const layerInfo = getCakeLayerInfo(order);
+  const currentKitchenStatus = deriveKitchenStatus(order);
   
   return (
     <Card className={`mb-2 ${urgencyClass} hover:shadow-md transition-shadow`}>
       <CardContent className={`${isCompact ? 'p-3' : 'p-4'} space-y-2`}>
         <div className="flex justify-between items-start">
           <div className="font-medium text-sm">{order.id}</div>
-          <KitchenStatusDropdown order={order} />
+          <Badge 
+            className={`${getKitchenStatusColor(currentKitchenStatus)}`}
+          >
+            {getStatusDisplayName(currentKitchenStatus)}
+          </Badge>
         </div>
         
         <div className="space-y-1">
@@ -107,6 +166,14 @@ const KitchenOrderCard: React.FC<KitchenOrderCardProps> = ({ order, isCompact = 
               )}
             </div>
           )}
+
+          {/* Add Next Status Button */}
+          <div className="mt-3">
+            <NextStatusButton 
+              order={order} 
+              currentKitchenStatus={currentKitchenStatus} 
+            />
+          </div>
         </div>
       </CardContent>
     </Card>

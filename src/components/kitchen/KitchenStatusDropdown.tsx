@@ -98,6 +98,9 @@ const getStatusDisplayName = (status: KitchenOrderStatus): string => {
   }
 };
 
+/**
+ * @deprecated This component is being replaced by NextStatusButton
+ */
 const KitchenStatusDropdown = ({ order }: KitchenStatusDropdownProps) => {
   const { updateOrder } = useApp();
   const [isUpdating, setIsUpdating] = useState(false);
@@ -165,4 +168,3 @@ const KitchenStatusDropdown = ({ order }: KitchenStatusDropdownProps) => {
 };
 
 export default KitchenStatusDropdown;
-

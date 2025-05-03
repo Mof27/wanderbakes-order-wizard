@@ -6,15 +6,16 @@ import { Order, KitchenOrderStatus } from "@/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import KitchenOrderCard from "@/components/kitchen/KitchenOrderCard";
-import KitchenOrdersColumn from "@/components/kitchen/KitchenOrdersColumn";
 import { formatDate } from "@/lib/utils";
-import { Archive, Inbox } from "lucide-react";
+import { Archive, Check, ChevronDown, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 const KitchenLeaderPage = () => {
   const { orders } = useApp();
-  const [view, setView] = useState<"kanban" | "list">("kanban");
+  const [view, setView] = useState<"all" | "byDate">("all");
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
+  const [activeFilter, setActiveFilter] = useState<KitchenOrderStatus | "all">("all");
   
   // Filter orders that are relevant for kitchen production
   // These are orders in confirmed or in-progress status
@@ -28,26 +29,82 @@ const KitchenLeaderPage = () => {
     setFilteredOrders(relevantOrders);
   }, [orders]);
 
-  // Group orders by their kitchen status
-  const getOrdersByKitchenStatus = (status: KitchenOrderStatus) => {
+  // Handle status filter changes
+  const handleFilterChange = (status: KitchenOrderStatus | "all") => {
+    setActiveFilter(status);
+  };
+
+  // Get the filtered orders based on kitchen status
+  const getFilteredOrders = () => {
+    if (activeFilter === "all") {
+      return filteredOrders;
+    }
+    
     return filteredOrders.filter(order => {
-      // This is where we'll map the order status to kitchen status
-      // For now, use a simple approach based on order status
-      if (status === 'waiting-baker') {
+      // Map order status to kitchen status
+      if (activeFilter === 'waiting-baker') {
         return order.status === 'confirmed';
-      } else if (status === 'done-waiting-approval') {
+      } else if (activeFilter === 'done-waiting-approval') {
         return order.status === 'waiting-photo';
       } else {
-        // For other statuses, check if there's a matching kitchen status property
-        // This will be enhanced when we add the kitchenStatus property to orders
+        // For other statuses, check if status is in-progress
         return order.status === 'in-progress';
       }
     });
   };
 
+  const kitchenStatusOptions: Array<KitchenOrderStatus | "all"> = [
+    "all",
+    "waiting-baker",
+    "waiting-crumbcoat",
+    "waiting-cover",
+    "in-progress",
+    "done-waiting-approval"
+  ];
+
+  const getStatusDisplayName = (status: KitchenOrderStatus | "all"): string => {
+    if (status === "all") return "All Orders";
+    
+    switch (status) {
+      case 'waiting-baker': 
+        return 'Waiting Baker';
+      case 'waiting-crumbcoat': 
+        return 'Waiting Crumbcoat';
+      case 'waiting-cover': 
+        return 'Waiting Cover';
+      case 'in-progress': 
+        return 'In Progress';
+      case 'done-waiting-approval': 
+        return 'Done, Waiting Approval';
+      default:
+        return 'Unknown Status';
+    }
+  };
+
+  // Get status badge color
+  const getStatusColor = (status: KitchenOrderStatus | "all") => {
+    switch (status) {
+      case "all":
+        return "bg-gray-100 text-gray-800";
+      case "waiting-baker":
+        return "bg-orange-100 text-orange-800";
+      case "waiting-crumbcoat":
+        return "bg-yellow-100 text-yellow-800";
+      case "waiting-cover":
+        return "bg-blue-100 text-blue-800";
+      case "in-progress":
+        return "bg-purple-100 text-purple-800";
+      case "done-waiting-approval":
+        return "bg-green-100 text-green-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
   const getOrdersByDeliveryDate = () => {
-    // Group orders by delivery date
-    const ordersByDate = filteredOrders.reduce((acc, order) => {
+    // Group filtered orders by delivery date
+    const displayOrders = getFilteredOrders();
+    const ordersByDate = displayOrders.reduce((acc, order) => {
       const date = formatDate(order.deliveryDate);
       if (!acc[date]) {
         acc[date] = [];
@@ -59,37 +116,38 @@ const KitchenLeaderPage = () => {
     return ordersByDate;
   };
 
-  const renderKanbanView = () => (
-    <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-      <KitchenOrdersColumn 
-        title="Waiting Baker" 
-        orders={getOrdersByKitchenStatus('waiting-baker')} 
-        status="waiting-baker"
-      />
-      <KitchenOrdersColumn 
-        title="Waiting Crumbcoat" 
-        orders={getOrdersByKitchenStatus('waiting-crumbcoat')} 
-        status="waiting-crumbcoat"
-      />
-      <KitchenOrdersColumn 
-        title="Waiting Cover" 
-        orders={getOrdersByKitchenStatus('waiting-cover')} 
-        status="waiting-cover"
-      />
-      <KitchenOrdersColumn 
-        title="In Progress" 
-        orders={getOrdersByKitchenStatus('in-progress')} 
-        status="in-progress"
-      />
-      <KitchenOrdersColumn 
-        title="Done, Waiting Approval" 
-        orders={getOrdersByKitchenStatus('done-waiting-approval')} 
-        status="done-waiting-approval"
-      />
+  const renderFilterChips = () => (
+    <div className="flex flex-wrap gap-2 mb-4">
+      {kitchenStatusOptions.map((status) => (
+        <Badge
+          key={status}
+          className={`cursor-pointer ${
+            activeFilter === status 
+              ? `${getStatusColor(status)} border-2 border-slate-400` 
+              : "bg-gray-100 text-gray-800 hover:bg-gray-200"
+          }`}
+          onClick={() => handleFilterChange(status)}
+        >
+          {getStatusDisplayName(status)}
+          {activeFilter === status && <Check className="ml-1 h-3 w-3" />}
+        </Badge>
+      ))}
     </div>
   );
 
-  const renderListView = () => {
+  const renderAllOrders = () => {
+    const displayOrders = getFilteredOrders();
+    
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {displayOrders.map(order => (
+          <KitchenOrderCard key={order.id} order={order} />
+        ))}
+      </div>
+    );
+  };
+
+  const renderOrdersByDate = () => {
     const ordersByDate = getOrdersByDeliveryDate();
     
     return (
@@ -103,7 +161,7 @@ const KitchenLeaderPage = () => {
                   {date} ({dateOrders.length} orders)
                 </CardTitle>
               </CardHeader>
-              <CardContent className="divide-y">
+              <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {dateOrders.map(order => (
                   <KitchenOrderCard key={order.id} order={order} isCompact={true} />
                 ))}
@@ -124,20 +182,20 @@ const KitchenLeaderPage = () => {
         <h1 className="text-2xl font-bold">Kitchen Production</h1>
         <div className="flex gap-2">
           <Button
-            variant={view === "kanban" ? "default" : "outline"}
-            onClick={() => setView("kanban")}
+            variant={view === "all" ? "default" : "outline"}
+            onClick={() => setView("all")}
             className="flex gap-2 items-center"
           >
-            <Inbox className="h-4 w-4" />
-            Kanban View
+            <Filter className="h-4 w-4" />
+            All Orders
           </Button>
           <Button
-            variant={view === "list" ? "default" : "outline"}
-            onClick={() => setView("list")}
+            variant={view === "byDate" ? "default" : "outline"}
+            onClick={() => setView("byDate")}
             className="flex gap-2 items-center"
           >
             <Archive className="h-4 w-4" />
-            List by Date
+            Group by Date
           </Button>
         </div>
       </div>
@@ -146,7 +204,9 @@ const KitchenLeaderPage = () => {
         Manage your cake production workflow. View orders ready to be baked, track progress, and update status.
       </p>
       
-      {view === "kanban" ? renderKanbanView() : renderListView()}
+      {renderFilterChips()}
+      
+      {view === "all" ? renderAllOrders() : renderOrdersByDate()}
     </div>
   );
 };
