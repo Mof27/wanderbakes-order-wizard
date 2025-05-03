@@ -219,7 +219,8 @@ const DeliveryPage = () => {
                       <TableCell>
                         {order.deliveryMethod ? (
                           <Badge variant="outline" className="capitalize">
-                            {order.deliveryMethod === 'flat-rate' ? 'Shop Delivery' : order.deliveryMethod}
+                            {order.deliveryMethod === 'flat-rate' ? 'Flat Rate' : 
+                             order.deliveryMethod === 'lalamove' ? 'Lalamove' : 'Self-Pickup'}
                           </Badge>
                         ) : (
                           '-'
