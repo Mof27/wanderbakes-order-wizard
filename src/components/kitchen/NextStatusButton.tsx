@@ -169,8 +169,7 @@ const NextStatusButton: React.FC<NextStatusButtonProps> = ({ order, currentKitch
             <Timer className="h-4 w-4 text-blue-500" />
             <Progress 
               value={progressPercentage} 
-              className="h-2 w-full bg-blue-100" 
-              indicatorClassName="bg-blue-500"
+              className="h-2 w-full bg-blue-100"
             />
           </div>
         </div>
@@ -180,3 +179,4 @@ const NextStatusButton: React.FC<NextStatusButtonProps> = ({ order, currentKitch
 };
 
 export default NextStatusButton;
+
