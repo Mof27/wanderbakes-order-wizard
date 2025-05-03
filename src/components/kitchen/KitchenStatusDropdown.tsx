@@ -88,8 +88,13 @@ const getStatusDisplayName = (status: KitchenOrderStatus): string => {
       return 'In Progress';
     case 'done-waiting-approval': 
       return 'Done, Waiting Approval';
+    // The following case was causing the error because TypeScript correctly detected
+    // that this default case shouldn't be reachable (all possible values were covered)
+    // but the code was still trying to perform string operations on it
     default:
-      return status.charAt(0).toUpperCase() + status.slice(1).replace(/-/g, ' ');
+      // Provide a safe fallback - this should never happen
+      // if the KitchenOrderStatus type is used correctly
+      return 'Unknown Status';
   }
 };
 
@@ -160,3 +165,4 @@ const KitchenStatusDropdown = ({ order }: KitchenStatusDropdownProps) => {
 };
 
 export default KitchenStatusDropdown;
+
