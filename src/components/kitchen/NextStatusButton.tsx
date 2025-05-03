@@ -112,6 +112,8 @@ const NextStatusButton: React.FC<NextStatusButtonProps> = ({ order, currentKitch
       // Map the kitchen status to the appropriate order status
       const newOrderStatus = mapKitchenStatusToOrderStatus(nextStatus);
       
+      console.log(`Updating order ${order.id} from ${currentKitchenStatus} to ${nextStatus}`);
+      
       await updateOrder({
         ...order,
         status: newOrderStatus,
@@ -120,6 +122,7 @@ const NextStatusButton: React.FC<NextStatusButtonProps> = ({ order, currentKitch
       
       toast.success(`Updated status to ${getStatusDisplayName(nextStatus)}`);
     } catch (error) {
+      console.error("Failed to update status:", error);
       toast.error("Failed to update status");
     } finally {
       setIsProcessing(false);

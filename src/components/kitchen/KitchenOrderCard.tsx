@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Order, KitchenOrderStatus } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
@@ -25,8 +24,8 @@ const deriveKitchenStatus = (order: Order): KitchenOrderStatus => {
     case 'waiting-photo':
       return 'done-waiting-approval';
     case 'in-progress':
-      // Default to in-progress
-      return 'in-progress';
+      // Default to waiting-cover to match KitchenLeaderPage
+      return 'waiting-cover';
     default:
       return 'waiting-baker';
   }
@@ -169,7 +168,7 @@ const KitchenOrderCard: React.FC<KitchenOrderCardProps> = ({ order, isCompact = 
               )}
             </div>
           )}
-
+          
           {/* Add Next Status Button */}
           <div className="mt-3">
             <NextStatusButton 
