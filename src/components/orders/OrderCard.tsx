@@ -1,8 +1,9 @@
+
 import { Order } from "@/types";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Edit, Trash2 } from "lucide-react";
+import { Edit, Trash2, Upload } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { formatDate, formatCurrency } from "@/lib/utils";
 import OrderStatusDropdown from "./OrderStatusDropdown";
@@ -32,6 +33,9 @@ const getStatusColor = (status: string) => {
 
 const OrderCard = ({ order }: OrderCardProps) => {
   const { deleteOrder } = useApp();
+  
+  // Determine if this order is waiting for photos to be uploaded
+  const isWaitingPhoto = order.status === "waiting-photo";
 
   return (
     <Card className="overflow-hidden">
@@ -87,11 +91,24 @@ const OrderCard = ({ order }: OrderCardProps) => {
         >
           <Trash2 className="h-4 w-4" />
         </Button>
-        <Link to={`/orders/${order.id}`}>
-          <Button variant="outline" size="sm" className="bg-cake-primary hover:bg-cake-primary/80 text-cake-text">
-            <Edit className="h-4 w-4 mr-1" /> Edit
-          </Button>
-        </Link>
+        
+        {isWaitingPhoto ? (
+          <Link to={`/orders/${order.id}?tab=delivery-recap`}>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="bg-purple-100 text-purple-800 hover:bg-purple-200"
+            >
+              <Upload className="h-4 w-4 mr-1" /> Upload Photos
+            </Button>
+          </Link>
+        ) : (
+          <Link to={`/orders/${order.id}`}>
+            <Button variant="outline" size="sm" className="bg-cake-primary hover:bg-cake-primary/80 text-cake-text">
+              <Edit className="h-4 w-4 mr-1" /> Edit
+            </Button>
+          </Link>
+        )}
       </CardFooter>
     </Card>
   );

@@ -3,7 +3,7 @@ import { Order } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Edit, Trash2 } from "lucide-react";
+import { Edit, Trash2, Upload } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { formatDate, formatCurrency } from "@/lib/utils";
 import OrderStatusDropdown from "./OrderStatusDropdown";
@@ -35,6 +35,9 @@ const getStatusColor = (status: string) => {
 
 const OrderTableRow = ({ order }: OrderTableRowProps) => {
   const { deleteOrder } = useApp();
+
+  // Determine if this order is waiting for photos to be uploaded
+  const isWaitingPhoto = order.status === "waiting-photo";
 
   return (
     <tr className="border-t">
@@ -72,15 +75,28 @@ const OrderTableRow = ({ order }: OrderTableRowProps) => {
           >
             <Trash2 className="h-4 w-4" />
           </Button>
-          <Link to={`/orders/${order.id}`}>
-            <Button
-              variant="outline"
-              size="sm"
-              className="bg-cake-primary hover:bg-cake-primary/80 text-cake-text h-8 w-8 p-0"
-            >
-              <Edit className="h-4 w-4" />
-            </Button>
-          </Link>
+          
+          {isWaitingPhoto ? (
+            <Link to={`/orders/${order.id}?tab=delivery-recap`}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="bg-purple-100 text-purple-800 hover:bg-purple-200 h-8 w-8 p-0"
+              >
+                <Upload className="h-4 w-4" />
+              </Button>
+            </Link>
+          ) : (
+            <Link to={`/orders/${order.id}`}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="bg-cake-primary hover:bg-cake-primary/80 text-cake-text h-8 w-8 p-0"
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
+            </Link>
+          )}
         </div>
       </td>
     </tr>

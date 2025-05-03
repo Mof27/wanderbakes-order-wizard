@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
 import OrderForm from "@/components/orders/OrderForm";
 import { Helmet } from "react-helmet-async";
@@ -15,10 +15,14 @@ import DeliveryLabelPrintButton from "@/components/orders/DeliveryLabelPrintButt
 const EditOrderPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { orders } = useApp();
   const [order, setOrder] = useState(id ? orders.find(o => o.id === id) : null);
   const [settings, setSettings] = useState<SettingsData | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  // Get the tab from query parameters
+  const defaultTab = searchParams.get('tab') || 'required';
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -103,7 +107,7 @@ const EditOrderPage = () => {
         </div>
       )}
       
-      <OrderForm order={order} settings={settings} />
+      <OrderForm order={order} settings={settings} defaultTab={defaultTab} />
     </div>
   );
 };

@@ -27,9 +27,10 @@ import DeliveryRecapSection from "./OrderFormComponents/DeliveryRecapSection";
 interface OrderFormProps {
   order?: Order;
   settings?: SettingsData | null;
+  defaultTab?: string;
 }
 
-const OrderForm = ({ order, settings }: OrderFormProps) => {
+const OrderForm = ({ order, settings, defaultTab = "required" }: OrderFormProps) => {
   const navigate = useNavigate();
   const { addOrder, updateOrder, updateCustomer } = useApp();
   const [customer, setCustomer] = useState<Customer | null>(order?.customer || null);
@@ -49,7 +50,14 @@ const OrderForm = ({ order, settings }: OrderFormProps) => {
   );
   const [cakeFlavor, setCakeFlavor] = useState(order?.cakeFlavor || (cakeFlavors.length > 0 ? cakeFlavors[0] : ""));
   const [ingredients, setIngredients] = useState<Ingredient[]>(order?.ingredients || []);
-  const [activeTab, setActiveTab] = useState("required");
+  
+  // Use the defaultTab prop to set the initial activeTab state
+  const [activeTab, setActiveTab] = useState(
+    defaultTab === "delivery-recap" || defaultTab === "optional" 
+      ? defaultTab 
+      : "required"
+  );
+  
   const [useSameFlavor, setUseSameFlavor] = useState(order?.useSameFlavor !== false);
   const [useSameCover, setUseSameCover] = useState(order?.useSameCover !== false);
   const [packingItems, setPackingItems] = useState<PackingItem[]>(
