@@ -1,6 +1,5 @@
-
 import React, { createContext, useState, useContext, ReactNode, useEffect } from "react";
-import { ActivityAction, ActivityLog, Customer, FilterOption, Order, OrderStatus, ViewMode } from "../types";
+import { Customer, FilterOption, Order, ViewMode } from "../types";
 import { statusFilterOptions, timeFilterOptions } from "../data/mockData";
 import { toast } from "@/components/ui/sonner";
 import { dataService } from "@/services";
@@ -25,12 +24,6 @@ interface AppContextProps {
   filteredOrders: Order[];
   isLoading: boolean;
   getOrderById: (id: string) => Order | undefined;
-  logs: ActivityLog[];
-  activeUser: string;
-  setActiveUser: (userName: string) => void;
-  getLogs: () => Promise<ActivityLog[]>;
-  getLogsByEntityId: (entityId: string) => Promise<ActivityLog[]>;
-  getLogsByAction: (action: ActivityAction) => Promise<ActivityLog[]>;
 }
 
 const AppContext = createContext<AppContextProps | undefined>(undefined);
@@ -43,13 +36,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [logs, setLogs] = useState<ActivityLog[]>([]);
-  const [activeUser, setActiveUser] = useState<string>(localStorage.getItem('activeUser') || 'Admin');
-  
-  // Save active user to localStorage when it changes
-  useEffect(() => {
-    localStorage.setItem('activeUser', activeUser);
-  }, [activeUser]);
 
   // Load initial data
   useEffect(() => {
@@ -57,11 +43,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       try {
         const customersData = await dataService.customers.getAll();
         const ordersData = await dataService.orders.getAll();
-        const logsData = await dataService.logs.getAll();
         
         setCustomers(customersData);
         setOrders(ordersData);
-        setLogs(logsData);
       } catch (error) {
         console.error("Failed to load initial data:", error);
         toast.error("Failed to load data");
@@ -73,52 +57,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     loadInitialData();
   }, []);
 
-  // Log creation utility
-  const createActivityLog = async (
-    action: ActivityAction,
-    entityType: 'order' | 'customer',
-    entityId: string,
-    details?: { field?: string; previousValue?: any; newValue?: any }
-  ) => {
-    try {
-      const newLog = await dataService.logs.create({
-        action,
-        entityType,
-        entityId,
-        userName: activeUser,
-        details
-      });
-      
-      setLogs(prevLogs => [newLog, ...prevLogs]);
-      return newLog;
-    } catch (error) {
-      console.error("Failed to log activity:", error);
-      return null;
-    }
-  };
-
-  // Log retrieval functions
-  const getLogs = async (): Promise<ActivityLog[]> => {
-    return await dataService.logs.getAll();
-  };
-
-  const getLogsByEntityId = async (entityId: string): Promise<ActivityLog[]> => {
-    return await dataService.logs.getByEntityId(entityId);
-  };
-
-  const getLogsByAction = async (action: ActivityAction): Promise<ActivityLog[]> => {
-    return await dataService.logs.getByAction(action);
-  };
-
   // Customer functions
   const addCustomer = async (customerData: Omit<Customer, 'id' | 'createdAt'>) => {
     try {
       const newCustomer = await dataService.customers.create(customerData);
       setCustomers(prevCustomers => [...prevCustomers, newCustomer]);
-      
-      // Log customer creation
-      await createActivityLog('create', 'customer', newCustomer.id);
-      
       toast.success("Customer added successfully");
       return newCustomer;
     } catch (error) {
@@ -130,21 +73,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const updateCustomer = async (updatedCustomer: Customer) => {
     try {
-      const oldCustomer = customers.find(c => c.id === updatedCustomer.id);
       const result = await dataService.customers.update(updatedCustomer.id, updatedCustomer);
       setCustomers(prevCustomers => 
         prevCustomers.map(customer => 
           customer.id === updatedCustomer.id ? result : customer
         )
       );
-      
-      // Log customer update
-      await createActivityLog('update', 'customer', updatedCustomer.id, {
-        field: 'customer',
-        previousValue: oldCustomer,
-        newValue: result
-      });
-      
       toast.success("Customer updated successfully");
       return result;
     } catch (error) {
@@ -163,10 +97,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     try {
       const newOrder = await dataService.orders.create(orderData);
       setOrders(prevOrders => [newOrder, ...prevOrders]);
-      
-      // Log order creation
-      await createActivityLog('create', 'order', newOrder.id);
-      
       toast.success("Order created successfully");
       return newOrder;
     } catch (error) {
@@ -178,8 +108,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const updateOrder = async (updatedOrder: Order) => {
     try {
-      const oldOrder = orders.find(o => o.id === updatedOrder.id);
-      
       await dataService.orders.update(updatedOrder.id, updatedOrder);
       setOrders(prevOrders =>
         prevOrders.map(order => {
@@ -189,20 +117,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           return order;
         })
       );
-      
-      // Check if status was changed
-      if (oldOrder && oldOrder.status !== updatedOrder.status) {
-        // Log status change specifically
-        await createActivityLog('status-change', 'order', updatedOrder.id, {
-          field: 'status',
-          previousValue: oldOrder.status,
-          newValue: updatedOrder.status
-        });
-      } else {
-        // Log general update
-        await createActivityLog('update', 'order', updatedOrder.id);
-      }
-      
       toast.success("Order updated successfully");
     } catch (error) {
       console.error("Failed to update order:", error);
@@ -215,10 +129,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     try {
       await dataService.orders.delete(orderId);
       setOrders(prevOrders => prevOrders.filter(order => order.id !== orderId));
-      
-      // Log order deletion
-      await createActivityLog('delete', 'order', orderId);
-      
       toast.success("Order deleted successfully");
     } catch (error) {
       console.error("Failed to delete order:", error);
@@ -294,12 +204,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     filteredOrders,
     isLoading,
     getOrderById,
-    logs,
-    activeUser,
-    setActiveUser,
-    getLogs,
-    getLogsByEntityId,
-    getLogsByAction,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
