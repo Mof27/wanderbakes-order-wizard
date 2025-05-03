@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from "react";
 import { useApp } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
@@ -153,6 +152,35 @@ const DateFilterBar = () => {
                     }}
                     numberOfMonths={2}
                     className="pointer-events-auto"
+                    styles={{
+                      day_range_middle: {
+                        color: 'var(--primary-foreground)',
+                        backgroundColor: 'var(--primary)',
+                      },
+                      day_selected: 'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground',
+                      day_range_end: 'day-range-end bg-primary text-primary-foreground',
+                      day_range_start: 'day-range-start bg-primary text-primary-foreground',
+                    }}
+                    modifiersStyles={{
+                      selected: {
+                        backgroundColor: 'var(--primary)',
+                        color: 'var(--primary-foreground)',
+                      },
+                      range_start: {
+                        color: 'var(--primary-foreground)',
+                        backgroundColor: 'var(--primary)',
+                        borderRadius: '50% 0 0 50%',
+                      },
+                      range_end: {
+                        color: 'var(--primary-foreground)',
+                        backgroundColor: 'var(--primary)',
+                        borderRadius: '0 50% 50% 0',
+                      },
+                      range_middle: {
+                        color: 'var(--primary-foreground)',
+                        backgroundColor: 'var(--primary)',
+                      },
+                    }}
                   />
                   <div className="flex justify-end gap-2 pt-2 border-t mt-2">
                     <Button 
