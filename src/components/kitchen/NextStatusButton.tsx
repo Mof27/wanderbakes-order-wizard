@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Check, Timer, X } from "lucide-react";
 import { useApp } from "@/context/AppContext";
@@ -37,7 +36,7 @@ const mapKitchenStatusToOrderStatus = (kitchenStatus: KitchenOrderStatus) => {
     case 'waiting-crumbcoat':
     case 'waiting-cover':
     case 'in-progress':
-      return 'in-progress';
+      return 'in-kitchen';
     case 'done-waiting-approval':
       return 'waiting-photo';
   }

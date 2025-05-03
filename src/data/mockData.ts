@@ -149,7 +149,7 @@ export const mockOrders: Order[] = [
   {
     id: "o2",
     customer: mockCustomers[1],
-    status: "in-progress",
+    status: "in-kitchen",
     deliveryDate: new Date('2024-05-10'),
     deliveryAddress: mockCustomers[1].addresses[0].text,
     deliveryAddressNotes: mockCustomers[1].addresses[0].deliveryNotes,
@@ -311,7 +311,8 @@ export const mockOrders: Order[] = [
   {
     id: "o6",
     customer: mockCustomers[0],
-    status: "in-progress", // This could be in "waiting-crumbcoat" kitchen status
+    status: "in-kitchen", // This could be in "waiting-crumbcoat" kitchen status
+    kitchenStatus: "waiting-crumbcoat", // Adding explicit kitchen status
     deliveryDate: new Date('2024-05-07'),
     deliveryAddress: mockCustomers[0].addresses[0].text,
     deliveryAddressNotes: mockCustomers[0].addresses[0].deliveryNotes,
@@ -335,7 +336,8 @@ export const mockOrders: Order[] = [
   {
     id: "o7",
     customer: mockCustomers[2],
-    status: "in-progress", // This could be in "waiting-cover" kitchen status
+    status: "in-kitchen", // This could be in "waiting-cover" kitchen status
+    kitchenStatus: "waiting-cover", // Adding explicit kitchen status
     deliveryDate: new Date('2024-05-06'),
     deliveryAddress: mockCustomers[2].addresses[0].text,
     deliveryAddressNotes: mockCustomers[2].addresses[0].deliveryNotes,
@@ -363,7 +365,7 @@ export const statusFilterOptions: FilterOption[] = [
   { id: "all", label: "All Orders", value: "all" },
   { id: "draft", label: "Draft", value: "draft" },
   { id: "confirmed", label: "Confirmed", value: "confirmed" },
-  { id: "in-progress", label: "In Progress", value: "in-progress" },
+  { id: "in-kitchen", label: "In Kitchen", value: "in-kitchen" },
   { id: "waiting-photo", label: "Waiting Photo", value: "waiting-photo" },
   { id: "ready", label: "Ready", value: "ready" },
   { id: "delivered", label: "Delivered", value: "delivered" },

@@ -23,7 +23,7 @@ const getStatusColor = (status: string) => {
       return "bg-gray-200 text-gray-800";
     case "confirmed":
       return "bg-blue-100 text-blue-800";
-    case "in-progress":
+    case "in-kitchen":
       return "bg-yellow-100 text-yellow-800";
     case "waiting-photo":
       return "bg-purple-100 text-purple-800";
@@ -42,7 +42,7 @@ const getStatusColor = (status: string) => {
 const statusOptions: OrderStatus[] = [
   "draft",
   "confirmed", 
-  "in-progress",
+  "in-kitchen",
   "waiting-photo",
   "ready",
   "delivered", 

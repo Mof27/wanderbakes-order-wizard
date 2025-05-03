@@ -44,7 +44,7 @@ const deriveKitchenStatus = (order: Order): KitchenOrderStatus => {
       return 'waiting-baker';
     case 'waiting-photo':
       return 'done-waiting-approval';
-    case 'in-progress':
+    case 'in-kitchen':
       // Default to in-progress, but this is where we would
       // look at the kitchenStatus property once implemented
       return 'in-progress';
@@ -69,7 +69,7 @@ const mapKitchenStatusToOrderStatus = (kitchenStatus: KitchenOrderStatus) => {
     case 'waiting-crumbcoat':
     case 'waiting-cover':
     case 'in-progress':
-      return 'in-progress';
+      return 'in-kitchen';
     case 'done-waiting-approval':
       return 'waiting-photo';
   }

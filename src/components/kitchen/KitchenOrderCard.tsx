@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Order, KitchenOrderStatus } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
@@ -23,7 +24,7 @@ const deriveKitchenStatus = (order: Order): KitchenOrderStatus => {
       return 'waiting-baker';
     case 'waiting-photo':
       return 'done-waiting-approval';
-    case 'in-progress':
+    case 'in-kitchen':
       // Default to waiting-cover to match KitchenLeaderPage
       return 'waiting-cover';
     default:

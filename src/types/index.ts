@@ -116,7 +116,7 @@ export type Ingredient = {
   unit: string;
 };
 
-export type OrderStatus = 'draft' | 'confirmed' | 'in-progress' | 'ready' | 'delivered' | 'cancelled' | 'waiting-photo';
+export type OrderStatus = 'draft' | 'confirmed' | 'in-kitchen' | 'ready' | 'delivered' | 'cancelled' | 'waiting-photo';
 
 // New kitchen-specific status types
 export type KitchenOrderStatus = 
