@@ -1,4 +1,3 @@
-
 export type Address = {
   id: string;
   text: string;
@@ -73,6 +72,21 @@ export interface PrintEvent {
   user?: string; // Can be used for tracking who printed
 }
 
+// New type for cake photo upload
+export interface PhotoUpload {
+  imageUrl: string;
+  uploadedAt: Date;
+  approvedAt?: Date;
+  note?: string;
+}
+
+// New type for delivery confirmation
+export interface DeliveryConfirmation {
+  confirmedAt: Date;
+  notes?: string;
+  deliveredBy?: string;
+}
+
 export type Order = {
   id: string;
   customer: Customer;
@@ -106,7 +120,9 @@ export type Order = {
   deliveryMethod?: DeliveryMethod;
   deliveryTimeSlot?: string;
   deliveryPrice?: number;
-  printHistory?: PrintEvent[]; // New field to track print history
+  printHistory?: PrintEvent[]; // Field to track print history
+  photos?: PhotoUpload[]; // New field for cake photos
+  delivery?: DeliveryConfirmation; // New field for delivery confirmation
 };
 
 export type Ingredient = {
