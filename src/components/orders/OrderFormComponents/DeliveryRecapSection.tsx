@@ -10,17 +10,20 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { OrderStatus, OrderTag } from "@/types";
-import { Calendar as CalendarIcon, Upload, Truck, CheckCircle2, MessageSquare, Archive } from "lucide-react";
+import { Calendar as CalendarIcon, Upload, Truck, CheckCircle2, MessageSquare, Archive, Camera, Image } from "lucide-react";
 import { useApp } from "@/context/AppContext";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface DeliveryRecapSectionProps {
   orderId?: string;
   status?: OrderStatus;
   finishedCakePhotos?: string[];
+  deliveryDocumentationPhotos?: string[];
   actualDeliveryTime?: Date;
   customerFeedback?: string;
   orderTags?: OrderTag[];
   onPhotosChange: (photos: string[]) => void;
+  onDeliveryPhotosChange: (photos: string[]) => void;
   onDeliveryTimeChange: (date: Date | undefined) => void;
   onFeedbackChange: (feedback: string) => void;
   onTagsChange: (tags: OrderTag[]) => void;
@@ -41,29 +44,39 @@ const DeliveryRecapSection: React.FC<DeliveryRecapSectionProps> = ({
   orderId,
   status,
   finishedCakePhotos = [],
+  deliveryDocumentationPhotos = [],
   actualDeliveryTime,
   customerFeedback = '',
   orderTags = [],
   onPhotosChange,
+  onDeliveryPhotosChange,
   onDeliveryTimeChange,
   onFeedbackChange,
   onTagsChange,
   onStatusChange,
 }) => {
   const [photoPreview, setPhotoPreview] = useState<string[]>(finishedCakePhotos || []);
+  const [deliveryPhotoPreview, setDeliveryPhotoPreview] = useState<string[]>(deliveryDocumentationPhotos || []);
+  const [activePhotoTab, setActivePhotoTab] = useState<string>("cake-photos");
   const { updateOrder } = useApp();
   
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, photoType: 'cake' | 'delivery') => {
     if (e.target.files && e.target.files.length > 0) {
-      const newPhotos: string[] = [...photoPreview];
+      const newPhotos: string[] = photoType === 'cake' ? [...photoPreview] : [...deliveryPhotoPreview];
       
       Array.from(e.target.files).forEach(file => {
         const reader = new FileReader();
         reader.onload = (event) => {
           if (event.target?.result) {
             newPhotos.push(event.target.result as string);
-            setPhotoPreview([...newPhotos]);
-            onPhotosChange([...newPhotos]);
+            
+            if (photoType === 'cake') {
+              setPhotoPreview([...newPhotos]);
+              onPhotosChange([...newPhotos]);
+            } else {
+              setDeliveryPhotoPreview([...newPhotos]);
+              onDeliveryPhotosChange([...newPhotos]);
+            }
           }
         };
         reader.readAsDataURL(file);
@@ -71,11 +84,18 @@ const DeliveryRecapSection: React.FC<DeliveryRecapSectionProps> = ({
     }
   };
   
-  const removePhoto = (index: number) => {
-    const newPhotos = [...photoPreview];
-    newPhotos.splice(index, 1);
-    setPhotoPreview(newPhotos);
-    onPhotosChange(newPhotos);
+  const removePhoto = (index: number, photoType: 'cake' | 'delivery') => {
+    if (photoType === 'cake') {
+      const newPhotos = [...photoPreview];
+      newPhotos.splice(index, 1);
+      setPhotoPreview(newPhotos);
+      onPhotosChange(newPhotos);
+    } else {
+      const newPhotos = [...deliveryPhotoPreview];
+      newPhotos.splice(index, 1);
+      setDeliveryPhotoPreview(newPhotos);
+      onDeliveryPhotosChange(newPhotos);
+    }
   };
   
   const handleTagChange = (tag: OrderTag, checked: boolean) => {
@@ -185,11 +205,22 @@ const DeliveryRecapSection: React.FC<DeliveryRecapSectionProps> = ({
   };
 
   // Show appropriate section based on status
-  const showPhotosSection = status === 'waiting-photo' || photoPreview.length > 0;
+  // Make photos section visible for all states from waiting-photo onwards
+  const showPhotosSection = status === 'waiting-photo' || 
+                           status === 'ready-to-deliver' || 
+                           status === 'in-delivery' || 
+                           status === 'delivery-confirmed' || 
+                           status === 'waiting-feedback' || 
+                           status === 'finished' ||
+                           photoPreview.length > 0 ||
+                           deliveryPhotoPreview.length > 0;
+                           
   const showDeliverySection = status === 'in-delivery' || 
                              status === 'delivery-confirmed' || 
                              status === 'waiting-feedback' ||
+                             status === 'finished' ||
                              actualDeliveryTime !== undefined;
+                             
   const showFeedbackSection = status === 'delivery-confirmed' || 
                              status === 'waiting-feedback' || 
                              status === 'finished' ||
@@ -216,45 +247,112 @@ const DeliveryRecapSection: React.FC<DeliveryRecapSectionProps> = ({
         </div>
       )}
       
-      {/* Photos section */}
+      {/* Photos section with tabs */}
       {showPhotosSection && (
         <div className="space-y-2">
-          <h3 className="text-lg font-medium">Finished Cake Photos</h3>
-          <div className="grid grid-cols-3 gap-4">
-            {photoPreview.map((photo, index) => (
-              <div key={index} className="relative group">
-                <img 
-                  src={photo} 
-                  alt={`Cake photo ${index + 1}`}
-                  className="w-full h-32 object-cover rounded-md"
-                />
-                <button
-                  type="button"
-                  onClick={() => removePhoto(index)}
-                  className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  &times;
-                </button>
+          <h3 className="text-lg font-medium">Order Documentation Photos</h3>
+          <Tabs value={activePhotoTab} onValueChange={setActivePhotoTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-4">
+              <TabsTrigger value="cake-photos" className="flex items-center">
+                <Camera className="h-4 w-4 mr-2" />
+                <span>Finished Cake Photos</span>
+                {photoPreview.length > 0 && (
+                  <span className="ml-2 bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    {photoPreview.length}
+                  </span>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="delivery-photos" className="flex items-center">
+                <Image className="h-4 w-4 mr-2" />
+                <span>Delivery Documentation</span>
+                {deliveryPhotoPreview.length > 0 && (
+                  <span className="ml-2 bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    {deliveryPhotoPreview.length}
+                  </span>
+                )}
+              </TabsTrigger>
+            </TabsList>
+            
+            {/* Finished Cake Photos tab */}
+            <TabsContent value="cake-photos" className="space-y-4">
+              <p className="text-sm text-muted-foreground">Photos of the finished cake before delivery.</p>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {photoPreview.map((photo, index) => (
+                  <div key={index} className="relative group">
+                    <img 
+                      src={photo} 
+                      alt={`Cake photo ${index + 1}`}
+                      className="w-full h-32 object-cover rounded-md"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removePhoto(index, 'cake')}
+                      className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      &times;
+                    </button>
+                  </div>
+                ))}
+                <div className="w-full h-32 border-2 border-dashed border-gray-300 rounded-md flex items-center justify-center">
+                  <label
+                    htmlFor="cake-photo-upload"
+                    className="cursor-pointer flex flex-col items-center p-4"
+                  >
+                    <Upload className="h-6 w-6 mb-2 text-gray-500" />
+                    <span className="text-sm text-gray-500">Upload Photo</span>
+                    <input
+                      id="cake-photo-upload"
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={(e) => handleFileChange(e, 'cake')}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
               </div>
-            ))}
-            <div className="w-full h-32 border-2 border-dashed border-gray-300 rounded-md flex items-center justify-center">
-              <label
-                htmlFor="cake-photo-upload"
-                className="cursor-pointer flex flex-col items-center p-4"
-              >
-                <Upload className="h-6 w-6 mb-2 text-gray-500" />
-                <span className="text-sm text-gray-500">Upload Photo</span>
-                <input
-                  id="cake-photo-upload"
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handleFileChange}
-                  className="hidden"
-                />
-              </label>
-            </div>
-          </div>
+            </TabsContent>
+            
+            {/* Delivery Documentation Photos tab */}
+            <TabsContent value="delivery-photos" className="space-y-4">
+              <p className="text-sm text-muted-foreground">Photos taken during delivery (cake at venue, delivery receipt, etc).</p>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {deliveryPhotoPreview.map((photo, index) => (
+                  <div key={index} className="relative group">
+                    <img 
+                      src={photo} 
+                      alt={`Delivery documentation photo ${index + 1}`}
+                      className="w-full h-32 object-cover rounded-md"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removePhoto(index, 'delivery')}
+                      className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      &times;
+                    </button>
+                  </div>
+                ))}
+                <div className="w-full h-32 border-2 border-dashed border-gray-300 rounded-md flex items-center justify-center">
+                  <label
+                    htmlFor="delivery-photo-upload"
+                    className="cursor-pointer flex flex-col items-center p-4"
+                  >
+                    <Upload className="h-6 w-6 mb-2 text-gray-500" />
+                    <span className="text-sm text-gray-500">Upload Photo</span>
+                    <input
+                      id="delivery-photo-upload"
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={(e) => handleFileChange(e, 'delivery')}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
       )}
       

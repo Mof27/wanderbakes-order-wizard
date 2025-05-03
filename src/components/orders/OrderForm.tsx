@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useApp } from "@/context/AppContext";
 import { Customer, Order, Ingredient, Address, TierDetail, PackingItem, CakeColor, CoverType, SettingsData, DeliveryMethod, OrderTag, OrderStatus } from "@/types";
@@ -68,6 +67,7 @@ const OrderForm = ({ order, settings, defaultTab = "required", onStatusChange }:
   
   // New states for Delivery & Data Recap tab
   const [finishedCakePhotos, setFinishedCakePhotos] = useState<string[]>(order?.finishedCakePhotos || []);
+  const [deliveryDocumentationPhotos, setDeliveryDocumentationPhotos] = useState<string[]>(order?.deliveryDocumentationPhotos || []);
   const [actualDeliveryTime, setActualDeliveryTime] = useState<Date | undefined>(order?.actualDeliveryTime);
   const [customerFeedback, setCustomerFeedback] = useState<string>(order?.customerFeedback || '');
   const [orderTags, setOrderTags] = useState<OrderTag[]>(order?.orderTags || []);
@@ -487,6 +487,7 @@ const OrderForm = ({ order, settings, defaultTab = "required", onStatusChange }:
       deliveryPrice,
       // Add new fields for Delivery & Data Recap
       finishedCakePhotos: finishedCakePhotos.length > 0 ? finishedCakePhotos : undefined,
+      deliveryDocumentationPhotos: deliveryDocumentationPhotos.length > 0 ? deliveryDocumentationPhotos : undefined,
       actualDeliveryTime,
       customerFeedback: customerFeedback || undefined,
       orderTags: orderTags.length > 0 ? orderTags : undefined,
@@ -524,6 +525,7 @@ const OrderForm = ({ order, settings, defaultTab = "required", onStatusChange }:
       deliveryPrice,
       // Add new fields for Delivery & Data Recap
       finishedCakePhotos: finishedCakePhotos.length > 0 ? finishedCakePhotos : undefined,
+      deliveryDocumentationPhotos: deliveryDocumentationPhotos.length > 0 ? deliveryDocumentationPhotos : undefined,
       actualDeliveryTime,
       customerFeedback: customerFeedback || undefined,
       orderTags: orderTags.length > 0 ? orderTags : undefined,
@@ -556,6 +558,7 @@ const OrderForm = ({ order, settings, defaultTab = "required", onStatusChange }:
       deliveryPrice,
       // Add new fields for Delivery & Data Recap
       finishedCakePhotos,
+      deliveryDocumentationPhotos,
       actualDeliveryTime,
       customerFeedback,
       orderTags,
@@ -740,14 +743,18 @@ const OrderForm = ({ order, settings, defaultTab = "required", onStatusChange }:
         
         <TabsContent value="delivery-recap" className="space-y-6">
           <DeliveryRecapSection
+            status={order?.status}
             finishedCakePhotos={finishedCakePhotos}
+            deliveryDocumentationPhotos={deliveryDocumentationPhotos}
             actualDeliveryTime={actualDeliveryTime}
             customerFeedback={customerFeedback}
             orderTags={orderTags}
             onPhotosChange={setFinishedCakePhotos}
+            onDeliveryPhotosChange={setDeliveryDocumentationPhotos}
             onDeliveryTimeChange={setActualDeliveryTime}
             onFeedbackChange={setCustomerFeedback}
             onTagsChange={setOrderTags}
+            onStatusChange={onStatusChange}
           />
         </TabsContent>
       </Tabs>

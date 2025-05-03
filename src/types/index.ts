@@ -110,6 +110,7 @@ export type Order = {
   deliveryPrice?: number;
   printHistory?: PrintEvent[]; // New field to track print history
   finishedCakePhotos?: string[]; // URLs or base64 encoded images
+  deliveryDocumentationPhotos?: string[]; // New field for delivery documentation photos
   actualDeliveryTime?: Date; // When the cake was actually delivered
   customerFeedback?: string; // Any feedback or complaints
   orderTags?: OrderTag[]; // Metadata tags for the order

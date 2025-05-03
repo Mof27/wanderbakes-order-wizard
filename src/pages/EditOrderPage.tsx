@@ -11,6 +11,7 @@ import { dataService } from "@/services";
 import { OrderStatus, SettingsData } from "@/types";
 import OrderPrintButton from "@/components/orders/OrderPrintButton";
 import DeliveryLabelPrintButton from "@/components/orders/DeliveryLabelPrintButton";
+import { matchesStatus } from "@/lib/statusHelpers";
 
 const EditOrderPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -90,6 +91,15 @@ const EditOrderPage = () => {
   const orderPrintCount = order.printHistory?.filter(e => e.type === 'order-form').length || 0;
   const labelPrintCount = order.printHistory?.filter(e => e.type === 'delivery-label').length || 0;
 
+  // Determine if we should automatically switch to the delivery tab based on status
+  let activeTab = defaultTab;
+  if (matchesStatus(order.status, 'waiting-photo') || 
+      matchesStatus(order.status, 'in-delivery') || 
+      matchesStatus(order.status, 'delivery-confirmed') ||
+      matchesStatus(order.status, 'waiting-feedback')) {
+    activeTab = 'delivery-recap';
+  }
+
   return (
     <div className="space-y-6">
       <Helmet>
@@ -123,7 +133,7 @@ const EditOrderPage = () => {
       <OrderForm 
         order={order} 
         settings={settings} 
-        defaultTab={defaultTab}
+        defaultTab={activeTab}
         onStatusChange={handleStatusUpdate} 
       />
     </div>
