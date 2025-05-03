@@ -115,8 +115,7 @@ const NextStatusButton: React.FC<NextStatusButtonProps> = ({ order, currentKitch
       await updateOrder({
         ...order,
         status: newOrderStatus,
-        // In the future we would also set a dedicated kitchenStatus field
-        // kitchenStatus: nextStatus
+        kitchenStatus: nextStatus // Set the kitchenStatus field directly
       });
       
       toast.success(`Updated status to ${getStatusDisplayName(nextStatus)}`);
@@ -179,4 +178,3 @@ const NextStatusButton: React.FC<NextStatusButtonProps> = ({ order, currentKitch
 };
 
 export default NextStatusButton;
-

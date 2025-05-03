@@ -1,3 +1,4 @@
+
 export type Address = {
   id: string;
   text: string;
@@ -76,6 +77,7 @@ export type Order = {
   id: string;
   customer: Customer;
   status: OrderStatus;
+  kitchenStatus?: KitchenOrderStatus; // Add kitchenStatus field to track kitchen-specific status
   orderDate?: Date;
   deliveryDate: Date;
   deliveryAddress: string;

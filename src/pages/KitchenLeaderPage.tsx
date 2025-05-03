@@ -11,6 +11,27 @@ import { Archive, Check, ChevronDown, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
+// Function to derive kitchen status from order status
+const deriveKitchenStatus = (order: Order): KitchenOrderStatus => {
+  // First check if the order already has a kitchenStatus field
+  if (order.kitchenStatus) {
+    return order.kitchenStatus;
+  }
+  
+  // If not, infer it based on the order status (legacy behavior)
+  switch (order.status) {
+    case 'confirmed':
+      return 'waiting-baker';
+    case 'waiting-photo':
+      return 'done-waiting-approval';
+    case 'in-progress':
+      // Default to in-progress
+      return 'waiting-cover'; // Default to middle of the process
+    default:
+      return 'waiting-baker';
+  }
+};
+
 const KitchenLeaderPage = () => {
   const { orders } = useApp();
   const [view, setView] = useState<"all" | "byDate">("all");
@@ -41,15 +62,9 @@ const KitchenLeaderPage = () => {
     }
     
     return filteredOrders.filter(order => {
-      // Map order status to kitchen status
-      if (activeFilter === 'waiting-baker') {
-        return order.status === 'confirmed';
-      } else if (activeFilter === 'done-waiting-approval') {
-        return order.status === 'waiting-photo';
-      } else {
-        // For other statuses, check if status is in-progress
-        return order.status === 'in-progress';
-      }
+      // Get the proper kitchen status based on the new field or legacy approach
+      const kitchenStatus = deriveKitchenStatus(order);
+      return kitchenStatus === activeFilter;
     });
   };
 

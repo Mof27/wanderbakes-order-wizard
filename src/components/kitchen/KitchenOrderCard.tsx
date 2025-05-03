@@ -13,16 +13,19 @@ interface KitchenOrderCardProps {
 
 // Function to derive kitchen status from order status
 const deriveKitchenStatus = (order: Order): KitchenOrderStatus => {
-  // Eventually this will use a dedicated kitchenStatus field
-  // For now, infer it based on the order status
+  // First check if the order already has a kitchenStatus field
+  if (order.kitchenStatus) {
+    return order.kitchenStatus;
+  }
+  
+  // If not, infer it based on the order status (legacy behavior)
   switch (order.status) {
     case 'confirmed':
       return 'waiting-baker';
     case 'waiting-photo':
       return 'done-waiting-approval';
     case 'in-progress':
-      // Default to in-progress, but this is where we would
-      // look at the kitchenStatus property once implemented
+      // Default to in-progress
       return 'in-progress';
     default:
       return 'waiting-baker';
@@ -56,7 +59,7 @@ const getUrgencyClass = (deliveryDate: Date): string => {
 };
 
 // Kitchen status color mapping
-const getKitchenStatusColor = (status: string) => {
+const getKitchenStatusColor = (status: KitchenOrderStatus) => {
   switch (status) {
     case "waiting-baker":
       return "bg-orange-100 text-orange-800";
