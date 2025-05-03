@@ -3,10 +3,12 @@ import { Order } from "@/types";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Edit, Truck, Trash2, Upload, CheckCircle2 } from "lucide-react";
+import { Edit, Upload, Trash2 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { formatDate, formatCurrency } from "@/lib/utils";
 import OrderStatusDropdown from "./OrderStatusDropdown";
+import { matchesStatus } from "@/lib/statusHelpers";
+import DeliveryStatusManager from "@/components/delivery/DeliveryStatusManager";
 
 interface OrderCardProps {
   order: Order;
@@ -38,42 +40,41 @@ const getStatusColor = (status: string) => {
 const OrderCard = ({ order }: OrderCardProps) => {
   const { deleteOrder } = useApp();
   
+  // Determine if this order is in a delivery-related status
+  const isInDeliveryFlow = matchesStatus(order.status, 'ready-to-deliver') || 
+                         matchesStatus(order.status, 'in-delivery') ||
+                         matchesStatus(order.status, 'delivery-confirmed');
+
   // Determine context-specific action button based on status
   const getActionButton = () => {
-    switch (order.status) {
-      case "waiting-photo":
-        return (
-          <Link to={`/orders/${order.id}?tab=delivery-recap`}>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="bg-purple-100 text-purple-800 hover:bg-purple-200"
-            >
-              <Upload className="h-4 w-4 mr-1" /> Upload Photos
-            </Button>
-          </Link>
-        );
-      case "in-delivery":
-        return (
-          <Link to={`/orders/${order.id}?tab=delivery-recap`}>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="bg-orange-100 text-orange-800 hover:bg-orange-200"
-            >
-              <Truck className="h-4 w-4 mr-1" /> Confirm Delivery
-            </Button>
-          </Link>
-        );
-      default:
-        return (
-          <Link to={`/orders/${order.id}`}>
-            <Button variant="outline" size="sm" className="bg-cake-primary hover:bg-cake-primary/80 text-cake-text">
-              <Edit className="h-4 w-4 mr-1" /> Edit
-            </Button>
-          </Link>
-        );
+    // For delivery-related statuses, use the DeliveryStatusManager
+    if (isInDeliveryFlow) {
+      return <DeliveryStatusManager order={order} />;
     }
+    
+    // For waiting for photo status, show upload photos button
+    if (order.status === "waiting-photo") {
+      return (
+        <Link to={`/orders/${order.id}?tab=delivery-recap`}>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="bg-purple-100 text-purple-800 hover:bg-purple-200"
+          >
+            <Upload className="h-4 w-4 mr-1" /> Upload Photos
+          </Button>
+        </Link>
+      );
+    }
+
+    // Default edit button for other statuses
+    return (
+      <Link to={`/orders/${order.id}`}>
+        <Button variant="outline" size="sm" className="bg-cake-primary hover:bg-cake-primary/80 text-cake-text">
+          <Edit className="h-4 w-4 mr-1" /> Edit
+        </Button>
+      </Link>
+    );
   };
 
   return (

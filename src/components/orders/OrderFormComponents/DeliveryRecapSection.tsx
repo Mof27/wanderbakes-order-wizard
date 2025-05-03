@@ -10,9 +10,11 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { OrderStatus, OrderTag } from "@/types";
-import { Calendar as CalendarIcon, Upload, Truck, CheckCircle2, MessageSquare, Archive, Camera, Image } from "lucide-react";
+import { Calendar as CalendarIcon, Upload, Camera, Image } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { matchesStatus } from "@/lib/statusHelpers";
 
 interface DeliveryRecapSectionProps {
   orderId?: string;
@@ -106,103 +108,49 @@ const DeliveryRecapSection: React.FC<DeliveryRecapSectionProps> = ({
     onTagsChange(newTags);
   };
 
-  // Check if all required fields for finishing are completed
-  const isFinishReady = () => {
-    return status === 'waiting-feedback' && 
-           customerFeedback && 
-           customerFeedback.trim().length > 0 &&
-           actualDeliveryTime !== undefined;
-  };
-
-  // Handle status progression based on current status
-  const handleStatusProgress = () => {
-    if (!status || !onStatusChange) return;
-
-    let newStatus: OrderStatus | null = null;
+  // Check if feedback is required for current status
+  const isFeedbackRequired = status === 'waiting-feedback';
+  
+  // Get the appropriate help message based on status
+  const getStatusGuidance = () => {
+    if (!status) return null;
     
-    if (status === 'waiting-photo' && photoPreview.length > 0) {
-      newStatus = 'ready-to-deliver';
-    } else if (status === 'ready-to-deliver') {
-      newStatus = 'in-delivery';
-    } else if (status === 'in-delivery') {
-      newStatus = 'delivery-confirmed';
-      // Auto-set delivery time to now if not already set
-      if (!actualDeliveryTime) {
-        const now = new Date();
-        onDeliveryTimeChange(now);
-      }
-    } else if (status === 'delivery-confirmed') {
-      newStatus = 'waiting-feedback';
-    } else if (status === 'waiting-feedback' && customerFeedback.trim()) {
-      newStatus = 'finished';
+    if (matchesStatus(status, 'waiting-photo')) {
+      return {
+        type: 'info',
+        message: 'Upload photos of the finished cake. You can then mark the order as ready for delivery on the Delivery page.'
+      };
+    } else if (matchesStatus(status, 'ready-to-deliver')) {
+      return {
+        type: 'info',
+        message: 'This order is ready to be delivered. Go to the Delivery page to start the delivery process.'
+      };
+    } else if (matchesStatus(status, 'in-delivery')) {
+      return {
+        type: 'info',
+        message: 'This order is currently being delivered. Go to the Delivery page to mark it as delivered.'
+      };
+    } else if (matchesStatus(status, 'delivery-confirmed')) {
+      return {
+        type: 'info',
+        message: 'Delivery has been confirmed. Please collect customer feedback and delivery photos to complete the order.'
+      };
+    } else if (matchesStatus(status, 'waiting-feedback')) {
+      return {
+        type: 'warning',
+        message: 'This order is waiting for customer feedback. Once feedback is collected, you can mark the order as finished.'
+      };
+    } else if (matchesStatus(status, 'finished')) {
+      return {
+        type: 'success',
+        message: 'This order has been finished and archived. No further changes can be made unless reopened.'
+      };
     }
-
-    if (newStatus && onStatusChange) {
-      onStatusChange(newStatus);
-    }
-  };
-
-  // Get appropriate button based on status
-  const getActionButton = () => {
-    if (!status || !onStatusChange) return null;
     
-    switch(status) {
-      case 'waiting-photo':
-        return (
-          <Button 
-            className="bg-green-600 hover:bg-green-700" 
-            onClick={handleStatusProgress}
-            disabled={photoPreview.length === 0}
-          >
-            <CheckCircle2 className="mr-2 h-4 w-4" /> 
-            Mark Ready to Deliver
-          </Button>
-        );
-      case 'ready-to-deliver':
-        return (
-          <Button 
-            className="bg-orange-600 hover:bg-orange-700" 
-            onClick={handleStatusProgress}
-          >
-            <Truck className="mr-2 h-4 w-4" /> 
-            Start Delivery
-          </Button>
-        );
-      case 'in-delivery':
-        return (
-          <Button 
-            className="bg-teal-600 hover:bg-teal-700" 
-            onClick={handleStatusProgress}
-          >
-            <CheckCircle2 className="mr-2 h-4 w-4" /> 
-            Confirm Delivery
-          </Button>
-        );
-      case 'delivery-confirmed':
-        return (
-          <Button 
-            className="bg-indigo-600 hover:bg-indigo-700" 
-            onClick={handleStatusProgress}
-          >
-            <MessageSquare className="mr-2 h-4 w-4" /> 
-            Request Feedback
-          </Button>
-        );
-      case 'waiting-feedback':
-        return (
-          <Button 
-            className="bg-lime-600 hover:bg-lime-700" 
-            onClick={handleStatusProgress}
-            disabled={!isFinishReady()}
-          >
-            <Archive className="mr-2 h-4 w-4" /> 
-            Finish Order
-          </Button>
-        );
-      default:
-        return null;
-    }
+    return null;
   };
+  
+  const guidance = getStatusGuidance();
 
   // Show appropriate section based on status
   // Make photos section visible for all states from waiting-photo onwards
@@ -225,26 +173,24 @@ const DeliveryRecapSection: React.FC<DeliveryRecapSectionProps> = ({
                              status === 'waiting-feedback' || 
                              status === 'finished' ||
                              customerFeedback !== '';
-  
-  // Determine if feedback is required (highlighted UI)
-  const isFeedbackRequired = status === 'waiting-feedback';
-  
+
   return (
     <div className="space-y-6">
-      {/* Status action button at the top if available */}
-      {getActionButton() && (
-        <div className="flex justify-end">
-          {getActionButton()}
-        </div>
-      )}
-      
-      {/* Status indicator for waiting-feedback */}
-      {status === 'waiting-feedback' && (
-        <div className="p-4 border border-indigo-200 bg-indigo-50 rounded-md">
-          <p className="text-indigo-800 text-sm">
-            This order is waiting for customer feedback. Once feedback is collected, you can mark the order as finished.
-          </p>
-        </div>
+      {/* Status guidance alert */}
+      {guidance && (
+        <Alert className={`
+          ${guidance.type === 'info' ? 'border-blue-200 bg-blue-50' : ''}
+          ${guidance.type === 'warning' ? 'border-amber-200 bg-amber-50' : ''}
+          ${guidance.type === 'success' ? 'border-green-200 bg-green-50' : ''}
+        `}>
+          <AlertDescription className={`
+            ${guidance.type === 'info' ? 'text-blue-800' : ''}
+            ${guidance.type === 'warning' ? 'text-amber-800' : ''}
+            ${guidance.type === 'success' ? 'text-green-800' : ''}
+          `}>
+            {guidance.message}
+          </AlertDescription>
+        </Alert>
       )}
       
       {/* Photos section with tabs */}
@@ -455,12 +401,15 @@ const DeliveryRecapSection: React.FC<DeliveryRecapSectionProps> = ({
         </div>
       </div>
       
-      {/* Finished order info */}
-      {status === 'finished' && (
-        <div className="p-4 border border-lime-200 bg-lime-50 rounded-md">
-          <p className="text-lime-800">
-            This order has been finished and archived. No further changes can be made unless reopened.
-          </p>
+      {/* Add "Finish Order" button only for waiting-feedback status */}
+      {status === 'waiting-feedback' && customerFeedback.trim() && actualDeliveryTime && (
+        <div className="flex justify-end">
+          <Button 
+            className="bg-lime-600 hover:bg-lime-700"
+            onClick={() => onStatusChange && onStatusChange('finished')}
+          >
+            Finish Order
+          </Button>
         </div>
       )}
     </div>

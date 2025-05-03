@@ -12,8 +12,9 @@ import { startOfDay, endOfDay, addDays, format } from "date-fns";
 import { Link } from "react-router-dom";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Truck, CheckCircle2, Clock, CalendarClock } from "lucide-react";
+import { CalendarClock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import DeliveryStatusManager from "@/components/delivery/DeliveryStatusManager";
 
 // Helper function to determine the time slot background color
 const getTimeSlotColor = (timeSlot?: string): string => {
@@ -64,6 +65,12 @@ const DeliveryPage = () => {
   const { orders } = useApp();
   const [dateFilter, setDateFilter] = useState<'today' | 'tomorrow' | 'd-plus-2' | 'all'>('today');
   const [statusFilter, setStatusFilter] = useState<'ready' | 'in-transit' | 'all'>('ready');
+  const [refreshKey, setRefreshKey] = useState(0); // To force refresh when order status changes
+
+  // Force a refresh of the component when an order status changes
+  const handleStatusChange = () => {
+    setRefreshKey(prev => prev + 1);
+  };
 
   // Filter orders based on selected date filter
   const filterOrdersByDate = (orders: Order[], dateFilter: string): Order[] => {
@@ -141,7 +148,7 @@ const DeliveryPage = () => {
       
       return 0;
     });
-  }, [orders, dateFilter, statusFilter]);
+  }, [orders, dateFilter, statusFilter, refreshKey]); // Add refreshKey as dependency
 
   const dateTitles = {
     'today': `Today (${format(new Date(), 'dd MMM')})`,
@@ -193,7 +200,7 @@ const DeliveryPage = () => {
                   <TableHead className="w-[120px]">Delivery Method</TableHead>
                   <TableHead className="w-[150px]">
                     <div className="flex items-center">
-                      <Clock className="h-4 w-4 mr-2" />
+                      <CalendarClock className="h-4 w-4 mr-2" />
                       Time Slot
                     </div>
                   </TableHead>
@@ -204,8 +211,6 @@ const DeliveryPage = () => {
               </TableHeader>
               <TableBody>
                 {filteredOrders.map((order) => {
-                  const isReady = matchesStatus(order.status, 'ready-to-deliver');
-                  const isInTransit = matchesStatus(order.status, 'in-delivery');
                   const timeSlotClass = getTimeSlotColor(order.deliveryTimeSlot);
                   
                   return (
@@ -267,29 +272,12 @@ const DeliveryPage = () => {
                             </Link>
                           </Button>
                           
-                          {isReady && (
-                            <Button 
-                              size="sm"
-                              className="bg-orange-600 hover:bg-orange-700 text-white"
-                              asChild
-                            >
-                              <Link to={`/orders/${order.id}?tab=delivery-recap`}>
-                                <Truck className="h-4 w-4 mr-1" /> Start
-                              </Link>
-                            </Button>
-                          )}
-                          
-                          {isInTransit && (
-                            <Button 
-                              size="sm"
-                              className="bg-green-600 hover:bg-green-700 text-white"
-                              asChild
-                            >
-                              <Link to={`/orders/${order.id}?tab=delivery-recap`}>
-                                <CheckCircle2 className="h-4 w-4 mr-1" /> Complete
-                              </Link>
-                            </Button>
-                          )}
+                          {/* Replace status-specific buttons with the DeliveryStatusManager */}
+                          <DeliveryStatusManager 
+                            order={order} 
+                            onStatusChange={handleStatusChange}
+                            compact={true}
+                          />
                         </div>
                       </TableCell>
                     </TableRow>

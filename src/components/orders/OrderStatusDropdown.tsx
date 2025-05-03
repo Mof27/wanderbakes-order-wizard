@@ -64,7 +64,8 @@ const OrderStatusDropdown = ({ order }: OrderStatusDropdownProps) => {
   const [isUpdating, setIsUpdating] = useState(false);
   
   // Determine if status change is locked based on current status
-  const isStatusLocked = ['in-kitchen', 'waiting-photo', 'in-delivery'].includes(order.status);
+  // Updated to include 'ready-to-deliver' in locked statuses
+  const isStatusLocked = ['in-kitchen', 'waiting-photo', 'in-delivery', 'ready-to-deliver'].includes(order.status);
   
   // Function to determine if a status is allowed to change to based on current status
   const canChangeTo = (targetStatus: OrderStatus): boolean => {
@@ -84,7 +85,7 @@ const OrderStatusDropdown = ({ order }: OrderStatusDropdownProps) => {
       'in-queue': ['in-kitchen', 'cancelled'],
       'in-kitchen': ['waiting-photo', 'cancelled'],
       'waiting-photo': ['ready-to-deliver', 'cancelled'],
-      'ready-to-deliver': ['in-delivery', 'cancelled'],
+      'ready-to-deliver': ['cancelled'], // Can only cancel from Orders page once ready to deliver
       'in-delivery': ['delivery-confirmed', 'cancelled'],
       'delivery-confirmed': ['waiting-feedback', 'cancelled'],
       'waiting-feedback': ['finished', 'cancelled'],
@@ -120,6 +121,16 @@ const OrderStatusDropdown = ({ order }: OrderStatusDropdownProps) => {
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
   };
+  
+  // Add message for locked statuses that need to be managed elsewhere
+  const getLockedStatusMessage = (status: OrderStatus): string | null => {
+    if (status === 'ready-to-deliver' || status === 'in-delivery') {
+      return 'Manage from Delivery page';
+    } else if (status === 'in-kitchen' || status === 'waiting-photo') {
+      return 'Manage from Kitchen page';
+    }
+    return null;
+  };
 
   return (
     <DropdownMenu>
@@ -138,24 +149,39 @@ const OrderStatusDropdown = ({ order }: OrderStatusDropdownProps) => {
           <ChevronDown className="h-3 w-3 opacity-70" />
         </Badge>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-40 bg-white">
-        {statusOptions.map((status) => (
-          <DropdownMenuItem
-            key={status}
-            className={cn(
-              "flex items-center gap-2 cursor-pointer",
-              order.status === status ? "bg-accent" : "",
-              !canChangeTo(status) && status !== order.status ? "opacity-50 cursor-not-allowed" : ""
-            )}
-            disabled={!canChangeTo(status) && status !== order.status}
-            onClick={() => handleStatusChange(status)}
-          >
-            {order.status === status && <Check className="h-4 w-4 text-primary" />}
-            <span className={order.status === status ? "ml-0" : "ml-6"}>
-              {formatStatusLabel(status)}
-            </span>
-          </DropdownMenuItem>
-        ))}
+      <DropdownMenuContent align="start" className="w-48 bg-white">
+        {statusOptions.map((status) => {
+          const isLocked = !canChangeTo(status) && status !== order.status;
+          const lockedMessage = getLockedStatusMessage(status);
+          
+          return (
+            <DropdownMenuItem
+              key={status}
+              className={cn(
+                "flex items-center gap-2 cursor-pointer",
+                order.status === status ? "bg-accent" : "",
+                isLocked ? "opacity-50 cursor-not-allowed" : ""
+              )}
+              disabled={isLocked}
+              onClick={() => handleStatusChange(status)}
+            >
+              <div className="flex items-center justify-between w-full">
+                <div className="flex items-center">
+                  {order.status === status && <Check className="h-4 w-4 text-primary mr-1" />}
+                  <span className={order.status === status ? "ml-0" : "ml-0"}>
+                    {formatStatusLabel(status)}
+                  </span>
+                </div>
+                
+                {isLocked && lockedMessage && (
+                  <span className="text-xs text-muted-foreground ml-1">
+                    {lockedMessage}
+                  </span>
+                )}
+              </div>
+            </DropdownMenuItem>
+          );
+        })}
       </DropdownMenuContent>
     </DropdownMenu>
   );

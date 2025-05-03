@@ -3,10 +3,12 @@ import { Order } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Edit, Truck, Trash2, Upload, CheckCircle2, MessageSquare, Archive } from "lucide-react";
+import { Edit, Truck, Trash2, Upload } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { formatDate, formatCurrency } from "@/lib/utils";
 import OrderStatusDropdown from "./OrderStatusDropdown";
+import DeliveryStatusManager from "@/components/delivery/DeliveryStatusManager";
+import { matchesStatus } from "@/lib/statusHelpers";
 
 interface OrderTableRowProps {
   order: Order;
@@ -42,82 +44,48 @@ const getStatusColor = (status: string) => {
 const OrderTableRow = ({ order }: OrderTableRowProps) => {
   const { deleteOrder } = useApp();
 
-  // Determine context-specific action buttons based on status
+  // Determine if this order is in a delivery-related status
+  const isInDeliveryFlow = matchesStatus(order.status, 'ready-to-deliver') || 
+                          matchesStatus(order.status, 'in-delivery') ||
+                          matchesStatus(order.status, 'delivery-confirmed');
+
+  // Determine if this is in waiting-photo status
+  const isWaitingPhoto = matchesStatus(order.status, 'waiting-photo');
+
+  // Determine context-specific action buttons
   const getActionButton = () => {
-    switch (order.status) {
-      case "waiting-photo":
-        return (
-          <Link to={`/orders/${order.id}?tab=delivery-recap`}>
-            <Button
-              variant="outline"
-              size="sm"
-              className="bg-purple-100 text-purple-800 hover:bg-purple-200 h-8 w-8 p-0"
-            >
-              <Upload className="h-4 w-4" />
-            </Button>
-          </Link>
-        );
-      case "in-delivery":
-        return (
-          <Link to={`/orders/${order.id}?tab=delivery-recap`}>
-            <Button
-              variant="outline"
-              size="sm"
-              className="bg-orange-100 text-orange-800 hover:bg-orange-200 h-8 w-8 p-0"
-            >
-              <Truck className="h-4 w-4" />
-            </Button>
-          </Link>
-        );
-      case "delivery-confirmed":
-        return (
-          <Link to={`/orders/${order.id}?tab=delivery-recap`}>
-            <Button
-              variant="outline"
-              size="sm"
-              className="bg-teal-100 text-teal-800 hover:bg-teal-200 h-8 w-8 p-0"
-            >
-              <MessageSquare className="h-4 w-4" />
-            </Button>
-          </Link>
-        );
-      case "waiting-feedback":
-        return (
-          <Link to={`/orders/${order.id}?tab=delivery-recap`}>
-            <Button
-              variant="outline"
-              size="sm"
-              className="bg-indigo-100 text-indigo-800 hover:bg-indigo-200 h-8 w-8 p-0"
-            >
-              <CheckCircle2 className="h-4 w-4" />
-            </Button>
-          </Link>
-        );
-      case "finished":
-        return (
-          <Link to={`/orders/${order.id}?tab=delivery-recap`}>
-            <Button
-              variant="outline"
-              size="sm"
-              className="bg-lime-100 text-lime-800 hover:bg-lime-200 h-8 w-8 p-0"
-            >
-              <Archive className="h-4 w-4" />
-            </Button>
-          </Link>
-        );
-      default:
-        return (
-          <Link to={`/orders/${order.id}`}>
-            <Button
-              variant="outline"
-              size="sm"
-              className="bg-cake-primary hover:bg-cake-primary/80 text-cake-text h-8 w-8 p-0"
-            >
-              <Edit className="h-4 w-4" />
-            </Button>
-          </Link>
-        );
+    // For delivery-related statuses, use the DeliveryStatusManager
+    if (isInDeliveryFlow) {
+      return <DeliveryStatusManager order={order} compact={true} />;
     }
+    
+    // For waiting-photo status, show upload button
+    if (isWaitingPhoto) {
+      return (
+        <Link to={`/orders/${order.id}?tab=delivery-recap`}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="bg-purple-100 text-purple-800 hover:bg-purple-200 h-8 w-8 p-0"
+          >
+            <Upload className="h-4 w-4" />
+          </Button>
+        </Link>
+      );
+    }
+
+    // Default edit button for other statuses
+    return (
+      <Link to={`/orders/${order.id}`}>
+        <Button
+          variant="outline"
+          size="sm"
+          className="bg-cake-primary hover:bg-cake-primary/80 text-cake-text h-8 w-8 p-0"
+        >
+          <Edit className="h-4 w-4" />
+        </Button>
+      </Link>
+    );
   };
 
   return (
