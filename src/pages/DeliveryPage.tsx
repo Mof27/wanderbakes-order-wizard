@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from "react";
 import { useApp } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
@@ -10,49 +9,6 @@ import DeliveryCard from "@/components/delivery/DeliveryCard";
 import { Order } from "@/types";
 import { matchesStatus } from "@/lib/statusHelpers";
 import { startOfDay, endOfDay, addDays, format } from "date-fns";
-
-// Helper function to categorize time slots
-const getTimeSlotCategory = (timeSlot: string | undefined): string => {
-  if (!timeSlot) return "Unknown Time";
-  
-  // Handle predefined slots
-  if (timeSlot === "slot1" || timeSlot === "09:00 - 12:00") return "Morning (09:00 - 12:00)";
-  if (timeSlot === "slot2" || timeSlot === "13:00 - 17:00") return "Afternoon (13:00 - 17:00)";
-  if (timeSlot === "slot3" || timeSlot === "17:00 - 20:00") return "Evening (17:00 - 20:00)";
-  
-  // Handle custom time formats by parsing hours
-  const timeMatch = timeSlot.match(/(\d{1,2})[:.]\d{2}\s*-\s*(\d{1,2})[:.]\d{2}/);
-  if (timeMatch) {
-    const startHour = parseInt(timeMatch[1], 10);
-    
-    // Categorize based on starting hour
-    if (startHour >= 6 && startHour < 12) return "Morning (06:00 - 12:00)";
-    if (startHour >= 12 && startHour < 17) return "Afternoon (12:00 - 17:00)";
-    if (startHour >= 17 && startHour < 21) return "Evening (17:00 - 21:00)";
-    return "Night (21:00 - 06:00)";
-  }
-  
-  return timeSlot; // If we can't categorize, use the original time slot
-};
-
-// Helper function to sort time slots
-const sortTimeSlots = (a: string, b: string): number => {
-  const timeSlotOrder = {
-    "Morning (09:00 - 12:00)": 1,
-    "Morning (06:00 - 12:00)": 2,
-    "Afternoon (13:00 - 17:00)": 3,
-    "Afternoon (12:00 - 17:00)": 4,
-    "Evening (17:00 - 20:00)": 5,
-    "Evening (17:00 - 21:00)": 6,
-    "Night (21:00 - 06:00)": 7,
-    "Unknown Time": 8
-  };
-  
-  const orderA = timeSlotOrder[a as keyof typeof timeSlotOrder] || 9;
-  const orderB = timeSlotOrder[b as keyof typeof timeSlotOrder] || 9;
-  
-  return orderA - orderB;
-};
 
 const DeliveryPage = () => {
   const { orders } = useApp();
@@ -104,43 +60,34 @@ const DeliveryPage = () => {
     filtered = filterOrdersByDate(filtered, dateFilter);
     filtered = filterOrdersByStatus(filtered, statusFilter);
     
-    // Sort orders by delivery time slot
+    // Sort orders by delivery time (if available) or just by delivery date
     return filtered.sort((a, b) => {
-      // First by time slot category
-      const slotA = getTimeSlotCategory(a.deliveryTimeSlot);
-      const slotB = getTimeSlotCategory(b.deliveryTimeSlot);
+      const dateA = new Date(a.deliveryDate);
+      const dateB = new Date(b.deliveryDate);
       
-      const categoryCompare = sortTimeSlots(slotA, slotB);
-      if (categoryCompare !== 0) return categoryCompare;
+      // If they have delivery time slots, compare those first
+      if (a.deliveryTimeSlot && b.deliveryTimeSlot) {
+        return a.deliveryTimeSlot.localeCompare(b.deliveryTimeSlot);
+      }
       
-      // Then by specific time within category
-      return (a.deliveryTimeSlot || "").localeCompare(b.deliveryTimeSlot || "");
+      // Otherwise compare by date
+      return dateA.getTime() - dateB.getTime();
     });
   }, [orders, dateFilter, statusFilter]);
 
-  // Group orders by time slot
-  const ordersByTimeSlot = useMemo(() => {
+  // Group orders by delivery area for better routing
+  const ordersByArea = useMemo(() => {
     const grouped: Record<string, Order[]> = {};
     
     filteredOrders.forEach(order => {
-      const timeSlotCategory = getTimeSlotCategory(order.deliveryTimeSlot);
-      
-      if (!grouped[timeSlotCategory]) {
-        grouped[timeSlotCategory] = [];
+      const area = order.deliveryArea || 'Unknown Area';
+      if (!grouped[area]) {
+        grouped[area] = [];
       }
-      grouped[timeSlotCategory].push(order);
+      grouped[area].push(order);
     });
     
-    // Sort the keys (time slots) chronologically
-    const sortedKeys = Object.keys(grouped).sort(sortTimeSlots);
-    
-    // Rebuild the object with sorted keys
-    const sortedGrouped: Record<string, Order[]> = {};
-    sortedKeys.forEach(key => {
-      sortedGrouped[key] = grouped[key];
-    });
-    
-    return sortedGrouped;
+    return grouped;
   }, [filteredOrders]);
 
   const dateTitles = {
@@ -184,18 +131,14 @@ const DeliveryPage = () => {
           {dateTitles[dateFilter]} • {filteredOrders.length} deliveries
         </h2>
         
-        {Object.entries(ordersByTimeSlot).map(([timeSlotCategory, slotOrders]) => (
-          <div key={timeSlotCategory} className="mb-8">
-            <div className={`px-4 py-2 rounded-lg mb-4 ${
-              timeSlotCategory.includes("Morning") ? "bg-yellow-100" :
-              timeSlotCategory.includes("Afternoon") ? "bg-blue-100" :
-              timeSlotCategory.includes("Evening") ? "bg-purple-100" : "bg-gray-100"
-            }`}>
-              <h3 className="font-medium">{timeSlotCategory} ({slotOrders.length})</h3>
+        {Object.entries(ordersByArea).map(([area, areaOrders]) => (
+          <div key={area} className="mb-8">
+            <div className="bg-muted px-4 py-2 rounded-lg mb-4">
+              <h3 className="font-medium">{area} ({areaOrders.length})</h3>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {slotOrders.map(order => (
+              {areaOrders.map(order => (
                 <DeliveryCard key={order.id} order={order} />
               ))}
             </div>

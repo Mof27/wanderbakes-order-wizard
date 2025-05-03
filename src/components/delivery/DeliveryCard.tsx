@@ -41,11 +41,9 @@ const DeliveryCard = ({ order }: DeliveryCardProps) => {
           <span className="font-medium">{order.id}</span>
           {getStatusBadge()}
         </div>
-        {/* Highlight the delivery time slot more prominently */}
-        {order.deliveryTimeSlot && (
-          <Badge variant="outline" className="bg-blue-50 border-blue-200 flex items-center">
-            <Clock className="h-3 w-3 mr-1" />
-            {order.deliveryTimeSlot}
+        {order.deliveryMethod && (
+          <Badge variant="outline" className="capitalize">
+            {order.deliveryMethod === 'flat-rate' ? 'Shop Delivery' : order.deliveryMethod}
           </Badge>
         )}
       </CardHeader>
@@ -59,7 +57,6 @@ const DeliveryCard = ({ order }: DeliveryCardProps) => {
               {order.deliveryAddressNotes && (
                 <p className="text-sm text-muted-foreground">{order.deliveryAddressNotes}</p>
               )}
-              {/* Show area as a badge for easier routing planning */}
               {order.deliveryArea && (
                 <Badge variant="secondary" className="mt-1">{order.deliveryArea}</Badge>
               )}
@@ -72,6 +69,12 @@ const DeliveryCard = ({ order }: DeliveryCardProps) => {
             <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
             <span className="font-medium">{formatDate(order.deliveryDate)}</span>
           </div>
+          {order.deliveryTimeSlot && (
+            <div className="flex items-center ml-6">
+              <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
+              <span className="text-sm">{order.deliveryTimeSlot}</span>
+            </div>
+          )}
         </div>
         
         <div className="space-y-1">
