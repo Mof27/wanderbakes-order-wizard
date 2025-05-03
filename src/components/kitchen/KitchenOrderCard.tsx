@@ -20,7 +20,7 @@ const deriveKitchenStatus = (order: Order): KitchenOrderStatus => {
   
   // If not, infer it based on the order status (legacy behavior)
   switch (order.status) {
-    case 'confirmed':
+    case 'in-queue':
       return 'waiting-baker';
     case 'waiting-photo':
       return 'done-waiting-approval';

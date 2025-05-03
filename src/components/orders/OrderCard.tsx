@@ -1,4 +1,3 @@
-
 import { Order } from "@/types";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,7 +15,7 @@ const getStatusColor = (status: string) => {
   switch (status) {
     case "draft":
       return "bg-gray-200 text-gray-800";
-    case "confirmed":
+    case "in-queue":
       return "bg-blue-100 text-blue-800";
     case "in-kitchen":
       return "bg-yellow-100 text-yellow-800";

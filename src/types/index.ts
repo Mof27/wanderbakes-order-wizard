@@ -1,3 +1,4 @@
+
 export type Address = {
   id: string;
   text: string;
@@ -115,7 +116,7 @@ export type Ingredient = {
   unit: string;
 };
 
-export type OrderStatus = 'incomplete' | 'confirmed' | 'in-kitchen' | 'ready' | 'delivered' | 'cancelled' | 'waiting-photo';
+export type OrderStatus = 'incomplete' | 'in-queue' | 'in-kitchen' | 'ready' | 'delivered' | 'cancelled' | 'waiting-photo';
 
 // Kitchen-specific status types
 export type KitchenOrderStatus = 

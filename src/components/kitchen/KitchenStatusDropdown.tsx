@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Check, ChevronDown } from "lucide-react";
 import { useApp } from "@/context/AppContext";
@@ -39,7 +40,7 @@ const deriveKitchenStatus = (order: Order): KitchenOrderStatus => {
   // Eventually this will use a dedicated kitchenStatus field
   // For now, infer it based on the order status
   switch (order.status) {
-    case 'confirmed':
+    case 'in-queue':
       return 'waiting-baker';
     case 'waiting-photo':
       return 'done-waiting-approval';
