@@ -250,7 +250,7 @@ export const mockOrders: Order[] = [
   {
     id: "o5",
     customer: mockCustomers[4],
-    status: "delivered",
+    status: "delivery-confirmed", // Updated from "delivered" to "delivery-confirmed"
     deliveryDate: new Date('2024-04-30'),
     deliveryAddress: mockCustomers[4].addresses[0].text,
     deliveryAddressNotes: mockCustomers[4].addresses[0].deliveryNotes,
@@ -366,8 +366,8 @@ export const statusFilterOptions: FilterOption[] = [
   { id: "in-queue", label: "In Queue", value: "in-queue" },
   { id: "in-kitchen", label: "In Kitchen", value: "in-kitchen" },
   { id: "waiting-photo", label: "Waiting Photo", value: "waiting-photo" },
-  { id: "ready", label: "Ready", value: "ready" },
-  { id: "delivered", label: "Delivered", value: "delivered" },
+  { id: "ready", label: "Ready", value: "ready-to-deliver" }, // Updated value to match new status
+  { id: "delivered", label: "Delivered", value: "delivery-confirmed" }, // Updated value to match new status
   { id: "cancelled", label: "Cancelled", value: "cancelled" },
 ];
 

@@ -1,22 +1,27 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useApp } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { CakeIcon, CalendarIcon, CheckIcon, Clock, Plus, Users } from "lucide-react";
+import { matchesStatus } from "@/lib/statusHelpers";
+
 const Dashboard = () => {
   const {
     orders,
     customers
   } = useApp();
-  const upcomingDeliveries = orders.filter(order => order.status !== "delivered" && order.status !== "cancelled" && new Date(order.deliveryDate) >= new Date()).sort((a, b) => new Date(a.deliveryDate).getTime() - new Date(b.deliveryDate).getTime());
+  const upcomingDeliveries = orders.filter(order => 
+    !matchesStatus(order.status, "delivered") && 
+    order.status !== "cancelled" && 
+    new Date(order.deliveryDate) >= new Date()
+  ).sort((a, b) => new Date(a.deliveryDate).getTime() - new Date(b.deliveryDate).getTime());
 
   // Order statistics
   const totalOrders = orders.length;
   // Remove confirmed orders count
   const inProgressOrders = orders.filter(order => order.status === "in-kitchen").length;
-  const readyOrders = orders.filter(order => order.status === "ready").length;
-  const deliveredOrders = orders.filter(order => order.status === "delivered").length;
+  const readyOrders = orders.filter(order => matchesStatus(order.status, "ready")).length;
+  const deliveredOrders = orders.filter(order => matchesStatus(order.status, "delivered")).length;
   return <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Dashboard</h1>

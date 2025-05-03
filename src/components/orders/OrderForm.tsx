@@ -28,9 +28,10 @@ interface OrderFormProps {
   order?: Order;
   settings?: SettingsData | null;
   defaultTab?: string;
+  onStatusChange?: (newStatus: OrderStatus) => Promise<void>; // Add this line
 }
 
-const OrderForm = ({ order, settings, defaultTab = "required" }: OrderFormProps) => {
+const OrderForm = ({ order, settings, defaultTab = "required", onStatusChange }: OrderFormProps) => {
   const navigate = useNavigate();
   const { addOrder, updateOrder, updateCustomer } = useApp();
   const [customer, setCustomer] = useState<Customer | null>(order?.customer || null);
