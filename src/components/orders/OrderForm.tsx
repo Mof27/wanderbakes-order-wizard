@@ -1,6 +1,7 @@
+
 import { useState, useEffect } from "react";
 import { useApp } from "@/context/AppContext";
-import { Customer, Order, Ingredient, Address, TierDetail, PackingItem, CakeColor, CoverType, SettingsData, DeliveryMethod, OrderTag } from "@/types";
+import { Customer, Order, Ingredient, Address, TierDetail, PackingItem, CakeColor, CoverType, SettingsData, DeliveryMethod, OrderTag, OrderStatus } from "@/types";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/components/ui/sonner";
