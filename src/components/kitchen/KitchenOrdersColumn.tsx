@@ -5,10 +5,9 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import KitchenOrderCard from './KitchenOrderCard';
 
 interface KitchenOrdersColumnProps {
-  title?: string;
+  title: string;
   orders: Order[];
-  status?: KitchenOrderStatus;
-  showStartButton?: boolean;
+  status: KitchenOrderStatus;
 }
 
 const getColumnColor = (status: KitchenOrderStatus) => {
@@ -28,12 +27,12 @@ const getColumnColor = (status: KitchenOrderStatus) => {
   }
 };
 
-const KitchenOrdersColumn: React.FC<KitchenOrdersColumnProps> = ({ title, orders, status, showStartButton }) => {
+const KitchenOrdersColumn: React.FC<KitchenOrdersColumnProps> = ({ title, orders, status }) => {
   return (
-    <Card className={`bg-gray-50 ${status ? getColumnColor(status) : ''}`}>
+    <Card className={`bg-gray-50 ${getColumnColor(status)}`}>
       <CardHeader className="bg-muted py-3 px-4">
         <CardTitle className="text-sm font-medium flex justify-between">
-          <span>{title || 'Orders'}</span>
+          <span>{title}</span>
           <span className="bg-white text-gray-700 px-2 py-0.5 rounded-full text-xs">
             {orders.length}
           </span>
@@ -42,11 +41,7 @@ const KitchenOrdersColumn: React.FC<KitchenOrdersColumnProps> = ({ title, orders
       <CardContent className="p-2 h-[calc(100vh-220px)] overflow-auto space-y-2">
         {orders.length > 0 ? (
           orders.map((order) => (
-            <KitchenOrderCard 
-              key={order.id} 
-              order={order} 
-              isInQueue={showStartButton}
-            />
+            <KitchenOrderCard key={order.id} order={order} />
           ))
         ) : (
           <div className="flex items-center justify-center h-24 text-muted-foreground text-sm bg-white rounded-md border border-dashed">
