@@ -1,3 +1,4 @@
+
 import { Customer, FilterOption, Ingredient, Order, OrderStatus, Address, PackingItem, CakeColor, CoverType, TierDetail } from "../types";
 import { baseColors } from "./colorData";
 
@@ -7,7 +8,7 @@ const createAddress = (id: string, text: string, area: "Jakarta" | "Bekasi", del
   text,
   area,
   deliveryNotes,
-  createdAt: new Date('2024-02-15'),
+  createdAt: new Date('2025-02-15'),
 });
 
 // Helper function to create a solid color
@@ -40,7 +41,7 @@ export const mockCustomers: Customer[] = [
       createAddress("addr1", "123 Cake Street, Jakarta Selatan", "Jakarta", "Leave with security"),
       createAddress("addr2", "456 Pastry Lane, Jakarta Utara", "Jakarta", "Call before delivery")
     ],
-    createdAt: new Date('2024-02-15'),
+    createdAt: new Date('2025-02-15'),
   },
   {
     id: "c2",
@@ -51,7 +52,7 @@ export const mockCustomers: Customer[] = [
       createAddress("addr3", "456 Pastry Ave, Bekasi Timur", "Bekasi", "Apartment 3B, 3rd floor"),
       createAddress("addr4", "789 Cookie Blvd, Bekasi Utara", "Bekasi")
     ],
-    createdAt: new Date('2024-03-10'),
+    createdAt: new Date('2025-03-10'),
   },
   {
     id: "c3",
@@ -61,7 +62,7 @@ export const mockCustomers: Customer[] = [
     addresses: [
       createAddress("addr5", "789 Bakery Blvd, Jakarta Barat", "Jakarta", "Business address")
     ],
-    createdAt: new Date('2024-03-28'),
+    createdAt: new Date('2025-03-28'),
   },
   {
     id: "c4",
@@ -72,7 +73,7 @@ export const mockCustomers: Customer[] = [
       createAddress("addr7", "202 Cupcake Court, Bekasi Barat", "Bekasi"),
       createAddress("addr8", "303 Eclair Estate, Jakarta Timur", "Jakarta")
     ],
-    createdAt: new Date('2024-04-05'),
+    createdAt: new Date('2025-04-05'),
   },
   {
     id: "c5",
@@ -83,7 +84,7 @@ export const mockCustomers: Customer[] = [
       createAddress("addr9", "321 Muffin Lane, Jakarta Pusat", "Jakarta", "Ring doorbell twice"),
       createAddress("addr10", "654 Brownie Blvd, Bekasi Selatan", "Bekasi", "Weekend deliveries only")
     ],
-    createdAt: new Date('2024-04-12'),
+    createdAt: new Date('2025-04-12'),
   },
 ];
 
@@ -112,13 +113,14 @@ export const defaultPackingItems: PackingItem[] = [
   { id: "p4", name: "Cake Topper", checked: false },
 ];
 
-// Mock Orders
+// Mock Orders with 2025 dates
 export const mockOrders: Order[] = [
+  // Today's deliveries (May 3, 2025)
   {
     id: "o1",
     customer: mockCustomers[0],
-    status: "in-queue", // Changed from "confirmed" to "in-queue"
-    deliveryDate: new Date('2024-05-05'),
+    status: "ready-to-deliver", // Ready for delivery today
+    deliveryDate: new Date('2025-05-03'), // Today
     deliveryAddress: mockCustomers[0].addresses[0].text,
     deliveryAddressNotes: mockCustomers[0].addresses[0].deliveryNotes,
     deliveryArea: mockCustomers[0].addresses[0].area,
@@ -140,16 +142,17 @@ export const mockOrders: Order[] = [
       { id: "p4", name: "Cake Topper", checked: false },
     ],
     attachments: ["cake-design-1.jpg"],
-    createdAt: new Date('2024-04-25'),
-    updatedAt: new Date('2024-04-25'),
+    createdAt: new Date('2025-04-25'),
+    updatedAt: new Date('2025-04-25'),
     ingredients: mockIngredients["Double Chocolate"],
     cakePrice: 350000,
+    deliveryTimeSlot: "09:00 - 12:00", // Morning delivery
   },
   {
     id: "o2",
     customer: mockCustomers[1],
-    status: "in-kitchen",
-    deliveryDate: new Date('2024-05-10'),
+    status: "ready-to-deliver", // Ready for delivery today
+    deliveryDate: new Date('2025-05-03'), // Today
     deliveryAddress: mockCustomers[1].addresses[0].text,
     deliveryAddressNotes: mockCustomers[1].addresses[0].deliveryNotes,
     deliveryArea: mockCustomers[1].addresses[0].area,
@@ -163,7 +166,7 @@ export const mockOrders: Order[] = [
         tier: 1, 
         shape: "Round", 
         size: "22 CM", 
-        height: "3 Layer - 15 CM", // Added height
+        height: "3 Layer - 15 CM",
         flavor: "Vanilla",
         coverType: "buttercream" as CoverType,
         coverColor: createSolidColor("#D3E4FD")
@@ -172,7 +175,7 @@ export const mockOrders: Order[] = [
         tier: 2, 
         shape: "Round", 
         size: "16 CM", 
-        height: "2 Layer - 10 CM", // Added height
+        height: "2 Layer - 10 CM",
         flavor: "Double Chocolate",
         coverType: "buttercream" as CoverType,
         coverColor: createSolidColor("#FFD1DC")
@@ -189,16 +192,17 @@ export const mockOrders: Order[] = [
       { id: "p4", name: "Cake Topper", checked: true },
     ],
     attachments: ["cake-design-2.jpg"],
-    createdAt: new Date('2024-04-28'),
-    updatedAt: new Date('2024-04-29'),
+    createdAt: new Date('2025-04-28'),
+    updatedAt: new Date('2025-04-29'),
     ingredients: mockIngredients["Vanilla"],
     cakePrice: 450000,
+    deliveryTimeSlot: "13:00 - 17:00", // Afternoon delivery
   },
   {
     id: "o3",
     customer: mockCustomers[2],
-    status: "incomplete", // Changed from 'draft' to 'incomplete'
-    deliveryDate: new Date('2024-05-15'),
+    status: "in-delivery", // Currently in delivery today
+    deliveryDate: new Date('2025-05-03'), // Today
     deliveryAddress: mockCustomers[2].addresses[0].text,
     deliveryAddressNotes: mockCustomers[2].addresses[0].deliveryNotes,
     deliveryArea: mockCustomers[2].addresses[0].area,
@@ -212,16 +216,19 @@ export const mockOrders: Order[] = [
     coverType: "buttercream" as CoverType,
     notes: "Extra frosting please",
     packingItems: defaultPackingItems,
-    createdAt: new Date('2024-04-29'),
-    updatedAt: new Date('2024-04-29'),
+    createdAt: new Date('2025-04-29'),
+    updatedAt: new Date('2025-05-03'), // Updated today when delivery started
     ingredients: mockIngredients["Vanilla"],
     cakePrice: 250000,
+    deliveryTimeSlot: "09:00 - 12:00", // Morning delivery
   },
+  
+  // Tomorrow's deliveries (May 4, 2025)
   {
     id: "o4",
     customer: mockCustomers[3],
-    status: "waiting-photo", // Updated status
-    deliveryDate: new Date('2024-05-03'),
+    status: "ready-to-deliver", // Ready for delivery tomorrow
+    deliveryDate: new Date('2025-05-04'), // Tomorrow
     deliveryAddress: mockCustomers[3].addresses[0].text,
     deliveryAddressNotes: mockCustomers[3].addresses[0].deliveryNotes,
     deliveryArea: mockCustomers[3].addresses[0].area,
@@ -242,16 +249,19 @@ export const mockOrders: Order[] = [
       { id: "p4", name: "Cake Topper", checked: false },
     ],
     attachments: ["cake-design-3.jpg"],
-    createdAt: new Date('2024-04-20'),
-    updatedAt: new Date('2024-04-28'),
+    createdAt: new Date('2025-04-20'),
+    updatedAt: new Date('2025-04-28'),
     ingredients: mockIngredients["Double Chocolate"],
     cakePrice: 400000,
+    deliveryTimeSlot: "13:00 - 17:00", // Afternoon delivery
   },
+  
+  // Day after tomorrow deliveries (May 5, 2025)
   {
     id: "o5",
     customer: mockCustomers[4],
-    status: "delivery-confirmed", // Updated from "delivered" to "delivery-confirmed"
-    deliveryDate: new Date('2024-04-30'),
+    status: "ready-to-deliver", // Ready for delivery day after tomorrow
+    deliveryDate: new Date('2025-05-05'), // Day after tomorrow
     deliveryAddress: mockCustomers[4].addresses[0].text,
     deliveryAddressNotes: mockCustomers[4].addresses[0].deliveryNotes,
     deliveryArea: mockCustomers[4].addresses[0].area,
@@ -265,7 +275,7 @@ export const mockOrders: Order[] = [
         tier: 1, 
         shape: "Square", 
         size: "24 CM", 
-        height: "4 Layer - 20 CM", // Added height
+        height: "4 Layer - 20 CM", 
         flavor: "Vanilla",
         coverType: "buttercream" as CoverType,
         coverColor: createSolidColor("#40E0D0")
@@ -274,7 +284,7 @@ export const mockOrders: Order[] = [
         tier: 2, 
         shape: "Square", 
         size: "18 CM", 
-        height: "3 Layer - 15 CM", // Added height
+        height: "3 Layer - 15 CM", 
         flavor: "Vanilla",
         coverType: "buttercream" as CoverType,
         coverColor: createSolidColor("#40E0D0") 
@@ -283,7 +293,7 @@ export const mockOrders: Order[] = [
         tier: 3, 
         shape: "Square", 
         size: "12 CM", 
-        height: "2 Layer - 10 CM", // Added height
+        height: "2 Layer - 10 CM", 
         flavor: "Vanilla",
         coverType: "buttercream" as CoverType,
         coverColor: createSolidColor("#40E0D0")
@@ -301,21 +311,23 @@ export const mockOrders: Order[] = [
       { id: "p4", name: "Cake Topper", checked: false },
     ],
     attachments: ["cake-design-4.jpg"],
-    createdAt: new Date('2024-04-15'),
-    updatedAt: new Date('2024-04-30'),
+    createdAt: new Date('2025-04-15'),
+    updatedAt: new Date('2025-04-30'),
     ingredients: mockIngredients["Vanilla"],
     cakePrice: 300000,
+    deliveryTimeSlot: "09:00 - 12:00", // Morning delivery
   },
-  // Add a few more orders with different kitchen-relevant statuses
+  
+  // Add more orders with different statuses
   {
     id: "o6",
     customer: mockCustomers[0],
-    status: "in-kitchen", // This could be in "waiting-crumbcoat" kitchen status
-    kitchenStatus: "waiting-crumbcoat", // Adding explicit kitchen status
-    deliveryDate: new Date('2024-05-07'),
-    deliveryAddress: mockCustomers[0].addresses[0].text,
-    deliveryAddressNotes: mockCustomers[0].addresses[0].deliveryNotes,
-    deliveryArea: mockCustomers[0].addresses[0].area,
+    status: "in-kitchen", // Still in kitchen
+    kitchenStatus: "decorating",
+    deliveryDate: new Date('2025-05-05'), // Day after tomorrow
+    deliveryAddress: mockCustomers[0].addresses[1].text,
+    deliveryAddressNotes: mockCustomers[0].addresses[1].deliveryNotes,
+    deliveryArea: mockCustomers[0].addresses[1].area,
     cakeDesign: "Classic buttercream swirls",
     cakeFlavor: "Vanilla",
     cakeSize: "18 CM",
@@ -327,17 +339,16 @@ export const mockOrders: Order[] = [
     cakeText: "Happy Mother's Day!",
     notes: "Extra smooth buttercream finish, please",
     packingItems: defaultPackingItems,
-    createdAt: new Date('2024-04-30'),
-    updatedAt: new Date('2024-04-30'),
+    createdAt: new Date('2025-04-30'),
+    updatedAt: new Date('2025-04-30'),
     ingredients: mockIngredients["Vanilla"],
     cakePrice: 320000,
   },
   {
     id: "o7",
     customer: mockCustomers[2],
-    status: "in-kitchen", // This could be in "waiting-cover" kitchen status
-    kitchenStatus: "waiting-cover", // Adding explicit kitchen status
-    deliveryDate: new Date('2024-05-06'),
+    status: "in-delivery", // Currently in delivery (for tomorrow's date)
+    deliveryDate: new Date('2025-05-04'), // Tomorrow
     deliveryAddress: mockCustomers[2].addresses[0].text,
     deliveryAddressNotes: mockCustomers[2].addresses[0].deliveryNotes,
     deliveryArea: mockCustomers[2].addresses[0].area,
@@ -352,10 +363,35 @@ export const mockOrders: Order[] = [
     cakeText: "You're out of this world!",
     notes: "Use edible glitter for stars",
     packingItems: defaultPackingItems,
-    createdAt: new Date('2024-04-29'),
-    updatedAt: new Date('2024-04-29'),
+    createdAt: new Date('2025-04-29'),
+    updatedAt: new Date('2025-05-03'), // Updated today when delivery started
     ingredients: mockIngredients["Double Chocolate"],
     cakePrice: 375000,
+    deliveryTimeSlot: "13:00 - 17:00", // Afternoon delivery
+  },
+  {
+    id: "o8",
+    customer: mockCustomers[1],
+    status: "delivery-confirmed", // Already delivered
+    deliveryDate: new Date('2025-05-02'), // Yesterday
+    deliveryAddress: mockCustomers[1].addresses[1].text,
+    deliveryAddressNotes: mockCustomers[1].addresses[1].deliveryNotes,
+    deliveryArea: mockCustomers[1].addresses[1].area,
+    cakeDesign: "Geometric pattern",
+    cakeFlavor: "Double Chocolate",
+    cakeSize: "16 CM",
+    cakeShape: "Round",
+    cakeTier: 1,
+    useSameFlavor: true,
+    coverColor: createSolidColor("#F5F5DC"), // Beige
+    coverType: "buttercream" as CoverType,
+    cakeText: "Happy Birthday John!",
+    packingItems: defaultPackingItems,
+    createdAt: new Date('2025-04-20'),
+    updatedAt: new Date('2025-05-02'), // Updated yesterday when delivered
+    ingredients: mockIngredients["Double Chocolate"],
+    cakePrice: 300000,
+    deliveryTimeSlot: "09:00 - 12:00", // Morning delivery
   }
 ];
 

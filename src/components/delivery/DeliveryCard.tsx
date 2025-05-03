@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils";
 import { Link } from "react-router-dom";
-import { MapPin, Truck, Package, Calendar, CheckCircle2 } from "lucide-react";
+import { MapPin, Truck, Package, Calendar, CheckCircle2, Clock } from "lucide-react";
 import { matchesStatus } from "@/lib/statusHelpers";
 
 interface DeliveryCardProps {
@@ -68,12 +68,13 @@ const DeliveryCard = ({ order }: DeliveryCardProps) => {
           <div className="flex items-center">
             <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
             <span className="font-medium">{formatDate(order.deliveryDate)}</span>
-            {order.deliveryTimeSlot && (
-              <Badge variant="outline" className="ml-2">
-                {order.deliveryTimeSlot}
-              </Badge>
-            )}
           </div>
+          {order.deliveryTimeSlot && (
+            <div className="flex items-center ml-6">
+              <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
+              <span className="text-sm">{order.deliveryTimeSlot}</span>
+            </div>
+          )}
         </div>
         
         <div className="space-y-1">

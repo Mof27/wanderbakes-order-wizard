@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Calendar, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { format, addDays } from "date-fns";
 
 type DeliveryDateFilterProps = {
   value: 'today' | 'tomorrow' | 'd-plus-2' | 'all';
@@ -9,6 +10,12 @@ type DeliveryDateFilterProps = {
 };
 
 const DeliveryDateFilter = ({ value, onChange }: DeliveryDateFilterProps) => {
+  // Get the formatted dates for display
+  const today = new Date();
+  const todayFormatted = format(today, 'MMM d');
+  const tomorrowFormatted = format(addDays(today, 1), 'MMM d');
+  const dPlus2Formatted = format(addDays(today, 2), 'MMM d');
+
   return (
     <div className="flex flex-col space-y-2">
       <span className="text-sm font-medium">Delivery Date</span>
@@ -23,7 +30,7 @@ const DeliveryDateFilter = ({ value, onChange }: DeliveryDateFilterProps) => {
           onClick={() => onChange('today')}
         >
           <Calendar className="h-4 w-4 mr-2" />
-          Today
+          Today ({todayFormatted})
         </Button>
         
         <Button
@@ -36,7 +43,7 @@ const DeliveryDateFilter = ({ value, onChange }: DeliveryDateFilterProps) => {
           onClick={() => onChange('tomorrow')}
         >
           <Calendar className="h-4 w-4 mr-2" />
-          Tomorrow
+          Tomorrow ({tomorrowFormatted})
         </Button>
         
         <Button
@@ -49,7 +56,7 @@ const DeliveryDateFilter = ({ value, onChange }: DeliveryDateFilterProps) => {
           onClick={() => onChange('d-plus-2')}
         >
           <ArrowRight className="h-4 w-4 mr-2" />
-          D+2
+          {dPlus2Formatted}
         </Button>
         
         <Button
