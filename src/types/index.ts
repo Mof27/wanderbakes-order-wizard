@@ -219,3 +219,22 @@ export type SettingsData = {
   printTemplate: PrintTemplate;
   deliveryLabelTemplate: DeliveryLabelTemplate; // New field for delivery label template
 };
+
+export type ActivityAction = 'create' | 'update' | 'delete' | 'status-change';
+
+export type ActivityEntityType = 'order' | 'customer';
+
+export interface ActivityLog {
+  id: string;
+  action: ActivityAction;
+  entityType: ActivityEntityType;
+  entityId: string;
+  timestamp: Date;
+  userId?: string;
+  userName?: string;
+  details?: {
+    field?: string;
+    previousValue?: any;
+    newValue?: any;
+  };
+}
