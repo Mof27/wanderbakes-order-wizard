@@ -1,13 +1,12 @@
 
-import { format } from "date-fns";
 import { Order } from "@/types";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Edit, Trash2 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { formatDate, formatCurrency } from "@/lib/utils";
+import OrderStatusDropdown from "./OrderStatusDropdown";
 
 interface OrderCardProps {
   order: Order;
@@ -40,9 +39,7 @@ const OrderCard = ({ order }: OrderCardProps) => {
       <CardHeader className="bg-muted py-2">
         <div className="flex justify-between items-center">
           <p className="font-medium">{order.id}</p>
-          <Badge className={getStatusColor(order.status)}>
-            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-          </Badge>
+          <OrderStatusDropdown order={order} />
         </div>
       </CardHeader>
       <CardContent className="py-4 space-y-3">

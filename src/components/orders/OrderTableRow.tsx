@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 import { Edit, Trash2 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { formatDate, formatCurrency } from "@/lib/utils";
+import OrderStatusDropdown from "./OrderStatusDropdown";
 
 interface OrderTableRowProps {
   order: Order;
@@ -45,9 +46,7 @@ const OrderTableRow = ({ order }: OrderTableRowProps) => {
         </div>
       </td>
       <td className="p-2">
-        <Badge className={getStatusColor(order.status)}>
-          {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-        </Badge>
+        <OrderStatusDropdown order={order} />
       </td>
       <td className="p-2 text-sm">
         {formatDate(order.deliveryDate)}
