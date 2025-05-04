@@ -1,9 +1,10 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
-import { Plus, Grid, List, Info, Archive, Edit, Upload } from "lucide-react";
+import { Plus, Grid, List, Info, Archive, Edit, Upload, Eye, MessageSquare } from "lucide-react";
 import OrderList from "@/components/orders/OrderList";
 import OrderCard from "@/components/orders/OrderCard";
 import DateRangePicker from "@/components/orders/DateRangePicker";
@@ -21,6 +22,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "@/components/ui/sonner";
 import CakePhotoUploadDialog from "@/components/orders/CakePhotoUploadDialog";
+import DeliveryInfoDialog from "@/components/delivery/DeliveryInfoDialog";
 
 const OrdersPage = () => {
   const { orders, setDateRange, dateRange, updateOrder } = useApp();
@@ -32,6 +34,8 @@ const OrdersPage = () => {
   const [orderToArchive, setOrderToArchive] = useState<Order | null>(null);
   const [photoDialogOpen, setPhotoDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
+  const [selectedOrderForFeedback, setSelectedOrderForFeedback] = useState<Order | null>(null);
   
   // Create status filter options - removed "ready-to-deliver" and "delivery-confirmed"
   const statusOptions: FilterOption[] = [
@@ -128,12 +132,38 @@ const OrdersPage = () => {
     setSelectedOrder(null);
   };
 
+  // Handle feedback dialog
+  const handleOpenFeedbackDialog = (order: Order) => {
+    setSelectedOrderForFeedback(order);
+    setFeedbackDialogOpen(true);
+  };
+
+  // Handle feedback success
+  const handleFeedbackSuccess = () => {
+    toast.success("Feedback saved successfully");
+    setFeedbackDialogOpen(false);
+    setSelectedOrderForFeedback(null);
+  };
+
   // Render actions for order list
   const renderOrderActions = (order: Order) => {
     return (
       <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+        {/* View Order button - always present */}
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate(`/orders/${order.id}`);
+          }}
+        >
+          <Eye className="h-4 w-4" />
+        </Button>
+        
+        {/* Contextual buttons based on status */}
         {/* For waiting-photo status, show upload button */}
-        {order.status === 'waiting-photo' ? (
+        {order.status === 'waiting-photo' && (
           <Button 
             variant="outline" 
             size="sm"
@@ -145,16 +175,20 @@ const OrdersPage = () => {
           >
             <Upload className="h-4 w-4" />
           </Button>
-        ) : (
+        )}
+        
+        {/* For waiting-feedback status, show feedback button */}
+        {order.status === 'waiting-feedback' && (
           <Button 
             variant="outline" 
-            size="sm" 
+            size="sm"
+            className="bg-blue-100 text-blue-800 hover:bg-blue-200"
             onClick={(e) => {
               e.stopPropagation();
-              navigate(`/orders/${order.id}`);
+              handleOpenFeedbackDialog(order);
             }}
           >
-            <Edit className="h-4 w-4" />
+            <MessageSquare className="h-4 w-4" />
           </Button>
         )}
         
@@ -281,6 +315,16 @@ const OrdersPage = () => {
             setSelectedOrder(null);
           }}
           onSuccess={handlePhotoUploadSuccess}
+        />
+      )}
+
+      {/* Feedback Dialog */}
+      {selectedOrderForFeedback && (
+        <DeliveryInfoDialog 
+          order={selectedOrderForFeedback}
+          open={feedbackDialogOpen}
+          onOpenChange={setFeedbackDialogOpen}
+          onSaved={handleFeedbackSuccess}
         />
       )}
     </div>
