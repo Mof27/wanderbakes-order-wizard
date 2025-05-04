@@ -34,9 +34,13 @@ const DeliveryStatusManager = ({
     
     setIsUpdating(true);
     try {
-      // If transitioning to delivery confirmed, automatically set delivery time if not set
-      let updatedOrder: Partial<Order> = { ...order, status: newStatus };
+      // Create a complete Order object with the new status
+      const updatedOrder: Order = { 
+        ...order, 
+        status: newStatus 
+      };
       
+      // If transitioning to delivery confirmed, automatically set delivery time if not set
       if (newStatus === 'delivery-confirmed' && !order.actualDeliveryTime) {
         updatedOrder.actualDeliveryTime = new Date();
       }
