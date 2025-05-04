@@ -281,7 +281,7 @@ export const mockOrders: Order[] = [
     deliveryTimeSlot: "13:00 - 17:00", 
     deliveryMethod: "flat-rate",
     deliveryPrice: 65000,
-    orderTags: ["graduation", "for-kids"],
+    orderTags: ["birthday", "for-kids"],
   }
 ];
 
