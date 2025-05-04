@@ -1,10 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
-import { Plus, Grid, List, Info, Archive, Edit } from "lucide-react";
+import { Plus, Grid, List, Info, Archive, Edit, Upload } from "lucide-react";
 import OrderList from "@/components/orders/OrderList";
 import OrderCard from "@/components/orders/OrderCard";
 import DateRangePicker from "@/components/orders/DateRangePicker";
@@ -21,6 +20,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "@/components/ui/sonner";
+import CakePhotoUploadDialog from "@/components/orders/CakePhotoUploadDialog";
 
 const OrdersPage = () => {
   const { orders, setDateRange, dateRange, updateOrder } = useApp();
@@ -30,6 +30,8 @@ const OrdersPage = () => {
   const [filteredOrders, setFilteredOrders] = useState(orders);
   const [isArchiveDialogOpen, setIsArchiveDialogOpen] = useState(false);
   const [orderToArchive, setOrderToArchive] = useState<Order | null>(null);
+  const [photoDialogOpen, setPhotoDialogOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   
   // Create status filter options - removed "ready-to-deliver" and "delivery-confirmed"
   const statusOptions: FilterOption[] = [
@@ -113,20 +115,48 @@ const OrdersPage = () => {
     setOrderToArchive(null);
   };
 
+  // Handle photo upload dialog
+  const handleOpenPhotoDialog = (order: Order) => {
+    setSelectedOrder(order);
+    setPhotoDialogOpen(true);
+  };
+  
+  // Handle photo upload success
+  const handlePhotoUploadSuccess = () => {
+    toast.success("Photos uploaded successfully");
+    setPhotoDialogOpen(false);
+    setSelectedOrder(null);
+  };
+
   // Render actions for order list
   const renderOrderActions = (order: Order) => {
     return (
       <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={(e) => {
-            e.stopPropagation();
-            navigate(`/orders/${order.id}`);
-          }}
-        >
-          <Edit className="h-4 w-4" />
-        </Button>
+        {/* For waiting-photo status, show upload button */}
+        {order.status === 'waiting-photo' ? (
+          <Button 
+            variant="outline" 
+            size="sm"
+            className="bg-purple-100 text-purple-800 hover:bg-purple-200"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleOpenPhotoDialog(order);
+            }}
+          >
+            <Upload className="h-4 w-4" />
+          </Button>
+        ) : (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/orders/${order.id}`);
+            }}
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+        )}
         
         {/* Only show archive button for finished orders */}
         {order.status === 'finished' && (
@@ -240,6 +270,19 @@ const OrdersPage = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Photo Upload Dialog */}
+      {selectedOrder && (
+        <CakePhotoUploadDialog 
+          order={selectedOrder}
+          open={photoDialogOpen}
+          onClose={() => {
+            setPhotoDialogOpen(false);
+            setSelectedOrder(null);
+          }}
+          onSuccess={handlePhotoUploadSuccess}
+        />
+      )}
     </div>
   );
 };
