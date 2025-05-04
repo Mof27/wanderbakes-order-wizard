@@ -1,11 +1,12 @@
+
 import { Order } from "@/types";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Edit, Upload, Eye, Trash2 } from "lucide-react";
+import { Edit, Upload, Eye } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { formatDate, formatCurrency } from "@/lib/utils";
-import OrderStatusDropdown from "./OrderStatusDropdown";
+import StatusBadge from "./StatusBadge";
 import { matchesStatus } from "@/lib/statusHelpers";
 import DeliveryStatusManager from "@/components/delivery/DeliveryStatusManager";
 import { useState } from "react";
@@ -14,29 +15,6 @@ import CakePhotoUploadDialog from "./CakePhotoUploadDialog";
 interface OrderCardProps {
   order: Order;
 }
-
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case "incomplete":
-      return "bg-gray-200 text-gray-800";
-    case "in-queue":
-      return "bg-blue-100 text-blue-800";
-    case "in-kitchen":
-      return "bg-yellow-100 text-yellow-800";
-    case "waiting-photo":
-      return "bg-purple-100 text-purple-800";
-    case "ready-to-deliver":
-      return "bg-green-100 text-green-800";
-    case "in-delivery":
-      return "bg-orange-100 text-orange-800";
-    case "delivery-confirmed":
-      return "bg-teal-100 text-teal-800";
-    case "cancelled":
-      return "bg-red-100 text-red-800";
-    default:
-      return "bg-gray-100 text-gray-800";
-  }
-};
 
 const OrderCard = ({ order }: OrderCardProps) => {
   const { deleteOrder } = useApp();
@@ -101,7 +79,7 @@ const OrderCard = ({ order }: OrderCardProps) => {
         <CardHeader className="bg-muted py-2">
           <div className="flex justify-between items-center">
             <p className="font-medium">{order.id}</p>
-            <OrderStatusDropdown order={order} />
+            <StatusBadge status={order.status} />
           </div>
         </CardHeader>
         <CardContent className="py-4 space-y-3">

@@ -1,12 +1,11 @@
 
 import { Order } from "@/types";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Edit, Truck, Eye, Upload } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { formatDate, formatCurrency } from "@/lib/utils";
-import OrderStatusDropdown from "./OrderStatusDropdown";
+import StatusBadge from "./StatusBadge";
 import DeliveryStatusManager from "@/components/delivery/DeliveryStatusManager";
 import { matchesStatus } from "@/lib/statusHelpers";
 import { useState } from "react";
@@ -16,33 +15,6 @@ interface OrderTableRowProps {
   order: Order;
   onClick?: () => void;
 }
-
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case "incomplete":
-      return "bg-gray-200 text-gray-800";
-    case "in-queue":
-      return "bg-blue-100 text-blue-800";
-    case "in-kitchen":
-      return "bg-yellow-100 text-yellow-800";
-    case "waiting-photo":
-      return "bg-purple-100 text-purple-800";
-    case "ready-to-deliver":
-      return "bg-green-100 text-green-800";
-    case "in-delivery":
-      return "bg-orange-100 text-orange-800";
-    case "delivery-confirmed":
-      return "bg-teal-100 text-teal-800";
-    case "waiting-feedback":
-      return "bg-indigo-100 text-indigo-800";
-    case "finished":
-      return "bg-lime-100 text-lime-800";
-    case "cancelled":
-      return "bg-red-100 text-red-800";
-    default:
-      return "bg-gray-100 text-gray-800";
-  }
-};
 
 const OrderTableRow = ({ order, onClick }: OrderTableRowProps) => {
   const { deleteOrder } = useApp();
@@ -120,7 +92,7 @@ const OrderTableRow = ({ order, onClick }: OrderTableRowProps) => {
           </div>
         </td>
         <td className="p-2">
-          <OrderStatusDropdown order={order} />
+          <StatusBadge status={order.status} />
         </td>
         <td className="p-2 text-sm">
           {formatDate(order.deliveryDate)}
