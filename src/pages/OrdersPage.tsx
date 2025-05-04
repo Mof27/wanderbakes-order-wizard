@@ -1,20 +1,20 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
-import { Plus, Grid, List, Workflow, Info } from "lucide-react";
+import { Plus, Grid, List, Info } from "lucide-react";
 import OrderList from "@/components/orders/OrderList";
 import OrderCard from "@/components/orders/OrderCard";
-import DateFilterBar from "@/components/orders/DateFilterBar";
+import DateRangePicker from "@/components/orders/DateRangePicker";
 import StatusFilterChips from "@/components/orders/StatusFilterChips";
 import { ViewMode, FilterOption } from "@/types";
 
 const OrdersPage = () => {
-  const { orders } = useApp();
+  const { orders, setDateRange, dateRange } = useApp();
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<ViewMode>('list');
-  const [orderDate, setOrderDate] = useState<Date | undefined>(undefined);
   const [filterStatus, setFilterStatus] = useState<string[]>([]);
   const [filteredOrders, setFilteredOrders] = useState(orders);
   
@@ -34,16 +34,22 @@ const OrdersPage = () => {
   // Selected status option
   const [selectedStatusOption, setSelectedStatusOption] = useState<FilterOption>(statusOptions[0]);
   
-  // Filter orders based on date and status
+  // Filter orders based on date range and status
   useEffect(() => {
     let result = [...orders];
     
-    // Filter by date if selected
-    if (orderDate) {
-      const dateStr = orderDate.toISOString().split('T')[0];
+    // Filter by date range if selected
+    if (dateRange[0] && dateRange[1]) {
+      const startDate = new Date(dateRange[0]);
+      const endDate = new Date(dateRange[1]);
+      
+      // Set time to beginning and end of day for proper comparison
+      startDate.setHours(0, 0, 0, 0);
+      endDate.setHours(23, 59, 59, 999);
+      
       result = result.filter(order => {
-        const orderDateStr = new Date(order.deliveryDate).toISOString().split('T')[0];
-        return orderDateStr === dateStr;
+        const orderDate = new Date(order.deliveryDate);
+        return orderDate >= startDate && orderDate <= endDate;
       });
     }
     
@@ -53,7 +59,7 @@ const OrdersPage = () => {
     }
     
     setFilteredOrders(result);
-  }, [orders, orderDate, selectedStatusOption]);
+  }, [orders, dateRange, selectedStatusOption]);
 
   // Handle status filter change
   const handleStatusFilterChange = (option: FilterOption) => {
@@ -84,10 +90,12 @@ const OrdersPage = () => {
       </div>
       
       <div className="flex justify-between items-center">
-        <DateFilterBar 
-          selectedDate={orderDate} 
-          onDateChange={setOrderDate}
-        />
+        <div className="w-full max-w-md">
+          <DateRangePicker 
+            dateRange={dateRange} 
+            onDateRangeChange={setDateRange}
+          />
+        </div>
         
         <div className="flex gap-2">
           <Button 
