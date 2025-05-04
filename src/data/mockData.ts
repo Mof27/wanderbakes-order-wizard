@@ -1,4 +1,3 @@
-
 import { Customer, FilterOption, Ingredient, Order, OrderStatus, Address, PackingItem, CakeColor, CoverType, TierDetail } from "../types";
 import { baseColors } from "./colorData";
 
@@ -103,6 +102,15 @@ export const mockIngredients: Record<string, Ingredient[]> = {
     { id: "i6", name: "Vanilla Extract", quantity: 10, unit: "ml" },
     { id: "i4", name: "Butter", quantity: 200, unit: "g" },
     { id: "i5", name: "Eggs", quantity: 4, unit: "pcs" },
+  ],
+  "Red Velvet": [
+    { id: "i1", name: "Flour", quantity: 450, unit: "g" },
+    { id: "i2", name: "Sugar", quantity: 350, unit: "g" },
+    { id: "i3", name: "Cocoa Powder", quantity: 50, unit: "g" },
+    { id: "i4", name: "Butter", quantity: 180, unit: "g" },
+    { id: "i5", name: "Eggs", quantity: 3, unit: "pcs" },
+    { id: "i7", name: "Red Food Coloring", quantity: 30, unit: "ml" },
+    { id: "i8", name: "Buttermilk", quantity: 250, unit: "ml" },
   ]
 };
 
@@ -113,289 +121,171 @@ export const defaultPackingItems: PackingItem[] = [
   { id: "p4", name: "Cake Topper", checked: false },
 ];
 
-// Mock Orders with 2025 dates
+// Updated Mock Orders - only 3 detailed examples with in-queue status
 export const mockOrders: Order[] = [
-  // Today's deliveries (May 3, 2025)
+  // Order 1: Single-tier cake with solid color
   {
     id: "o1",
     customer: mockCustomers[0],
-    status: "ready-to-deliver", // Ready for delivery today
-    deliveryDate: new Date('2025-05-03'), // Today
+    status: "in-queue", // All orders set to "in-queue"
+    deliveryDate: new Date('2025-05-05'), // Tomorrow
     deliveryAddress: mockCustomers[0].addresses[0].text,
     deliveryAddressNotes: mockCustomers[0].addresses[0].deliveryNotes,
     deliveryArea: mockCustomers[0].addresses[0].area,
-    cakeDesign: "Flower themed",
-    cakeFlavor: "Double Chocolate",
-    cakeSize: "16 CM",
+    cakeDesign: "Elegant Floral Pattern",
+    cakeFlavor: "Vanilla",
+    cakeSize: "22 CM",
     cakeShape: "Round",
     cakeTier: 1,
     useSameFlavor: true,
     coverColor: createSolidColor("#FFD1DC"), // Pink
     coverType: "buttercream" as CoverType,
-    cakeText: "Happy Birthday Alice!",
-    greetingCard: "Wishing you a fantastic day!",
-    notes: "No nuts please",
-    packingItems: [
-      { id: "p1", name: "Candles", checked: true },
-      { id: "p2", name: "Big Knife", checked: false },
-      { id: "p3", name: "Greeting Card", checked: true },
-      { id: "p4", name: "Cake Topper", checked: false },
-    ],
-    attachments: ["cake-design-1.jpg"],
-    createdAt: new Date('2025-04-25'),
-    updatedAt: new Date('2025-04-25'),
-    ingredients: mockIngredients["Double Chocolate"],
-    cakePrice: 350000,
-    deliveryTimeSlot: "09:00 - 12:00", // Morning delivery
-  },
-  {
-    id: "o2",
-    customer: mockCustomers[1],
-    status: "ready-to-deliver", // Ready for delivery today
-    deliveryDate: new Date('2025-05-03'), // Today
-    deliveryAddress: mockCustomers[1].addresses[0].text,
-    deliveryAddressNotes: mockCustomers[1].addresses[0].deliveryNotes,
-    deliveryArea: mockCustomers[1].addresses[0].area,
-    cakeDesign: "Superhero themed",
-    cakeFlavor: "Vanilla",
-    cakeSize: "22 CM",
-    cakeShape: "Round",
-    cakeTier: 2,
-    tierDetails: [
-      { 
-        tier: 1, 
-        shape: "Round", 
-        size: "22 CM", 
-        height: "3 Layer - 15 CM",
-        flavor: "Vanilla",
-        coverType: "buttercream" as CoverType,
-        coverColor: createSolidColor("#D3E4FD")
-      },
-      { 
-        tier: 2, 
-        shape: "Round", 
-        size: "16 CM", 
-        height: "2 Layer - 10 CM",
-        flavor: "Double Chocolate",
-        coverType: "buttercream" as CoverType,
-        coverColor: createSolidColor("#FFD1DC")
-      }
-    ],
-    useSameFlavor: false,
-    coverColor: createGradientColor(["#D3E4FD", "#0EA5E9", "#1E3A8A"]), // Ocean Blue gradient
-    coverType: "buttercream" as CoverType,
-    cakeText: "Happy Birthday Bob!",
+    cakeText: "Happy Birthday Mom!",
+    greetingCard: "Wishing you a wonderful day filled with joy and happiness!",
+    notes: "Please make the flowers look elegant and use high-quality fondant decorations",
     packingItems: [
       { id: "p1", name: "Candles", checked: true },
       { id: "p2", name: "Big Knife", checked: true },
-      { id: "p3", name: "Greeting Card", checked: false },
-      { id: "p4", name: "Cake Topper", checked: true },
+      { id: "p3", name: "Greeting Card", checked: true },
+      { id: "p4", name: "Cake Topper", checked: false },
     ],
-    attachments: ["cake-design-2.jpg"],
-    createdAt: new Date('2025-04-28'),
-    updatedAt: new Date('2025-04-29'),
+    attachments: ["floral-cake-inspiration.jpg"],
+    createdAt: new Date('2025-05-01'), // Created a few days ago
+    updatedAt: new Date('2025-05-02'), 
     ingredients: mockIngredients["Vanilla"],
     cakePrice: 450000,
     deliveryTimeSlot: "13:00 - 17:00", // Afternoon delivery
-  },
-  {
-    id: "o3",
-    customer: mockCustomers[2],
-    status: "in-delivery", // Currently in delivery today
-    deliveryDate: new Date('2025-05-03'), // Today
-    deliveryAddress: mockCustomers[2].addresses[0].text,
-    deliveryAddressNotes: mockCustomers[2].addresses[0].deliveryNotes,
-    deliveryArea: mockCustomers[2].addresses[0].area,
-    cakeDesign: "Floral pattern",
-    cakeFlavor: "Vanilla",
-    cakeSize: "18 CM",
-    cakeShape: "Square",
-    cakeTier: 1,
-    useSameFlavor: true,
-    coverColor: createSolidColor("#FF0000"), // Red
-    coverType: "buttercream" as CoverType,
-    notes: "Extra frosting please",
-    packingItems: defaultPackingItems,
-    createdAt: new Date('2025-04-29'),
-    updatedAt: new Date('2025-05-03'), // Updated today when delivery started
-    ingredients: mockIngredients["Vanilla"],
-    cakePrice: 250000,
-    deliveryTimeSlot: "09:00 - 12:00", // Morning delivery
+    deliveryMethod: "flat-rate",
+    deliveryPrice: 50000,
+    orderTags: ["birthday", "for-woman"],
   },
   
-  // Tomorrow's deliveries (May 4, 2025)
+  // Order 2: Two-tier cake with gradient color
   {
-    id: "o4",
-    customer: mockCustomers[3],
-    status: "ready-to-deliver", // Ready for delivery tomorrow
-    deliveryDate: new Date('2025-05-04'), // Tomorrow
-    deliveryAddress: mockCustomers[3].addresses[0].text,
-    deliveryAddressNotes: mockCustomers[3].addresses[0].deliveryNotes,
-    deliveryArea: mockCustomers[3].addresses[0].area,
-    cakeDesign: "Minimalist",
+    id: "o2",
+    customer: mockCustomers[1],
+    status: "in-queue",
+    deliveryDate: new Date('2025-05-10'), // Next week
+    deliveryAddress: mockCustomers[1].addresses[0].text,
+    deliveryAddressNotes: mockCustomers[1].addresses[0].deliveryNotes,
+    deliveryArea: mockCustomers[1].addresses[0].area,
+    cakeDesign: "Modern Geometric Pattern",
     cakeFlavor: "Double Chocolate",
     cakeSize: "24 CM",
-    cakeShape: "Round",
-    cakeTier: 1,
-    useSameFlavor: true,
-    coverColor: createSolidColor("#FFFFFF"), // White
-    coverType: "buttercream" as CoverType,
-    cakeText: "Congratulations!",
-    greetingCard: "Well done on your achievement!",
-    packingItems: [
-      { id: "p1", name: "Candles", checked: false },
-      { id: "p2", name: "Big Knife", checked: true },
-      { id: "p3", name: "Greeting Card", checked: true },
-      { id: "p4", name: "Cake Topper", checked: false },
-    ],
-    attachments: ["cake-design-3.jpg"],
-    createdAt: new Date('2025-04-20'),
-    updatedAt: new Date('2025-04-28'),
-    ingredients: mockIngredients["Double Chocolate"],
-    cakePrice: 400000,
-    deliveryTimeSlot: "13:00 - 17:00", // Afternoon delivery
-  },
-  
-  // Day after tomorrow deliveries (May 5, 2025)
-  {
-    id: "o5",
-    customer: mockCustomers[4],
-    status: "ready-to-deliver", // Ready for delivery day after tomorrow
-    deliveryDate: new Date('2025-05-05'), // Day after tomorrow
-    deliveryAddress: mockCustomers[4].addresses[0].text,
-    deliveryAddressNotes: mockCustomers[4].addresses[0].deliveryNotes,
-    deliveryArea: mockCustomers[4].addresses[0].area,
-    cakeDesign: "Beach themed",
-    cakeFlavor: "Vanilla",
-    cakeSize: "16 CM",
     cakeShape: "Square",
-    cakeTier: 3,
+    cakeTier: 2,
     tierDetails: [
       { 
         tier: 1, 
         shape: "Square", 
         size: "24 CM", 
-        height: "4 Layer - 20 CM", 
-        flavor: "Vanilla",
-        coverType: "buttercream" as CoverType,
-        coverColor: createSolidColor("#40E0D0")
+        height: "3 Layer - 15 CM",
+        flavor: "Double Chocolate",
+        coverType: "fondant" as CoverType,
+        coverColor: createSolidColor("#0EA5E9")
       },
       { 
         tier: 2, 
         shape: "Square", 
-        size: "18 CM", 
-        height: "3 Layer - 15 CM", 
+        size: "16 CM", 
+        height: "2 Layer - 10 CM",
         flavor: "Vanilla",
+        coverType: "fondant" as CoverType,
+        coverColor: createSolidColor("#D3E4FD")
+      }
+    ],
+    useSameFlavor: false,
+    useSameCover: true,
+    coverColor: createGradientColor(["#0EA5E9", "#1E3A8A", "#D3E4FD"]), // Ocean Blue gradient
+    coverType: "fondant" as CoverType,
+    cakeText: "Happy Anniversary Bob & Carol!",
+    greetingCard: "Celebrating 10 wonderful years together!",
+    notes: "Clean, modern design with sharp edges. Gold accents on the geometric pattern would be nice.",
+    packingItems: [
+      { id: "p1", name: "Candles", checked: false },
+      { id: "p2", name: "Big Knife", checked: true },
+      { id: "p3", name: "Greeting Card", checked: true },
+      { id: "p4", name: "Cake Topper", checked: true },
+    ],
+    attachments: ["geometric-design.jpg", "anniversary-topper.jpg"],
+    createdAt: new Date('2025-04-25'),
+    updatedAt: new Date('2025-04-28'),
+    ingredients: [...mockIngredients["Double Chocolate"], ...mockIngredients["Vanilla"]],
+    cakePrice: 750000,
+    deliveryTimeSlot: "09:00 - 12:00", // Morning delivery
+    deliveryMethod: "lalamove", 
+    deliveryPrice: 75000,
+    orderTags: ["anniversary"],
+  },
+  
+  // Order 3: Three-tier cake with custom color
+  {
+    id: "o3",
+    customer: mockCustomers[2],
+    status: "in-queue",
+    deliveryDate: new Date('2025-05-04'), // Today
+    deliveryAddress: mockCustomers[2].addresses[0].text,
+    deliveryAddressNotes: mockCustomers[2].addresses[0].deliveryNotes,
+    deliveryArea: mockCustomers[2].addresses[0].area,
+    cakeDesign: "Galaxy Theme with Gold Accents",
+    cakeFlavor: "Red Velvet",
+    cakeSize: "30 CM",
+    cakeShape: "Round",
+    cakeTier: 3,
+    tierDetails: [
+      { 
+        tier: 1, 
+        shape: "Round", 
+        size: "30 CM", 
+        height: "4 Layer - 20 CM", 
+        flavor: "Red Velvet",
         coverType: "buttercream" as CoverType,
-        coverColor: createSolidColor("#40E0D0") 
+        coverColor: createCustomColor("Deep blue base with purple swirls", "galaxy-bottom-tier.jpg")
+      },
+      { 
+        tier: 2, 
+        shape: "Round", 
+        size: "22 CM", 
+        height: "3 Layer - 15 CM", 
+        flavor: "Red Velvet",
+        coverType: "buttercream" as CoverType,
+        coverColor: createCustomColor("Purple base with pink accents", "galaxy-middle-tier.jpg")
       },
       { 
         tier: 3, 
-        shape: "Square", 
-        size: "12 CM", 
+        shape: "Round", 
+        size: "16 CM", 
         height: "2 Layer - 10 CM", 
-        flavor: "Vanilla",
+        flavor: "Red Velvet",
         coverType: "buttercream" as CoverType,
-        coverColor: createSolidColor("#40E0D0")
+        coverColor: createCustomColor("Dark purple with gold stars", "galaxy-top-tier.jpg")
       }
     ],
     useSameFlavor: true,
-    coverColor: createSolidColor("#40E0D0"), // Turquoise
+    coverColor: createCustomColor("Galaxy theme with deep blues, purples, and gold/silver star accents", "galaxy-cake-reference.jpg"),
     coverType: "buttercream" as CoverType,
-    cakeText: "Happy Anniversary!",
-    notes: "Include a small gift box",
+    cakeText: "",
+    greetingCard: "To the stars and beyond! Happy Graduation!",
+    notes: "Please make it look like a galaxy/space theme with edible gold stars and silver accents. Client provided reference images.",
     packingItems: [
       { id: "p1", name: "Candles", checked: true },
       { id: "p2", name: "Big Knife", checked: true },
       { id: "p3", name: "Greeting Card", checked: true },
-      { id: "p4", name: "Cake Topper", checked: false },
+      { id: "p4", name: "Cake Topper", checked: true },
     ],
-    attachments: ["cake-design-4.jpg"],
-    createdAt: new Date('2025-04-15'),
-    updatedAt: new Date('2025-04-30'),
-    ingredients: mockIngredients["Vanilla"],
-    cakePrice: 300000,
-    deliveryTimeSlot: "09:00 - 12:00", // Morning delivery
-  },
-  
-  // Add more orders with different statuses
-  {
-    id: "o6",
-    customer: mockCustomers[0],
-    status: "in-kitchen", // Still in kitchen
-    kitchenStatus: "decorating",
-    deliveryDate: new Date('2025-05-05'), // Day after tomorrow
-    deliveryAddress: mockCustomers[0].addresses[1].text,
-    deliveryAddressNotes: mockCustomers[0].addresses[1].deliveryNotes,
-    deliveryArea: mockCustomers[0].addresses[1].area,
-    cakeDesign: "Classic buttercream swirls",
-    cakeFlavor: "Vanilla",
-    cakeSize: "18 CM",
-    cakeShape: "Round",
-    cakeTier: 1,
-    useSameFlavor: true,
-    coverColor: createSolidColor("#E6E6FA"), // Lavender
-    coverType: "buttercream" as CoverType,
-    cakeText: "Happy Mother's Day!",
-    notes: "Extra smooth buttercream finish, please",
-    packingItems: defaultPackingItems,
-    createdAt: new Date('2025-04-30'),
-    updatedAt: new Date('2025-04-30'),
-    ingredients: mockIngredients["Vanilla"],
-    cakePrice: 320000,
-  },
-  {
-    id: "o7",
-    customer: mockCustomers[2],
-    status: "in-delivery", // Currently in delivery (for tomorrow's date)
-    deliveryDate: new Date('2025-05-04'), // Tomorrow
-    deliveryAddress: mockCustomers[2].addresses[0].text,
-    deliveryAddressNotes: mockCustomers[2].addresses[0].deliveryNotes,
-    deliveryArea: mockCustomers[2].addresses[0].area,
-    cakeDesign: "Galaxy theme with stars",
-    cakeFlavor: "Double Chocolate",
-    cakeSize: "22 CM",
-    cakeShape: "Round",
-    cakeTier: 1,
-    useSameFlavor: true,
-    coverColor: createGradientColor(["#000033", "#191970", "#4B0082"]), // Dark blue to purple
-    coverType: "buttercream" as CoverType,
-    cakeText: "You're out of this world!",
-    notes: "Use edible glitter for stars",
-    packingItems: defaultPackingItems,
-    createdAt: new Date('2025-04-29'),
-    updatedAt: new Date('2025-05-03'), // Updated today when delivery started
-    ingredients: mockIngredients["Double Chocolate"],
-    cakePrice: 375000,
-    deliveryTimeSlot: "13:00 - 17:00", // Afternoon delivery
-  },
-  {
-    id: "o8",
-    customer: mockCustomers[1],
-    status: "delivery-confirmed", // Already delivered
-    deliveryDate: new Date('2025-05-02'), // Yesterday
-    deliveryAddress: mockCustomers[1].addresses[1].text,
-    deliveryAddressNotes: mockCustomers[1].addresses[1].deliveryNotes,
-    deliveryArea: mockCustomers[1].addresses[1].area,
-    cakeDesign: "Geometric pattern",
-    cakeFlavor: "Double Chocolate",
-    cakeSize: "16 CM",
-    cakeShape: "Round",
-    cakeTier: 1,
-    useSameFlavor: true,
-    coverColor: createSolidColor("#F5F5DC"), // Beige
-    coverType: "buttercream" as CoverType,
-    cakeText: "Happy Birthday John!",
-    packingItems: defaultPackingItems,
+    attachments: ["galaxy-cake-reference.jpg", "star-decoration-example.jpg", "graduation-topper.jpg"],
     createdAt: new Date('2025-04-20'),
-    updatedAt: new Date('2025-05-02'), // Updated yesterday when delivered
-    ingredients: mockIngredients["Double Chocolate"],
-    cakePrice: 300000,
-    deliveryTimeSlot: "09:00 - 12:00", // Morning delivery
+    updatedAt: new Date('2025-05-01'),
+    ingredients: mockIngredients["Red Velvet"],
+    cakePrice: 1200000,
+    deliveryTimeSlot: "13:00 - 17:00", 
+    deliveryMethod: "flat-rate",
+    deliveryPrice: 65000,
+    orderTags: ["graduation", "for-kids"],
   }
 ];
 
-// Filter Options
+// Keep existing filter options
 export const statusFilterOptions: FilterOption[] = [
   { id: "all", label: "All Orders", value: "all" },
   { id: "incomplete", label: "Incomplete", value: "incomplete" },
@@ -407,6 +297,7 @@ export const statusFilterOptions: FilterOption[] = [
   { id: "cancelled", label: "Cancelled", value: "cancelled" },
 ];
 
+// Keep existing timeFilterOptions
 export const timeFilterOptions: FilterOption[] = [
   { id: "all", label: "All Time", value: "all" },
   { id: "today", label: "Today", value: "today" },
@@ -414,10 +305,11 @@ export const timeFilterOptions: FilterOption[] = [
   { id: "this-month", label: "This Month", value: "this-month" },
 ];
 
-// Cake options
+// Keep existing cake options
 export const cakeFlavors = [
   "Vanilla",
-  "Double Chocolate"
+  "Double Chocolate",
+  "Red Velvet"
 ];
 
 export const cakeSizes = [
