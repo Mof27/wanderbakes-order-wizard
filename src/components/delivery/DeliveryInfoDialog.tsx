@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/components/ui/sonner";
 import { 
   ImagePlus,
@@ -21,7 +22,9 @@ import {
   User,
   MessageSquare,
   Loader2,
-  Save
+  Save,
+  Camera,
+  Image
 } from "lucide-react";
 import { Order, OrderStatus } from "@/types";
 import { formatDate } from "@/lib/utils";
@@ -31,6 +34,7 @@ interface DeliveryInfoDialogProps {
   onOpenChange: (open: boolean) => void;
   order: Order;
   onSaved?: () => void;
+  editMode?: 'delivery' | 'all'; // 'delivery' is default, 'all' allows editing all fields
 }
 
 type RecipientType = "customer" | "family-member" | "security" | "neighbor" | "other";
@@ -39,29 +43,50 @@ const DeliveryInfoDialog = ({
   open, 
   onOpenChange,
   order,
-  onSaved
+  onSaved,
+  editMode = 'delivery'
 }: DeliveryInfoDialogProps) => {
   const { updateOrder } = useApp();
   const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('delivery-photos');
+  
+  // Delivery documentation photos
   const [photos, setPhotos] = useState<string[]>(order.deliveryDocumentationPhotos || []);
+  
+  // Finished cake photos (only editable in 'all' mode)
+  const [cakePhotos, setCakePhotos] = useState<string[]>(order.finishedCakePhotos || []);
+  
+  // Delivery time
   const [actualDeliveryTime, setActualDeliveryTime] = useState<Date | undefined>(
     order.actualDeliveryTime || new Date()
   );
+  
+  // Recipient info
   const [recipientType, setRecipientType] = useState<RecipientType>("customer");
   const [recipientName, setRecipientName] = useState<string>("");
+  
+  // Feedback
   const [feedback, setFeedback] = useState<string>(order.customerFeedback || "");
   
   // Reset form state when order changes
   useEffect(() => {
     setPhotos(order.deliveryDocumentationPhotos || []);
+    setCakePhotos(order.finishedCakePhotos || []);
     setActualDeliveryTime(order.actualDeliveryTime || new Date());
     setRecipientType("customer");
     setRecipientName("");
     setFeedback(order.customerFeedback || "");
-  }, [order]);
+    
+    // Set the most appropriate tab based on edit mode
+    if (editMode === 'all') {
+      setActiveTab('cake-photos');
+    } else {
+      setActiveTab('delivery-photos');
+    }
+  }, [order, editMode, open]);
 
-  // Handle file upload for delivery documentation photos
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle file upload for both types of photos
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, photoType: 'cake' | 'delivery') => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
     
@@ -71,7 +96,11 @@ const DeliveryInfoDialog = ({
       const reader = new FileReader();
       reader.onload = (e) => {
         if (e.target?.result) {
-          setPhotos(prevPhotos => [...prevPhotos, e.target!.result as string]);
+          if (photoType === 'cake') {
+            setCakePhotos(prevPhotos => [...prevPhotos, e.target!.result as string]);
+          } else {
+            setPhotos(prevPhotos => [...prevPhotos, e.target!.result as string]);
+          }
         }
       };
       reader.readAsDataURL(file);
@@ -79,8 +108,12 @@ const DeliveryInfoDialog = ({
   };
 
   // Remove a photo from the preview
-  const handleRemovePhoto = (index: number) => {
-    setPhotos(prevPhotos => prevPhotos.filter((_, i) => i !== index));
+  const handleRemovePhoto = (index: number, photoType: 'cake' | 'delivery') => {
+    if (photoType === 'cake') {
+      setCakePhotos(prevPhotos => prevPhotos.filter((_, i) => i !== index));
+    } else {
+      setPhotos(prevPhotos => prevPhotos.filter((_, i) => i !== index));
+    }
   };
 
   // Update delivery time
@@ -113,6 +146,11 @@ const DeliveryInfoDialog = ({
         deliveryDocumentationPhotos: photos,
         customerFeedback: feedback,
       };
+      
+      // Only update cake photos when in 'all' edit mode
+      if (editMode === 'all') {
+        updatedOrder.finishedCakePhotos = cakePhotos;
+      }
       
       // Determine if we need to update the status
       // If coming from 'in-delivery', move to 'delivery-confirmed'
@@ -148,45 +186,103 @@ const DeliveryInfoDialog = ({
         </DialogHeader>
         
         <div className="grid gap-6 py-4">
-          {/* Delivery Photos Section */}
-          <div className="grid gap-2">
-            <Label className="text-base font-semibold flex items-center">
-              <ImagePlus className="h-4 w-4 mr-2" /> Delivery Photos
-            </Label>
+          {/* Photos Tabs */}
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid grid-cols-2">
+              {editMode === 'all' && (
+                <TabsTrigger value="cake-photos" className="flex items-center">
+                  <Camera className="h-4 w-4 mr-2" />
+                  Cake Photos
+                </TabsTrigger>
+              )}
+              <TabsTrigger value="delivery-photos" className={editMode === 'all' ? '' : 'col-span-2'}>
+                <Image className="h-4 w-4 mr-2" />
+                Delivery Photos
+              </TabsTrigger>
+            </TabsList>
             
-            <div className="flex flex-wrap gap-2 mt-2">
-              {photos.map((photo, index) => (
-                <div key={index} className="relative w-24 h-24 rounded overflow-hidden border">
-                  <img 
-                    src={photo} 
-                    alt={`Delivery ${index + 1}`} 
-                    className="w-full h-full object-cover"
-                  />
-                  <button 
-                    type="button"
-                    onClick={() => handleRemovePhoto(index)}
-                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center"
-                  >
-                    ×
-                  </button>
+            {/* Cake Photos Tab */}
+            {editMode === 'all' && (
+              <TabsContent value="cake-photos" className="space-y-4">
+                <Label className="text-base font-semibold flex items-center">
+                  <Camera className="h-4 w-4 mr-2" /> Finished Cake Photos
+                </Label>
+                
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {cakePhotos.map((photo, index) => (
+                    <div key={index} className="relative w-24 h-24 rounded overflow-hidden border">
+                      <img 
+                        src={photo} 
+                        alt={`Cake ${index + 1}`} 
+                        className="w-full h-full object-cover"
+                      />
+                      <button 
+                        type="button"
+                        onClick={() => handleRemovePhoto(index, 'cake')}
+                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                  
+                  <label className="w-24 h-24 border-2 border-dashed rounded flex items-center justify-center cursor-pointer bg-muted hover:bg-muted/80">
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      multiple 
+                      className="hidden"
+                      onChange={(e) => handleFileUpload(e, 'cake')} 
+                    />
+                    <ImagePlus className="h-6 w-6 text-muted-foreground" />
+                  </label>
                 </div>
-              ))}
+                <p className="text-sm text-muted-foreground">
+                  Upload photos of the finished cake before delivery
+                </p>
+              </TabsContent>
+            )}
+            
+            {/* Delivery Photos Tab */}
+            <TabsContent value="delivery-photos" className="space-y-4">
+              <Label className="text-base font-semibold flex items-center">
+                <ImagePlus className="h-4 w-4 mr-2" /> Delivery Photos
+              </Label>
               
-              <label className="w-24 h-24 border-2 border-dashed rounded flex items-center justify-center cursor-pointer bg-muted hover:bg-muted/80">
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  multiple 
-                  className="hidden"
-                  onChange={handleFileUpload} 
-                />
-                <ImagePlus className="h-6 w-6 text-muted-foreground" />
-              </label>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Upload photos of the delivered cake and/or delivery receipt
-            </p>
-          </div>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {photos.map((photo, index) => (
+                  <div key={index} className="relative w-24 h-24 rounded overflow-hidden border">
+                    <img 
+                      src={photo} 
+                      alt={`Delivery ${index + 1}`} 
+                      className="w-full h-full object-cover"
+                    />
+                    <button 
+                      type="button"
+                      onClick={() => handleRemovePhoto(index, 'delivery')}
+                      className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+                
+                <label className="w-24 h-24 border-2 border-dashed rounded flex items-center justify-center cursor-pointer bg-muted hover:bg-muted/80">
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    multiple 
+                    className="hidden"
+                    onChange={(e) => handleFileUpload(e, 'delivery')} 
+                  />
+                  <ImagePlus className="h-6 w-6 text-muted-foreground" />
+                </label>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Upload photos of the delivered cake and/or delivery receipt
+              </p>
+            </TabsContent>
+          </Tabs>
 
           {/* Delivery Time Section */}
           <div className="grid gap-2">

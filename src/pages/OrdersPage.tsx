@@ -1,231 +1,108 @@
-import OrderList from "@/components/orders/OrderList";
-import { useSearchParams, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+
+import { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
-import { toast } from "@/components/ui/sonner";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Check, X, QrCode, LayoutGrid, List, Search, FilterX } from "lucide-react";
+import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Plus, Grid, List, Workflow, Info } from "lucide-react";
+import OrderList from "@/components/orders/OrderList";
+import OrderCard from "@/components/orders/OrderCard";
 import DateFilterBar from "@/components/orders/DateFilterBar";
 import StatusFilterChips from "@/components/orders/StatusFilterChips";
-import { statusFilterOptions } from "@/data/mockData";
-import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
+import { ViewMode } from "@/types";
 
 const OrdersPage = () => {
-  const { 
-    setSearchQuery,
-    orders,
-    getOrderById,
-    searchQuery,
-    viewMode,
-    setViewMode,
-    activeStatusFilter,
-    setActiveStatusFilter,
-    dateRange,
-    resetFilters,
-    filteredOrders
-  } = useApp();
-  
-  const [searchParams] = useSearchParams();
+  const { orders } = useApp();
   const navigate = useNavigate();
-  const idFromQR = searchParams.get("id");
-  const [showQrAlert, setShowQrAlert] = useState(false);
-  const [orderFound, setOrderFound] = useState<boolean | null>(null);
-  const [isQrScannerOpen, setIsQrScannerOpen] = useState(false);
-
-  // If there's an ID in the URL (e.g., from scanning a QR code), set it as search query
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [orderDate, setOrderDate] = useState<Date | undefined>(undefined);
+  const [filterStatus, setFilterStatus] = useState<string[]>([]);
+  const [filteredOrders, setFilteredOrders] = useState(orders);
+  
+  // Filter orders based on date and status
   useEffect(() => {
-    if (idFromQR) {
-      setSearchQuery(idFromQR);
-      
-      // Check if order exists
-      const orderExists = getOrderById(idFromQR);
-      setOrderFound(!!orderExists);
-      setShowQrAlert(true);
-      
-      if (!orderExists) {
-        toast.error(`Order with ID ${idFromQR} not found`);
-      } else {
-        toast.success(`Order #${idFromQR} found`);
-      }
+    let result = [...orders];
+    
+    // Filter by date if selected
+    if (orderDate) {
+      const dateStr = orderDate.toISOString().split('T')[0];
+      result = result.filter(order => {
+        const orderDateStr = new Date(order.deliveryDate).toISOString().split('T')[0];
+        return orderDateStr === dateStr;
+      });
     }
-  }, [idFromQR, setSearchQuery, getOrderById]);
-
-  const handleClearQrSearch = () => {
-    setShowQrAlert(false);
-    setSearchQuery("");
-    navigate("/orders");
-  };
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-  };
-
-  const clearSearch = () => {
-    setSearchQuery("");
-    // Clear the URL param if it exists
-    const currentUrl = new URL(window.location.href);
-    if (currentUrl.searchParams.has('id')) {
-      navigate('/orders');
+    
+    // Filter by status if selected
+    if (filterStatus.length > 0) {
+      result = result.filter(order => filterStatus.includes(order.status));
     }
-  };
-
-  // Calculate if any filters are active
-  const hasActiveFilters = searchQuery || 
-    (dateRange[0] && dateRange[1]) || 
-    (activeStatusFilter.value !== "all");
+    
+    setFilteredOrders(result);
+  }, [orders, orderDate, filterStatus]);
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Orders</h1>
-      
-      {showQrAlert && (
-        <Alert 
-          className={`border ${orderFound ? 'border-green-600 bg-green-50' : 'border-red-600 bg-red-50'}`}
-        >
-          <div className="flex justify-between items-center">
-            <AlertDescription className="flex items-center">
-              {orderFound ? (
-                <>
-                  <Check className="h-4 w-4 text-green-600 mr-2" />
-                  <span>Order <strong>{idFromQR}</strong> found from QR scan</span>
-                </>
-              ) : (
-                <>
-                  <X className="h-4 w-4 text-red-600 mr-2" />
-                  <span>Order <strong>{idFromQR}</strong> not found from QR scan</span>
-                </>
-              )}
-            </AlertDescription>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={handleClearQrSearch}
-              className="ml-2"
-            >
-              Clear search
+      <Helmet>
+        <title>Orders | Cake Shop</title>
+      </Helmet>
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Orders</h1>
+        <div className="flex gap-2">
+          <Link to="/workflow">
+            <Button variant="outline" size="sm" className="h-9">
+              <Info className="h-4 w-4 mr-2" />
+              Workflow
             </Button>
-          </div>
-        </Alert>
-      )}
+          </Link>
+          <Button variant="outline" size="sm" className="h-9" onClick={() => navigate("/orders/scan")}>
+            Scan QR
+          </Button>
+          <Button className="h-9" onClick={() => navigate("/orders/new")}>
+            <Plus className="mr-2 h-4 w-4" /> New Order
+          </Button>
+        </div>
+      </div>
       
-      <p className="text-muted-foreground mb-4">
-        Order IDs now show month and year (MM-YY-XXX format) to easily track when orders were placed.
-        QR codes on printed orders can be scanned with any phone's camera app to quickly find them here.
-        Click the <QrCode className="inline h-3 w-3 mx-1" /> icon to scan QR codes directly in the app.
-      </p>
-
-      {/* Search and filter controls */}
-      <div className="space-y-4">
-        {/* Search input with QR button */}
-        <div className="relative flex items-center gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search order by ID or customer name..."
-              className="pl-8"
-              value={searchQuery}
-              onChange={handleSearchChange}
-              autoFocus={!!searchQuery} // Auto focus if there's a search query
-            />
-            {searchQuery && (
-              <button 
-                onClick={clearSearch}
-                className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-          <Button
-            variant="outline"
-            size="icon"
-            className="flex-shrink-0"
-            onClick={() => setIsQrScannerOpen(true)}
-            title="Scan QR Code"
+      <div className="flex justify-between items-center">
+        <DateFilterBar 
+          selectedDate={orderDate} 
+          onDateSelected={setOrderDate}
+        />
+        
+        <div className="flex gap-2">
+          <Button 
+            variant={viewMode === 'list' ? "default" : "outline"}
+            size="sm"
+            onClick={() => setViewMode('list')}
           >
-            <QrCode className="h-4 w-4" />
+            <List className="h-4 w-4" />
           </Button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Date Filter Section */}
-          <div className="rounded-md border p-3 bg-gray-50">
-            <DateFilterBar />
-          </div>
-
-          {/* Status Filter Section */}
-          <div className="rounded-md border p-3 bg-gray-50">
-            <StatusFilterChips 
-              options={statusFilterOptions}
-              selectedOption={activeStatusFilter}
-              onChange={setActiveStatusFilter}
-            />
-          </div>
-        </div>
-
-        {/* View Options & Reset Filters */}
-        <div className="flex flex-wrap justify-between items-center">
-          <div className="flex border rounded-md">
-            <Button
-              variant="ghost"
-              size="sm"
-              className={cn(
-                "rounded-r-none border-r",
-                viewMode === "list" ? "bg-muted" : ""
-              )}
-              onClick={() => setViewMode("list")}
-            >
-              <List className="h-4 w-4 mr-1" /> List
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className={cn(
-                "rounded-l-none",
-                viewMode === "grid" ? "bg-muted" : ""
-              )}
-              onClick={() => setViewMode("grid")}
-            >
-              <LayoutGrid className="h-4 w-4 mr-1" /> Grid
-            </Button>
-          </div>
-            
-          {/* Reset Filters Button */}
-          {hasActiveFilters && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={resetFilters}
-              className="flex gap-2"
-            >
-              <FilterX className="h-4 w-4" /> 
-              Clear all filters
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {/* Results indicator */}
-      <div className="flex justify-between items-center border-b pb-2">
-        <div className="text-sm text-muted-foreground">
-          Showing {filteredOrders.length} of {orders.length} orders
-          {hasActiveFilters && (
-            <span className="ml-1">
-              with filters applied
-            </span>
-          )}
-        </div>
-        <div>
-          <Button className="bg-cake-primary hover:bg-cake-primary/80 text-cake-text">
-            <span>+ New Order</span>
+          <Button 
+            variant={viewMode === 'grid' ? "default" : "outline"}
+            size="sm"
+            onClick={() => setViewMode('grid')}
+          >
+            <Grid className="h-4 w-4" />
           </Button>
         </div>
       </div>
-
-      <OrderList />
+      
+      <StatusFilterChips selectedStatuses={filterStatus} onChange={setFilterStatus} />
+      
+      {viewMode === 'list' ? (
+        <OrderList orders={filteredOrders} />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredOrders.map(order => (
+            <OrderCard key={order.id} order={order} />
+          ))}
+          {filteredOrders.length === 0 && (
+            <p className="text-muted-foreground col-span-full text-center py-10">
+              No orders found matching your filters.
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 };

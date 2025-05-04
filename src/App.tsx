@@ -16,6 +16,7 @@ import SettingsPage from "./pages/SettingsPage";
 import ScanQrPage from "./pages/ScanQrPage";
 import KitchenLeaderPage from "./pages/KitchenLeaderPage";
 import DeliveryPage from "./pages/DeliveryPage";
+import WorkflowPage from "./pages/WorkflowPage";
 import NotFound from "./pages/NotFound";
 import { AppProvider } from "./context/AppContext";
 import { useEffect } from "react";
@@ -95,6 +96,11 @@ const App = () => {
                 <Route path="/delivery" element={
                   <MainLayout>
                     <DeliveryPage />
+                  </MainLayout>
+                } />
+                <Route path="/workflow" element={
+                  <MainLayout>
+                    <WorkflowPage />
                   </MainLayout>
                 } />
                 <Route path="/customers" element={

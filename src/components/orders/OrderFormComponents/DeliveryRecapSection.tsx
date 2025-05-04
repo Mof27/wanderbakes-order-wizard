@@ -1,20 +1,14 @@
 
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
-import { OrderStatus, OrderTag } from "@/types";
-import { Calendar as CalendarIcon, Upload, Camera, Image } from "lucide-react";
-import { useApp } from "@/context/AppContext";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { OrderStatus, OrderTag } from "@/types";
+import { Edit, Info, Camera, Image } from "lucide-react";
 import { matchesStatus } from "@/lib/statusHelpers";
+import DeliveryInfoDialog from "@/components/delivery/DeliveryInfoDialog";
 
 interface DeliveryRecapSectionProps {
   orderId?: string;
@@ -57,49 +51,11 @@ const DeliveryRecapSection: React.FC<DeliveryRecapSectionProps> = ({
   onTagsChange,
   onStatusChange,
 }) => {
-  const [photoPreview, setPhotoPreview] = useState<string[]>(finishedCakePhotos || []);
-  const [deliveryPhotoPreview, setDeliveryPhotoPreview] = useState<string[]>(deliveryDocumentationPhotos || []);
+  // Show DeliveryInfoDialog for editing delivery information
+  const [showInfoDialog, setShowInfoDialog] = useState(false);
   const [activePhotoTab, setActivePhotoTab] = useState<string>("cake-photos");
-  const { updateOrder } = useApp();
   
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, photoType: 'cake' | 'delivery') => {
-    if (e.target.files && e.target.files.length > 0) {
-      const newPhotos: string[] = photoType === 'cake' ? [...photoPreview] : [...deliveryPhotoPreview];
-      
-      Array.from(e.target.files).forEach(file => {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          if (event.target?.result) {
-            newPhotos.push(event.target.result as string);
-            
-            if (photoType === 'cake') {
-              setPhotoPreview([...newPhotos]);
-              onPhotosChange([...newPhotos]);
-            } else {
-              setDeliveryPhotoPreview([...newPhotos]);
-              onDeliveryPhotosChange([...newPhotos]);
-            }
-          }
-        };
-        reader.readAsDataURL(file);
-      });
-    }
-  };
-  
-  const removePhoto = (index: number, photoType: 'cake' | 'delivery') => {
-    if (photoType === 'cake') {
-      const newPhotos = [...photoPreview];
-      newPhotos.splice(index, 1);
-      setPhotoPreview(newPhotos);
-      onPhotosChange(newPhotos);
-    } else {
-      const newPhotos = [...deliveryPhotoPreview];
-      newPhotos.splice(index, 1);
-      setDeliveryPhotoPreview(newPhotos);
-      onDeliveryPhotosChange(newPhotos);
-    }
-  };
-  
+  // Handle tag changes directly
   const handleTagChange = (tag: OrderTag, checked: boolean) => {
     const newTags = checked 
       ? [...orderTags, tag]
@@ -108,9 +64,6 @@ const DeliveryRecapSection: React.FC<DeliveryRecapSectionProps> = ({
     onTagsChange(newTags);
   };
 
-  // Check if feedback is required for current status
-  const isFeedbackRequired = status === 'waiting-feedback';
-  
   // Get the appropriate help message based on status
   const getStatusGuidance = () => {
     if (!status) return null;
@@ -152,16 +105,15 @@ const DeliveryRecapSection: React.FC<DeliveryRecapSectionProps> = ({
   
   const guidance = getStatusGuidance();
 
-  // Show appropriate section based on status
-  // Make photos section visible for all states from waiting-photo onwards
+  // Determine what sections to show based on status
   const showPhotosSection = status === 'waiting-photo' || 
-                           status === 'ready-to-deliver' || 
-                           status === 'in-delivery' || 
-                           status === 'delivery-confirmed' || 
-                           status === 'waiting-feedback' || 
-                           status === 'finished' ||
-                           photoPreview.length > 0 ||
-                           deliveryPhotoPreview.length > 0;
+                          status === 'ready-to-deliver' || 
+                          status === 'in-delivery' || 
+                          status === 'delivery-confirmed' || 
+                          status === 'waiting-feedback' || 
+                          status === 'finished' ||
+                          finishedCakePhotos.length > 0 ||
+                          deliveryDocumentationPhotos.length > 0;
                            
   const showDeliverySection = status === 'in-delivery' || 
                              status === 'delivery-confirmed' || 
@@ -173,6 +125,15 @@ const DeliveryRecapSection: React.FC<DeliveryRecapSectionProps> = ({
                              status === 'waiting-feedback' || 
                              status === 'finished' ||
                              customerFeedback !== '';
+
+  // Handle update when dialog is saved
+  const handleInfoDialogSaved = () => {
+    // Dialog will close automatically when saved
+    // If we're in waiting-feedback status and have feedback, enable the finish button
+    if (status === 'waiting-feedback' && customerFeedback && actualDeliveryTime) {
+      // No automatic status change, let user decide
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -193,200 +154,130 @@ const DeliveryRecapSection: React.FC<DeliveryRecapSectionProps> = ({
         </Alert>
       )}
       
-      {/* Photos section with tabs */}
-      {showPhotosSection && (
-        <div className="space-y-2">
-          <h3 className="text-lg font-medium">Order Documentation Photos</h3>
-          <Tabs value={activePhotoTab} onValueChange={setActivePhotoTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-4">
-              <TabsTrigger value="cake-photos" className="flex items-center">
-                <Camera className="h-4 w-4 mr-2" />
-                <span>Finished Cake Photos</span>
-                {photoPreview.length > 0 && (
-                  <span className="ml-2 bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                    {photoPreview.length}
-                  </span>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="delivery-photos" className="flex items-center">
-                <Image className="h-4 w-4 mr-2" />
-                <span>Delivery Documentation</span>
-                {deliveryPhotoPreview.length > 0 && (
-                  <span className="ml-2 bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                    {deliveryPhotoPreview.length}
-                  </span>
-                )}
-              </TabsTrigger>
-            </TabsList>
-            
-            {/* Finished Cake Photos tab */}
-            <TabsContent value="cake-photos" className="space-y-4">
-              <p className="text-sm text-muted-foreground">Photos of the finished cake before delivery.</p>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {photoPreview.map((photo, index) => (
-                  <div key={index} className="relative group">
-                    <img 
-                      src={photo} 
-                      alt={`Cake photo ${index + 1}`}
-                      className="w-full h-32 object-cover rounded-md"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removePhoto(index, 'cake')}
-                      className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      &times;
-                    </button>
-                  </div>
-                ))}
-                <div className="w-full h-32 border-2 border-dashed border-gray-300 rounded-md flex items-center justify-center">
-                  <label
-                    htmlFor="cake-photo-upload"
-                    className="cursor-pointer flex flex-col items-center p-4"
-                  >
-                    <Upload className="h-6 w-6 mb-2 text-gray-500" />
-                    <span className="text-sm text-gray-500">Upload Photo</span>
-                    <input
-                      id="cake-photo-upload"
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      onChange={(e) => handleFileChange(e, 'cake')}
-                      className="hidden"
-                    />
-                  </label>
-                </div>
-              </div>
-            </TabsContent>
-            
-            {/* Delivery Documentation Photos tab */}
-            <TabsContent value="delivery-photos" className="space-y-4">
-              <p className="text-sm text-muted-foreground">Photos taken during delivery (cake at venue, delivery receipt, etc).</p>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {deliveryPhotoPreview.map((photo, index) => (
-                  <div key={index} className="relative group">
-                    <img 
-                      src={photo} 
-                      alt={`Delivery documentation photo ${index + 1}`}
-                      className="w-full h-32 object-cover rounded-md"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removePhoto(index, 'delivery')}
-                      className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      &times;
-                    </button>
-                  </div>
-                ))}
-                <div className="w-full h-32 border-2 border-dashed border-gray-300 rounded-md flex items-center justify-center">
-                  <label
-                    htmlFor="delivery-photo-upload"
-                    className="cursor-pointer flex flex-col items-center p-4"
-                  >
-                    <Upload className="h-6 w-6 mb-2 text-gray-500" />
-                    <span className="text-sm text-gray-500">Upload Photo</span>
-                    <input
-                      id="delivery-photo-upload"
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      onChange={(e) => handleFileChange(e, 'delivery')}
-                      className="hidden"
-                    />
-                  </label>
-                </div>
-              </div>
-            </TabsContent>
-          </Tabs>
+      {/* "Edit Delivery Information" button */}
+      {(showPhotosSection || showDeliverySection || showFeedbackSection) && (
+        <div className="flex justify-end">
+          <Button
+            onClick={() => setShowInfoDialog(true)}
+            className="mb-4"
+            variant="outline"
+          >
+            <Edit className="h-4 w-4 mr-2" />
+            Edit Delivery Information
+          </Button>
+          
+          {/* DeliveryInfoDialog for editing all delivery information */}
+          <DeliveryInfoDialog 
+            open={showInfoDialog} 
+            onOpenChange={setShowInfoDialog} 
+            order={{
+              id: orderId || '',
+              deliveryDate: new Date(),
+              actualDeliveryTime,
+              deliveryDocumentationPhotos,
+              finishedCakePhotos,
+              customerFeedback,
+              status: status || 'in-queue',
+              customer: { id: '', name: '', whatsappNumber: '', addresses: [], createdAt: new Date() },
+              cakeFlavor: '',
+              cakeSize: '',
+              cakeShape: '',
+              cakeDesign: '',
+              cakeTier: 1,
+              coverColor: { type: 'solid', color: '#000000' },
+              cakePrice: 0,
+              deliveryAddress: '',
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            }}
+            onSaved={handleInfoDialogSaved}
+            editMode="all" // New prop to indicate we're editing all fields
+          />
         </div>
       )}
       
-      {/* Delivery time section */}
-      {showDeliverySection && (
+      {/* Photos section - Read Only */}
+      {showPhotosSection && (
         <div className="space-y-2">
-          <Label htmlFor="actual-delivery-time">Actual Delivery Time</Label>
-          <div className="flex space-x-2">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !actualDeliveryTime && "text-muted-foreground",
-                    status === 'waiting-feedback' && !actualDeliveryTime && "border-red-500"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {actualDeliveryTime ? format(actualDeliveryTime, "PPP HH:mm") : "Select date and time"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={actualDeliveryTime}
-                  onSelect={onDeliveryTimeChange}
-                  initialFocus
-                />
-                <div className="p-3 border-t border-gray-200">
-                  <Input
-                    type="time"
-                    value={actualDeliveryTime ? format(actualDeliveryTime, "HH:mm") : ""}
-                    onChange={(e) => {
-                      const [hours, minutes] = e.target.value.split(':').map(Number);
-                      const newDate = actualDeliveryTime ? new Date(actualDeliveryTime) : new Date();
-                      newDate.setHours(hours, minutes);
-                      onDeliveryTimeChange(newDate);
-                    }}
-                    className="w-full"
+          <h3 className="text-lg font-medium flex items-center">
+            <Camera className="h-4 w-4 mr-2" />
+            Cake Photos
+          </h3>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {finishedCakePhotos.length === 0 ? (
+              <p className="text-sm text-muted-foreground col-span-full">No cake photos added yet.</p>
+            ) : (
+              finishedCakePhotos.map((photo, index) => (
+                <div key={index} className="relative group">
+                  <img 
+                    src={photo} 
+                    alt={`Cake photo ${index + 1}`}
+                    className="w-full h-24 object-cover rounded-md"
                   />
                 </div>
-              </PopoverContent>
-            </Popover>
-            
-            {actualDeliveryTime && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => onDeliveryTimeChange(undefined)}
-              >
-                &times;
-              </Button>
+              ))
             )}
           </div>
         </div>
       )}
       
-      {/* Feedback section */}
+      {/* Delivery Photos - Read Only */}
+      {deliveryDocumentationPhotos.length > 0 && (
+        <div className="space-y-2">
+          <h3 className="text-lg font-medium flex items-center">
+            <Image className="h-4 w-4 mr-2" />
+            Delivery Documentation
+          </h3>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {deliveryDocumentationPhotos.map((photo, index) => (
+              <div key={index} className="relative group">
+                <img 
+                  src={photo} 
+                  alt={`Delivery documentation photo ${index + 1}`}
+                  className="w-full h-24 object-cover rounded-md"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      
+      {/* Delivery time - Read Only */}
+      {showDeliverySection && actualDeliveryTime && (
+        <div className="space-y-2">
+          <h3 className="text-lg font-medium">Actual Delivery Time</h3>
+          <p className="text-sm">
+            {actualDeliveryTime.toLocaleString('en-US', { 
+              weekday: 'long',
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            })}
+          </p>
+        </div>
+      )}
+      
+      {/* Feedback section - Read Only */}
       {showFeedbackSection && (
         <div className="space-y-2">
-          <Label 
-            htmlFor="customer-feedback" 
-            className={cn(isFeedbackRequired && !customerFeedback.trim() ? "text-red-500" : "")}
-          >
-            Customer Feedback/Complaints
-            {isFeedbackRequired && <span className="text-red-500 ml-1">*</span>}
-          </Label>
-          <Textarea
-            id="customer-feedback"
-            value={customerFeedback}
-            onChange={(e) => onFeedbackChange(e.target.value)}
-            placeholder={isFeedbackRequired ? "Feedback required to finish order" : "Enter any feedback or complaints from the customer"}
-            className={cn(
-              "min-h-[100px]",
-              isFeedbackRequired && !customerFeedback.trim() ? "border-red-500" : ""
-            )}
-          />
-          {isFeedbackRequired && !customerFeedback.trim() && (
-            <p className="text-red-500 text-sm">Feedback is required to finish this order</p>
+          <h3 className="text-lg font-medium">Customer Feedback</h3>
+          {customerFeedback ? (
+            <div className="bg-muted p-3 rounded-md">
+              <p className="text-sm whitespace-pre-line">{customerFeedback}</p>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">No feedback collected yet.</p>
           )}
         </div>
       )}
       
-      {/* Order tags section - always show */}
+      {/* Order tags section */}
       <div className="space-y-3">
         <h3 className="text-lg font-medium">Order Tags</h3>
-        <p className="text-sm text-muted-foreground">Select tags that apply to this order:</p>
         <div className="grid grid-cols-2 gap-4">
           {availableTags.map((tag) => (
             <div key={tag.value} className="flex items-center space-x-2">
