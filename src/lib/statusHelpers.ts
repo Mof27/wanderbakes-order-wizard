@@ -35,3 +35,18 @@ export const matchesStatus = (orderStatus: OrderStatus, targetStatus: string): b
   // Direct comparison for other statuses
   return orderStatus === targetStatus as OrderStatus;
 };
+
+/**
+ * Helper function to check if an order is in a delivery-related status
+ */
+export const isInDeliveryStatus = (orderStatus: OrderStatus): boolean => {
+  return orderStatus === "ready-to-deliver" || orderStatus === "in-delivery";
+};
+
+/**
+ * Helper function to check if an order should be shown in the "all statuses" view
+ * on the delivery page (all except cancelled, finished, and archived)
+ */
+export const shouldShowInAllStatusesDelivery = (orderStatus: OrderStatus): boolean => {
+  return !["cancelled", "finished", "archived"].includes(orderStatus);
+};

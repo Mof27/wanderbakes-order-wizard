@@ -1,18 +1,18 @@
 
 import { Button } from "@/components/ui/button";
-import { Truck, Package, CheckCircle2 } from "lucide-react";
+import { Truck, Package, CheckCircle2, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type DeliveryStatusFilterProps = {
-  value: 'ready' | 'in-transit' | 'all';
-  onChange: (value: 'ready' | 'in-transit' | 'all') => void;
+  value: 'ready' | 'in-transit' | 'delivery-statuses' | 'all-statuses';
+  onChange: (value: 'ready' | 'in-transit' | 'delivery-statuses' | 'all-statuses') => void;
 };
 
 const DeliveryStatusFilter = ({ value, onChange }: DeliveryStatusFilterProps) => {
   return (
     <div className="flex flex-col space-y-2">
       <span className="text-sm font-medium">Delivery Status</span>
-      <div className="flex space-x-2">
+      <div className="flex flex-wrap gap-2">
         <Button
           variant="outline"
           size="sm"
@@ -44,12 +44,25 @@ const DeliveryStatusFilter = ({ value, onChange }: DeliveryStatusFilterProps) =>
           size="sm"
           className={cn(
             "min-w-24",
-            value === 'all' && "bg-primary text-primary-foreground"
+            value === 'delivery-statuses' && "bg-blue-100 text-blue-800 border-blue-200"
           )}
-          onClick={() => onChange('all')}
+          onClick={() => onChange('delivery-statuses')}
         >
           <CheckCircle2 className="h-4 w-4 mr-2" />
-          All
+          Delivery Only
+        </Button>
+
+        <Button
+          variant="outline"
+          size="sm"
+          className={cn(
+            "min-w-24",
+            value === 'all-statuses' && "bg-purple-100 text-purple-800 border-purple-200"
+          )}
+          onClick={() => onChange('all-statuses')}
+        >
+          <Calendar className="h-4 w-4 mr-2" />
+          All Orders
         </Button>
       </div>
     </div>

@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from "react";
 import { useApp } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
@@ -7,7 +6,7 @@ import { Helmet } from "react-helmet-async";
 import DeliveryDateFilter from "@/components/delivery/DeliveryDateFilter";
 import DeliveryStatusFilter from "@/components/delivery/DeliveryStatusFilter";
 import { Order } from "@/types";
-import { matchesStatus } from "@/lib/statusHelpers";
+import { matchesStatus, isInDeliveryStatus, shouldShowInAllStatusesDelivery } from "@/lib/statusHelpers";
 import { startOfDay, endOfDay, addDays, format } from "date-fns";
 import { Link } from "react-router-dom";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
@@ -15,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { CalendarClock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import DeliveryStatusManager from "@/components/delivery/DeliveryStatusManager";
+import StatusBadge from "@/components/orders/StatusBadge";
 
 // Helper function to determine the time slot background color
 const getTimeSlotColor = (timeSlot?: string): string => {
@@ -64,7 +64,7 @@ const formatTimeSlotDisplay = (timeSlot?: string): string => {
 const DeliveryPage = () => {
   const { orders } = useApp();
   const [dateFilter, setDateFilter] = useState<'today' | 'tomorrow' | 'd-plus-2' | 'all'>('today');
-  const [statusFilter, setStatusFilter] = useState<'ready' | 'in-transit' | 'all'>('ready');
+  const [statusFilter, setStatusFilter] = useState<'ready' | 'in-transit' | 'delivery-statuses' | 'all-statuses'>('delivery-statuses');
   const [refreshKey, setRefreshKey] = useState(0); // To force refresh when order status changes
 
   // Force a refresh of the component when an order status changes
@@ -102,11 +102,12 @@ const DeliveryPage = () => {
           return matchesStatus(order.status, 'ready-to-deliver');
         case 'in-transit':
           return matchesStatus(order.status, 'in-delivery');
+        case 'delivery-statuses':
+          return isInDeliveryStatus(order.status);
+        case 'all-statuses':
+          return shouldShowInAllStatusesDelivery(order.status);
         default:
-          return (
-            matchesStatus(order.status, 'ready-to-deliver') || 
-            matchesStatus(order.status, 'in-delivery')
-          );
+          return isInDeliveryStatus(order.status);
       }
     });
   };
@@ -117,44 +118,65 @@ const DeliveryPage = () => {
     filtered = filterOrdersByDate(filtered, dateFilter);
     filtered = filterOrdersByStatus(filtered, statusFilter);
     
-    // Sort orders by time slot and then by delivery time (if available)
+    // Sort orders - first by status priority, then by time slot
     return filtered.sort((a, b) => {
-      // If time slots are the same, sort by ID
+      // Define status priority (lower number = higher priority)
+      const getStatusPriority = (status: string): number => {
+        switch(status) {
+          case 'ready-to-deliver': return 1;
+          case 'in-delivery': return 2;
+          case 'waiting-photo': return 3;
+          case 'in-kitchen': return 4;
+          case 'in-queue': return 5;
+          case 'incomplete': return 6;
+          default: return 10;
+        }
+      };
+      
+      // First sort by status priority
+      const statusPriorityA = getStatusPriority(a.status);
+      const statusPriorityB = getStatusPriority(b.status);
+      
+      if (statusPriorityA !== statusPriorityB) {
+        return statusPriorityA - statusPriorityB;
+      }
+      
+      // If statuses have the same priority, sort by time slot as before
       if (a.deliveryTimeSlot === b.deliveryTimeSlot) {
         return a.id.localeCompare(b.id);
       }
       
-      // If one has a time slot and the other doesn't
       if (a.deliveryTimeSlot && !b.deliveryTimeSlot) return -1;
       if (!a.deliveryTimeSlot && b.deliveryTimeSlot) return 1;
       
-      // Sort standard slots in order
       const slotOrder = { slot1: 1, slot2: 2, slot3: 3 };
       
       if (a.deliveryTimeSlot && b.deliveryTimeSlot) {
-        // If both are standard slots
         if (a.deliveryTimeSlot in slotOrder && b.deliveryTimeSlot in slotOrder) {
           return slotOrder[a.deliveryTimeSlot as keyof typeof slotOrder] - 
                  slotOrder[b.deliveryTimeSlot as keyof typeof slotOrder];
         }
         
-        // If only one is a standard slot
         if (a.deliveryTimeSlot in slotOrder) return -1;
         if (b.deliveryTimeSlot in slotOrder) return 1;
         
-        // Both are custom times, compare them directly
         return a.deliveryTimeSlot.localeCompare(b.deliveryTimeSlot);
       }
       
       return 0;
     });
-  }, [orders, dateFilter, statusFilter, refreshKey]); // Add refreshKey as dependency
+  }, [orders, dateFilter, statusFilter, refreshKey]);
 
   const dateTitles = {
     'today': `Today (${format(new Date(), 'dd MMM')})`,
     'tomorrow': `Tomorrow (${format(addDays(new Date(), 1), 'dd MMM')})`,
     'd-plus-2': `${format(addDays(new Date(), 2), 'dd MMM')}`,
     'all': 'All Delivery Dates'
+  };
+  
+  // Helper function to determine if the status is actionable directly in the delivery page
+  const isStatusActionableInDelivery = (status: string): boolean => {
+    return status === 'ready-to-deliver' || status === 'in-delivery';
   };
 
   return (
@@ -188,7 +210,7 @@ const DeliveryPage = () => {
       
       <div>
         <h2 className="text-xl font-semibold mb-4">
-          {dateTitles[dateFilter]} • {filteredOrders.length} deliveries
+          {dateTitles[dateFilter]} • {filteredOrders.length} {statusFilter === 'all-statuses' ? 'orders' : 'deliveries'}
         </h2>
         
         {filteredOrders.length > 0 ? (
@@ -197,6 +219,7 @@ const DeliveryPage = () => {
               <TableHeader className="bg-muted">
                 <TableRow>
                   <TableHead className="w-[80px]">Order ID</TableHead>
+                  <TableHead className="w-[120px]">Status</TableHead>
                   <TableHead className="w-[120px]">Delivery Method</TableHead>
                   <TableHead className="w-[150px]">
                     <div className="flex items-center">
@@ -220,6 +243,9 @@ const DeliveryPage = () => {
                     >
                       <TableCell className="font-medium">
                         {order.id}
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge status={order.status} />
                       </TableCell>
                       <TableCell>
                         {order.deliveryMethod ? (
@@ -272,12 +298,30 @@ const DeliveryPage = () => {
                             </Link>
                           </Button>
                           
-                          {/* Replace status-specific buttons with the DeliveryStatusManager */}
-                          <DeliveryStatusManager 
-                            order={order} 
-                            onStatusChange={handleStatusChange}
-                            compact={true}
-                          />
+                          {isStatusActionableInDelivery(order.status) ? (
+                            <DeliveryStatusManager 
+                              order={order} 
+                              onStatusChange={handleStatusChange}
+                              compact={true}
+                            />
+                          ) : (
+                            <Button 
+                              variant="outline"
+                              size="sm"
+                              asChild
+                              className={order.status === 'in-kitchen' || order.status === 'waiting-photo' 
+                                ? "bg-yellow-50 text-yellow-800 border-yellow-200 hover:bg-yellow-100"
+                                : ""}
+                            >
+                              <Link to={order.status === 'in-kitchen' || order.status === 'waiting-photo' 
+                                ? "/kitchen" 
+                                : `/orders/${order.id}`}>
+                                {order.status === 'in-kitchen' || order.status === 'waiting-photo' 
+                                  ? "Go to Kitchen" 
+                                  : "Manage Order"}
+                              </Link>
+                            </Button>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
