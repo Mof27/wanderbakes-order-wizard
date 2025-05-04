@@ -4,19 +4,32 @@ import { useNavigate, Link } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
-import { Plus, Grid, List, Info, Archive } from "lucide-react";
+import { Plus, Grid, List, Info, Archive, Edit } from "lucide-react";
 import OrderList from "@/components/orders/OrderList";
 import OrderCard from "@/components/orders/OrderCard";
 import DateRangePicker from "@/components/orders/DateRangePicker";
 import StatusFilterChips from "@/components/orders/StatusFilterChips";
-import { ViewMode, FilterOption } from "@/types";
+import { ViewMode, FilterOption, Order } from "@/types";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "@/components/ui/sonner";
 
 const OrdersPage = () => {
-  const { orders, setDateRange, dateRange } = useApp();
+  const { orders, setDateRange, dateRange, updateOrder } = useApp();
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [filterStatus, setFilterStatus] = useState<string[]>([]);
   const [filteredOrders, setFilteredOrders] = useState(orders);
+  const [isArchiveDialogOpen, setIsArchiveDialogOpen] = useState(false);
+  const [orderToArchive, setOrderToArchive] = useState<Order | null>(null);
   
   // Create status filter options - removed "ready-to-deliver" and "delivery-confirmed"
   const statusOptions: FilterOption[] = [
@@ -64,6 +77,72 @@ const OrdersPage = () => {
   // Handle status filter change
   const handleStatusFilterChange = (option: FilterOption) => {
     setSelectedStatusOption(option);
+  };
+
+  // Handle archiving order
+  const handleArchiveOrder = (order: Order) => {
+    setOrderToArchive(order);
+    setIsArchiveDialogOpen(true);
+  };
+
+  // Confirm archiving order
+  const confirmArchiveOrder = async () => {
+    if (!orderToArchive) return;
+    
+    try {
+      const updatedOrder = {
+        ...orderToArchive,
+        status: 'archived' as const,
+        archivedDate: new Date()
+      };
+      
+      await updateOrder(updatedOrder);
+      toast.success(`Order #${orderToArchive.id.substring(orderToArchive.id.length - 5)} archived`);
+    } catch (error) {
+      toast.error("Failed to archive order");
+      console.error("Error archiving order:", error);
+    } finally {
+      setIsArchiveDialogOpen(false);
+      setOrderToArchive(null);
+    }
+  };
+
+  // Cancel archiving order
+  const cancelArchiveOrder = () => {
+    setIsArchiveDialogOpen(false);
+    setOrderToArchive(null);
+  };
+
+  // Render actions for order list
+  const renderOrderActions = (order: Order) => {
+    return (
+      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate(`/orders/${order.id}`);
+          }}
+        >
+          <Edit className="h-4 w-4" />
+        </Button>
+        
+        {/* Only show archive button for finished orders */}
+        {order.status === 'finished' && (
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleArchiveOrder(order);
+            }}
+          >
+            <Archive className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -131,6 +210,7 @@ const OrdersPage = () => {
         <OrderList 
           orders={filteredOrders} 
           onOrderClick={(orderId) => navigate(`/orders/${orderId}`)}
+          renderActions={renderOrderActions}
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -144,6 +224,22 @@ const OrdersPage = () => {
           )}
         </div>
       )}
+
+      {/* Archive Confirmation Dialog */}
+      <AlertDialog open={isArchiveDialogOpen} onOpenChange={setIsArchiveDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Archive Order</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to archive this order? Archived orders can be viewed in the archived orders section.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={cancelArchiveOrder}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmArchiveOrder}>Archive</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
