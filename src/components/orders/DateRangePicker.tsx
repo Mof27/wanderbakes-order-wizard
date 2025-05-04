@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon, ChevronDown } from "lucide-react";
@@ -51,6 +50,11 @@ const presets = [
       return [startOfMonth, endOfMonth] as [Date, Date];
     },
   },
+  {
+    id: "custom-selection",
+    label: "Custom Selection",
+    isCustom: true, // Flag to identify this as the custom selection option
+  },
 ];
 
 const DateRangePicker: React.FC<DateRangePickerProps> = ({ dateRange, onDateRangeChange }) => {
@@ -65,11 +69,18 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({ dateRange, onDateRang
     setIsOpen(false);
   };
 
-  // Handle preset selection - apply immediately
+  // Handle preset selection - apply immediately for regular presets
+  // or prepare for custom selection
   const handlePresetClick = (preset: typeof presets[number]) => {
-    onDateRangeChange(preset.getValue());
-    setTempDateRange([null, null]); // Reset temp range
-    setIsOpen(false);
+    if (preset.isCustom) {
+      // For custom selection, just clear the temp range and keep the popover open
+      setTempDateRange([null, null]);
+    } else {
+      // For regular presets, apply immediately and close the popover
+      onDateRangeChange(preset.getValue());
+      setTempDateRange([null, null]); // Reset temp range
+      setIsOpen(false);
+    }
   };
   
   // Handle apply button click - only now we update the actual dateRange
@@ -136,7 +147,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({ dateRange, onDateRang
             <Button
               key={preset.id}
               size="sm"
-              variant="outline"
+              variant={preset.isCustom && tempDateRange[0] === null ? "default" : "outline"}
               className="text-xs"
               onClick={() => handlePresetClick(preset)}
             >
