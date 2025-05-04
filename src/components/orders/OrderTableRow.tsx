@@ -1,4 +1,3 @@
-
 import { Order } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,6 +12,7 @@ import { useState } from "react";
 
 interface OrderTableRowProps {
   order: Order;
+  onClick?: () => void; // Add the onClick prop definition
 }
 
 const getStatusColor = (status: string) => {
@@ -42,7 +42,7 @@ const getStatusColor = (status: string) => {
   }
 };
 
-const OrderTableRow = ({ order }: OrderTableRowProps) => {
+const OrderTableRow = ({ order, onClick }: OrderTableRowProps) => {
   const { deleteOrder } = useApp();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
@@ -100,7 +100,7 @@ const OrderTableRow = ({ order }: OrderTableRowProps) => {
   };
 
   return (
-    <tr className="border-t">
+    <tr className="border-t cursor-pointer hover:bg-muted/40" onClick={onClick}>
       <td className="p-2 text-sm">{order.id}</td>
       <td className="p-2">
         <div>
@@ -126,11 +126,14 @@ const OrderTableRow = ({ order }: OrderTableRowProps) => {
         {formatCurrency(order.cakePrice)}
       </td>
       <td className="p-2">
-        <div className="flex space-x-1">
+        <div className="flex space-x-1" onClick={e => e.stopPropagation()}>
           <Button
             variant="outline"
             size="sm"
-            onClick={() => deleteOrder(order.id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              deleteOrder(order.id);
+            }}
             className="text-red-500 hover:text-red-700 h-8 w-8 p-0"
           >
             <Trash2 className="h-4 w-4" />
