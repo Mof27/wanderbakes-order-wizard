@@ -9,6 +9,7 @@ import { formatDate, formatCurrency } from "@/lib/utils";
 import OrderStatusDropdown from "./OrderStatusDropdown";
 import DeliveryStatusManager from "@/components/delivery/DeliveryStatusManager";
 import { matchesStatus } from "@/lib/statusHelpers";
+import { useState } from "react";
 
 interface OrderTableRowProps {
   order: Order;
@@ -43,6 +44,7 @@ const getStatusColor = (status: string) => {
 
 const OrderTableRow = ({ order }: OrderTableRowProps) => {
   const { deleteOrder } = useApp();
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Determine if this order is in a delivery-related status
   const isInDeliveryFlow = matchesStatus(order.status, 'ready-to-deliver') || 
@@ -52,11 +54,20 @@ const OrderTableRow = ({ order }: OrderTableRowProps) => {
   // Determine if this is in waiting-photo status
   const isWaitingPhoto = matchesStatus(order.status, 'waiting-photo');
 
+  // Handle status changes to trigger a refresh
+  const handleStatusChange = () => {
+    setRefreshTrigger(prev => prev + 1);
+  };
+
   // Determine context-specific action buttons
   const getActionButton = () => {
     // For delivery-related statuses, use the DeliveryStatusManager
     if (isInDeliveryFlow) {
-      return <DeliveryStatusManager order={order} compact={true} />;
+      return <DeliveryStatusManager 
+                order={order} 
+                compact={true} 
+                onStatusChange={handleStatusChange} 
+             />;
     }
     
     // For waiting-photo status, show upload button

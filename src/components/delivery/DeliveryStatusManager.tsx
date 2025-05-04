@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Truck, CheckCircle2, MessageSquare, Clock } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 import { matchesStatus } from "@/lib/statusHelpers";
-import { useNavigate } from "react-router-dom";
+import DeliveryInfoDialog from "./DeliveryInfoDialog";
 
 interface DeliveryStatusManagerProps {
   order: Order;
@@ -20,8 +20,8 @@ const DeliveryStatusManager = ({
   compact = false 
 }: DeliveryStatusManagerProps) => {
   const { updateOrder } = useApp();
-  const navigate = useNavigate();
   const [isUpdating, setIsUpdating] = useState(false);
+  const [showInfoDialog, setShowInfoDialog] = useState(false);
   
   // Get current status
   const isReady = matchesStatus(order.status, 'ready-to-deliver');
@@ -59,65 +59,94 @@ const DeliveryStatusManager = ({
     }
   };
   
-  // Handle navigation to recap section for collecting data
-  const navigateToRecap = () => {
-    navigate(`/orders/${order.id}?tab=delivery-recap`);
+  // Handle opening the delivery info dialog
+  const openDeliveryInfoDialog = () => {
+    setShowInfoDialog(true);
   };
   
   // Ready to deliver -> Start delivery button
   if (isReady) {
     return (
-      <Button 
-        size={compact ? "sm" : "default"}
-        className={`bg-orange-600 hover:bg-orange-700 text-white ${isUpdating ? 'opacity-70' : ''}`}
-        disabled={isUpdating}
-        onClick={() => updateStatus('in-delivery')}
-      >
-        <Truck className={`h-4 w-4 ${compact ? '' : 'mr-1'}`} /> 
-        {!compact && "Start Delivery"}
-      </Button>
+      <>
+        <Button 
+          size={compact ? "sm" : "default"}
+          className={`bg-orange-600 hover:bg-orange-700 text-white ${isUpdating ? 'opacity-70' : ''}`}
+          disabled={isUpdating}
+          onClick={() => updateStatus('in-delivery')}
+        >
+          <Truck className={`h-4 w-4 ${compact ? '' : 'mr-1'}`} /> 
+          {!compact && "Start Delivery"}
+        </Button>
+      </>
     );
   }
   
   // In delivery -> Complete delivery button
   if (isInTransit) {
     return (
-      <Button 
-        size={compact ? "sm" : "default"}
-        className={`bg-green-600 hover:bg-green-700 text-white ${isUpdating ? 'opacity-70' : ''}`}
-        disabled={isUpdating}
-        onClick={() => updateStatus('delivery-confirmed')}
-      >
-        <CheckCircle2 className={`h-4 w-4 ${compact ? '' : 'mr-1'}`} />
-        {!compact && "Complete Delivery"}
-      </Button>
+      <>
+        <Button 
+          size={compact ? "sm" : "default"}
+          className={`bg-green-600 hover:bg-green-700 text-white ${isUpdating ? 'opacity-70' : ''}`}
+          disabled={isUpdating}
+          onClick={openDeliveryInfoDialog}
+        >
+          <CheckCircle2 className={`h-4 w-4 ${compact ? '' : 'mr-1'}`} />
+          {!compact && "Complete Delivery"}
+        </Button>
+        
+        <DeliveryInfoDialog 
+          open={showInfoDialog} 
+          onOpenChange={setShowInfoDialog} 
+          order={order}
+          onSaved={onStatusChange}
+        />
+      </>
     );
   }
   
-  // Delivered -> Add data button (navigate to recap)
+  // Delivered -> Add data button
   if (isDelivered) {
     return (
-      <Button 
-        size={compact ? "sm" : "default"}
-        className="bg-indigo-600 hover:bg-indigo-700 text-white"
-        onClick={navigateToRecap}
-      >
-        <MessageSquare className={`h-4 w-4 ${compact ? '' : 'mr-1'}`} />
-        {!compact && "Add Delivery Data"}
-      </Button>
+      <>
+        <Button 
+          size={compact ? "sm" : "default"}
+          className="bg-indigo-600 hover:bg-indigo-700 text-white"
+          onClick={openDeliveryInfoDialog}
+        >
+          <MessageSquare className={`h-4 w-4 ${compact ? '' : 'mr-1'}`} />
+          {!compact && "Add Delivery Data"}
+        </Button>
+        
+        <DeliveryInfoDialog 
+          open={showInfoDialog} 
+          onOpenChange={setShowInfoDialog} 
+          order={order}
+          onSaved={onStatusChange}
+        />
+      </>
     );
   }
   
-  // For any other status, show a button to navigate to recap
+  // For any other status, show a button to open the info dialog
   return (
-    <Button 
-      size={compact ? "sm" : "default"}
-      variant="outline"
-      onClick={navigateToRecap}
-    >
-      <Clock className={`h-4 w-4 ${compact ? '' : 'mr-1'}`} />
-      {!compact && "Delivery Details"}
-    </Button>
+    <>
+      <Button 
+        size={compact ? "sm" : "default"}
+        variant="outline"
+        onClick={openDeliveryInfoDialog}
+      >
+        <Clock className={`h-4 w-4 ${compact ? '' : 'mr-1'}`} />
+        {!compact && "Delivery Details"}
+      </Button>
+      
+      <DeliveryInfoDialog 
+        open={showInfoDialog} 
+        onOpenChange={setShowInfoDialog} 
+        order={order}
+        onSaved={onStatusChange}
+      />
+    </>
   );
 };
 
