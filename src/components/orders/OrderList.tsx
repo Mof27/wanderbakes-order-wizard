@@ -6,9 +6,10 @@ import OrderTableRow from "./OrderTableRow";
 interface OrderListProps {
   orders: Order[];
   onOrderClick?: (orderId: string) => void;
+  renderActions?: (order: Order) => React.ReactNode; // Add this line to support custom action rendering
 }
 
-const OrderList = ({ orders, onOrderClick }: OrderListProps) => {
+const OrderList = ({ orders, onOrderClick, renderActions }: OrderListProps) => {
   if (orders.length === 0) {
     return (
       <div className="text-center py-10">
@@ -36,7 +37,8 @@ const OrderList = ({ orders, onOrderClick }: OrderListProps) => {
             <OrderTableRow 
               key={order.id} 
               order={order} 
-              onClick={() => onOrderClick && onOrderClick(order.id)} 
+              onClick={() => onOrderClick && onOrderClick(order.id)}
+              customActions={renderActions ? renderActions(order) : undefined} // Pass custom actions to the row
             />
           ))}
         </TableBody>
