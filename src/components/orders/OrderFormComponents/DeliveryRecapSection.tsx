@@ -189,6 +189,9 @@ const DeliveryRecapSection: React.FC<DeliveryRecapSectionProps> = ({
               deliveryAddress: '',
               createdAt: new Date(),
               updatedAt: new Date(),
+              // Add missing required properties for Order
+              useSameFlavor: true,
+              useSameCover: true
             }}
             onSaved={handleInfoDialogSaved}
             editMode="all" // New prop to indicate we're editing all fields

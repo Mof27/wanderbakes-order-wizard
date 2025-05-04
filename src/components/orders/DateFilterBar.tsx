@@ -1,198 +1,62 @@
 
-import { useState, useMemo } from "react";
-import { useApp } from "@/context/AppContext";
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { 
-  addDays, 
-  startOfDay, 
-  endOfDay, 
-  startOfWeek, 
-  endOfWeek, 
-  startOfMonth, 
-  endOfMonth,
-  format
-} from "date-fns";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
-import {
-  ToggleGroup,
-  ToggleGroupItem,
-} from "@/components/ui/toggle-group";
+import { CalendarIcon, X } from "lucide-react";
+import { format } from "date-fns";
 
-type DateFilterOption = {
-  id: string;
-  label: string;
-  value: string;
-};
+interface DateFilterBarProps {
+  selectedDate: Date | undefined;
+  onDateChange: (date: Date | undefined) => void;
+}
 
-const dateFilterOptions: DateFilterOption[] = [
-  { id: "all", label: "All Dates", value: "all" },
-  { id: "today", label: "Today", value: "today" },
-  { id: "tomorrow", label: "Tomorrow", value: "tomorrow" },
-  { id: "this-week", label: "This Week", value: "this-week" },
-  { id: "this-month", label: "This Month", value: "this-month" },
-  { id: "custom", label: "Custom", value: "custom" },
-];
-
-const DateFilterBar = () => {
-  const { dateRange, setDateRange } = useApp();
-  const [activeDateFilter, setActiveDateFilter] = useState<string>("all");
-  const [customDateRange, setCustomDateRange] = useState<[Date | null, Date | null]>([null, null]);
-  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-
-  // Format the custom date range for display
-  const customDateRangeLabel = useMemo(() => {
-    if (dateRange[0] && dateRange[1] && activeDateFilter === "custom") {
-      return `${format(dateRange[0], "MMM d")} - ${format(dateRange[1], "MMM d")}`;
-    }
-    return "Custom";
-  }, [dateRange, activeDateFilter]);
-
-  // Handle preset date filter selection
-  const handleDateFilterClick = (filterId: string) => {
-    const now = new Date();
-    let startDate: Date | null = null;
-    let endDate: Date | null = null;
-
-    switch (filterId) {
-      case "today":
-        startDate = startOfDay(now);
-        endDate = endOfDay(now);
-        break;
-
-      case "tomorrow":
-        const tomorrow = addDays(now, 1);
-        startDate = startOfDay(tomorrow);
-        endDate = endOfDay(tomorrow);
-        break;
-
-      case "this-week":
-        startDate = startOfWeek(now, { weekStartsOn: 1 }); // Monday
-        endDate = endOfWeek(now, { weekStartsOn: 1 }); // Sunday
-        break;
-
-      case "this-month":
-        startDate = startOfMonth(now);
-        endDate = endOfMonth(now);
-        break;
-
-      case "custom":
-        // Open the calendar popover
-        setIsCalendarOpen(true);
-        setCustomDateRange(dateRange);
-        return; // Don't set date range yet for custom
-
-      case "all":
-      default:
-        // Clear date filter
-        startDate = null;
-        endDate = null;
-        break;
-    }
-
-    // Update active filter and global date range
-    setActiveDateFilter(filterId);
-    setDateRange([startDate, endDate]);
-    setIsCalendarOpen(false);
-  };
-
-  // Handle custom date range apply button
-  const handleApplyCustomDates = () => {
-    setDateRange(customDateRange);
-    setActiveDateFilter("custom");
-    setIsCalendarOpen(false);
-  };
-
-  // Handle calendar cancel button
-  const handleCancelCustomDates = () => {
-    setIsCalendarOpen(false);
+const DateFilterBar: React.FC<DateFilterBarProps> = ({ 
+  selectedDate, 
+  onDateChange 
+}) => {
+  // Handle clearing the date filter
+  const handleClearDate = () => {
+    onDateChange(undefined);
   };
 
   return (
-    <div className="space-y-2">
-      <h3 className="font-medium text-sm text-muted-foreground">Filter by Date</h3>
-      <ToggleGroup 
-        type="single" 
-        value={activeDateFilter}
-        onValueChange={(value) => value && handleDateFilterClick(value)}
-        className="flex flex-wrap gap-2"
-      >
-        {dateFilterOptions.map((option) => (
-          option.id === "custom" ? (
-            <Popover key={option.id} open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-              <PopoverTrigger asChild>
-                <ToggleGroupItem 
-                  value={option.id}
-                  className={cn(
-                    "data-[state=on]:bg-primary data-[state=on]:text-primary-foreground",
-                    "data-[state=on]:hover:bg-primary data-[state=on]:hover:text-primary-foreground"
-                  )}
-                >
-                  <CalendarIcon className="h-4 w-4 mr-1" />
-                  {activeDateFilter === "custom" ? customDateRangeLabel : option.label}
-                </ToggleGroupItem>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <div className="p-3">
-                  <Calendar
-                    initialFocus
-                    mode="range"
-                    defaultMonth={customDateRange[0] || new Date()}
-                    selected={{
-                      from: customDateRange[0] || undefined,
-                      to: customDateRange[1] || undefined,
-                    }}
-                    onSelect={(range) => {
-                      setCustomDateRange([range?.from || null, range?.to || null]);
-                    }}
-                    numberOfMonths={2}
-                    className="pointer-events-auto"
-                    classNames={{
-                      day_range_middle: "bg-primary text-primary-foreground",
-                      day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
-                      day_range_end: "day-range-end bg-primary text-primary-foreground",
-                      day_range_start: "day-range-start bg-primary text-primary-foreground"
-                    }}
-                  />
-                  <div className="flex justify-end gap-2 pt-2 border-t mt-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={handleCancelCustomDates}
-                    >
-                      Cancel
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      onClick={handleApplyCustomDates}
-                      disabled={!customDateRange[0] || !customDateRange[1]}
-                    >
-                      Apply
-                    </Button>
-                  </div>
-                </div>
-              </PopoverContent>
-            </Popover>
-          ) : (
-            <ToggleGroupItem
-              key={option.id}
-              value={option.id}
-              className={cn(
-                "data-[state=on]:bg-primary data-[state=on]:text-primary-foreground",
-                "data-[state=on]:hover:bg-primary data-[state=on]:hover:text-primary-foreground"
-              )}
-            >
-              {option.label}
-            </ToggleGroupItem>
-          )
-        ))}
-      </ToggleGroup>
+    <div className="flex items-center space-x-2">
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            className={cn(
+              "min-w-[240px] justify-start text-left font-normal",
+              !selectedDate && "text-muted-foreground"
+            )}
+          >
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            {selectedDate ? format(selectedDate, "PPP") : "Filter by date"}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            mode="single"
+            selected={selectedDate}
+            onSelect={onDateChange}
+            initialFocus
+          />
+        </PopoverContent>
+      </Popover>
+      
+      {selectedDate && (
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={handleClearDate}
+          className="rounded-full h-8 w-8 p-0"
+        >
+          <X className="h-4 w-4" />
+          <span className="sr-only">Clear date filter</span>
+        </Button>
+      )}
     </div>
   );
 };

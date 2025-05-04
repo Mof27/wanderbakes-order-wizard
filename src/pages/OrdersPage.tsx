@@ -9,7 +9,7 @@ import OrderList from "@/components/orders/OrderList";
 import OrderCard from "@/components/orders/OrderCard";
 import DateFilterBar from "@/components/orders/DateFilterBar";
 import StatusFilterChips from "@/components/orders/StatusFilterChips";
-import { ViewMode } from "@/types";
+import { ViewMode, FilterOption } from "@/types";
 
 const OrdersPage = () => {
   const { orders } = useApp();
@@ -18,6 +18,24 @@ const OrdersPage = () => {
   const [orderDate, setOrderDate] = useState<Date | undefined>(undefined);
   const [filterStatus, setFilterStatus] = useState<string[]>([]);
   const [filteredOrders, setFilteredOrders] = useState(orders);
+  
+  // Create status filter options
+  const statusOptions: FilterOption[] = [
+    { id: 'all', label: 'All Orders', value: 'all' },
+    { id: 'incomplete', label: 'Incomplete', value: 'incomplete' },
+    { id: 'in-queue', label: 'In Queue', value: 'in-queue' },
+    { id: 'in-kitchen', label: 'In Kitchen', value: 'in-kitchen' },
+    { id: 'waiting-photo', label: 'Waiting Photo', value: 'waiting-photo' },
+    { id: 'ready-to-deliver', label: 'Ready to Deliver', value: 'ready-to-deliver' },
+    { id: 'in-delivery', label: 'In Delivery', value: 'in-delivery' },
+    { id: 'delivery-confirmed', label: 'Delivered', value: 'delivery-confirmed' },
+    { id: 'waiting-feedback', label: 'Waiting Feedback', value: 'waiting-feedback' },
+    { id: 'finished', label: 'Finished', value: 'finished' },
+    { id: 'cancelled', label: 'Cancelled', value: 'cancelled' }
+  ];
+
+  // Selected status option
+  const [selectedStatusOption, setSelectedStatusOption] = useState<FilterOption>(statusOptions[0]);
   
   // Filter orders based on date and status
   useEffect(() => {
@@ -32,13 +50,18 @@ const OrdersPage = () => {
       });
     }
     
-    // Filter by status if selected
-    if (filterStatus.length > 0) {
-      result = result.filter(order => filterStatus.includes(order.status));
+    // Filter by status if not "all"
+    if (selectedStatusOption.value !== 'all') {
+      result = result.filter(order => order.status === selectedStatusOption.value);
     }
     
     setFilteredOrders(result);
-  }, [orders, orderDate, filterStatus]);
+  }, [orders, orderDate, selectedStatusOption]);
+
+  // Handle status filter change
+  const handleStatusFilterChange = (option: FilterOption) => {
+    setSelectedStatusOption(option);
+  };
 
   return (
     <div className="space-y-6">
@@ -66,7 +89,7 @@ const OrdersPage = () => {
       <div className="flex justify-between items-center">
         <DateFilterBar 
           selectedDate={orderDate} 
-          onDateSelected={setOrderDate}
+          onDateChange={setOrderDate}
         />
         
         <div className="flex gap-2">
@@ -87,10 +110,17 @@ const OrdersPage = () => {
         </div>
       </div>
       
-      <StatusFilterChips selectedStatuses={filterStatus} onChange={setFilterStatus} />
+      <StatusFilterChips 
+        options={statusOptions} 
+        selectedOption={selectedStatusOption} 
+        onChange={handleStatusFilterChange}
+      />
       
       {viewMode === 'list' ? (
-        <OrderList orders={filteredOrders} />
+        <OrderList 
+          orders={filteredOrders} 
+          onOrderClick={(orderId) => navigate(`/orders/${orderId}`)}
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredOrders.map(order => (
