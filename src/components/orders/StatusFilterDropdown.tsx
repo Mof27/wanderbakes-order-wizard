@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Check, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -28,6 +27,8 @@ const getStatusColor = (status: string) => {
     case "ready-to-deliver": return "bg-green-100 text-green-800";
     case "in-delivery": return "bg-orange-100 text-orange-800";
     case "delivery-confirmed": return "bg-teal-100 text-teal-800";
+    case "waiting-feedback": return "bg-indigo-100 text-indigo-800";
+    case "finished": return "bg-lime-100 text-lime-800";
     case "cancelled": return "bg-red-100 text-red-800";
     case "all": return "bg-gray-100 text-gray-800";
     default: return "bg-gray-100 text-gray-800";

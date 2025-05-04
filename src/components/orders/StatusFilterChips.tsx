@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Check } from "lucide-react";
 import { FilterOption } from "@/types";
@@ -23,6 +22,8 @@ const getStatusColor = (status: string) => {
     case "ready-to-deliver": return "bg-green-100 text-green-800 border-green-200";
     case "in-delivery": return "bg-orange-100 text-orange-800 border-orange-200";
     case "delivery-confirmed": return "bg-teal-100 text-teal-800 border-teal-200";
+    case "waiting-feedback": return "bg-indigo-100 text-indigo-800 border-indigo-200";
+    case "finished": return "bg-lime-100 text-lime-800 border-lime-200";
     case "cancelled": return "bg-red-100 text-red-800 border-red-200";
     case "all": return "bg-white border-gray-200 text-gray-800";
     default: return "bg-gray-100 text-gray-800 border-gray-200";

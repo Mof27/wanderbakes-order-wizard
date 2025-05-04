@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
@@ -19,16 +18,14 @@ const OrdersPage = () => {
   const [filterStatus, setFilterStatus] = useState<string[]>([]);
   const [filteredOrders, setFilteredOrders] = useState(orders);
   
-  // Create status filter options
+  // Create status filter options - removed "ready-to-deliver" and "delivery-confirmed"
   const statusOptions: FilterOption[] = [
     { id: 'all', label: 'All Orders', value: 'all' },
     { id: 'incomplete', label: 'Incomplete', value: 'incomplete' },
     { id: 'in-queue', label: 'In Queue', value: 'in-queue' },
     { id: 'in-kitchen', label: 'In Kitchen', value: 'in-kitchen' },
     { id: 'waiting-photo', label: 'Waiting Photo', value: 'waiting-photo' },
-    { id: 'ready-to-deliver', label: 'Ready to Deliver', value: 'ready-to-deliver' },
     { id: 'in-delivery', label: 'In Delivery', value: 'in-delivery' },
-    { id: 'delivery-confirmed', label: 'Delivered', value: 'delivery-confirmed' },
     { id: 'waiting-feedback', label: 'Waiting Feedback', value: 'waiting-feedback' },
     { id: 'finished', label: 'Finished', value: 'finished' },
     { id: 'cancelled', label: 'Cancelled', value: 'cancelled' }
