@@ -41,7 +41,7 @@ const WorkflowPage = () => {
     },
     {
       stage: "Delivery Management",
-      statuses: ["ready-to-deliver", "in-delivery", "delivery-confirmed"],
+      statuses: ["ready-to-deliver", "in-delivery"],
       page: "Delivery / Edit Order",
       components: ["DeliveryStatusManager", "DeliveryInfoDialog"],
       nextAction: "Start/Complete Delivery"
@@ -115,7 +115,6 @@ const WorkflowPage = () => {
                               ${status === "waiting-photo" ? "bg-purple-100 text-purple-800" : ""}
                               ${status === "ready-to-deliver" ? "bg-green-100 text-green-800" : ""}
                               ${status === "in-delivery" ? "bg-orange-100 text-orange-800" : ""}
-                              ${status === "delivery-confirmed" ? "bg-teal-100 text-teal-800" : ""}
                               ${status === "waiting-feedback" ? "bg-indigo-100 text-indigo-800" : ""}
                               ${status === "finished" ? "bg-lime-100 text-lime-800" : ""}
                               ${status === "cancelled" ? "bg-red-100 text-red-800" : ""}

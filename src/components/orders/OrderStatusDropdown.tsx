@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Check, ChevronDown } from "lucide-react";
 import { useApp } from "@/context/AppContext";
@@ -32,8 +31,6 @@ const getStatusColor = (status: string) => {
       return "bg-green-100 text-green-800";
     case "in-delivery":
       return "bg-orange-100 text-orange-800";
-    case "delivery-confirmed":
-      return "bg-teal-100 text-teal-800";
     case "waiting-feedback":
       return "bg-indigo-100 text-indigo-800";
     case "finished":
@@ -55,7 +52,6 @@ const statusOptions: OrderStatus[] = [
   "waiting-photo",
   "ready-to-deliver",
   "in-delivery",
-  "delivery-confirmed",
   "waiting-feedback",
   "finished",
   "archived",
@@ -94,8 +90,7 @@ const OrderStatusDropdown = ({ order }: OrderStatusDropdownProps) => {
       'in-kitchen': ['waiting-photo', 'cancelled'],
       'waiting-photo': ['ready-to-deliver', 'cancelled'],
       'ready-to-deliver': ['cancelled'], // Can only cancel from Orders page once ready to deliver
-      'in-delivery': ['delivery-confirmed', 'cancelled'],
-      'delivery-confirmed': ['waiting-feedback', 'cancelled'],
+      'in-delivery': ['waiting-feedback', 'cancelled'],
       'waiting-feedback': ['finished', 'cancelled'],
       'finished': ['archived', 'cancelled'],
       'archived': ['finished'], // Can restore from archived to finished

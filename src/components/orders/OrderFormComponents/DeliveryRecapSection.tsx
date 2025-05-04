@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -98,11 +97,6 @@ const DeliveryRecapSection: React.FC<DeliveryRecapSectionProps> = ({
         type: 'info',
         message: 'This order is currently being delivered. Go to the Delivery page to mark it as delivered.'
       };
-    } else if (matchesStatus(status, 'delivery-confirmed')) {
-      return {
-        type: 'info',
-        message: 'Delivery has been confirmed. Please collect customer feedback to complete the order.'
-      };
     } else if (matchesStatus(status, 'waiting-feedback')) {
       return {
         type: 'warning',
@@ -124,20 +118,17 @@ const DeliveryRecapSection: React.FC<DeliveryRecapSectionProps> = ({
   const showPhotosSection = status === 'waiting-photo' || 
                           status === 'ready-to-deliver' || 
                           status === 'in-delivery' || 
-                          status === 'delivery-confirmed' || 
                           status === 'waiting-feedback' || 
                           status === 'finished' ||
                           finishedCakePhotos.length > 0 ||
                           deliveryDocumentationPhotos.length > 0;
                            
   const showDeliverySection = status === 'in-delivery' || 
-                             status === 'delivery-confirmed' || 
                              status === 'waiting-feedback' ||
                              status === 'finished' ||
                              actualDeliveryTime !== undefined;
                              
-  const showFeedbackSection = status === 'delivery-confirmed' || 
-                             status === 'waiting-feedback' || 
+  const showFeedbackSection = status === 'waiting-feedback' || 
                              status === 'finished' ||
                              customerFeedback !== '';
 
