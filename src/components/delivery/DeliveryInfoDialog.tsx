@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useApp } from "@/context/AppContext";
 import { 
@@ -153,9 +152,10 @@ const DeliveryInfoDialog = ({
       }
       
       // Determine if we need to update the status
-      // If coming from 'in-delivery', move to 'delivery-confirmed'
+      // If coming from 'in-delivery', move straight to 'waiting-feedback'
+      // instead of the previous 'delivery-confirmed' status
       if (order.status === 'in-delivery') {
-        updatedOrder.status = 'delivery-confirmed';
+        updatedOrder.status = 'waiting-feedback';
       }
       
       // Update the order

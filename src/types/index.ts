@@ -1,3 +1,4 @@
+
 export type Address = {
   id: string;
   text: string;
@@ -131,10 +132,10 @@ export type OrderStatus =
   'waiting-photo' | 
   'ready-to-deliver' | 
   'in-delivery' | 
-  'delivery-confirmed' | 
+  // 'delivery-confirmed' is now removed as it's redundant
   'waiting-feedback' |
   'finished' |
-  'archived' |    // Add the new archived status
+  'archived' |
   'cancelled';
 
 // Kitchen-specific status types

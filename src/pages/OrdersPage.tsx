@@ -1,10 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
-import { Plus, Grid, List, Info, Archive, Edit, Upload, Eye, MessageSquare } from "lucide-react";
+import { Plus, Grid, List, Info, Archive, Upload, Eye, MessageSquare } from "lucide-react";
 import OrderList from "@/components/orders/OrderList";
 import OrderCard from "@/components/orders/OrderCard";
 import DateRangePicker from "@/components/orders/DateRangePicker";
@@ -37,7 +36,7 @@ const OrdersPage = () => {
   const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
   const [selectedOrderForFeedback, setSelectedOrderForFeedback] = useState<Order | null>(null);
   
-  // Create status filter options - removed "ready-to-deliver" and "delivery-confirmed"
+  // Create status filter options - removed "delivery-confirmed" as it's now redundant
   const statusOptions: FilterOption[] = [
     { id: 'all', label: 'All Orders', value: 'all' },
     { id: 'incomplete', label: 'Incomplete', value: 'incomplete' },

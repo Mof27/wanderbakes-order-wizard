@@ -24,8 +24,7 @@ export const getStatusColor = (status: string) => {
       return "bg-green-100 text-green-800";
     case "in-delivery":
       return "bg-orange-100 text-orange-800";
-    case "delivery-confirmed":
-      return "bg-teal-100 text-teal-800";
+    // Removed "delivery-confirmed" case as it's no longer used
     case "waiting-feedback":
       return "bg-indigo-100 text-indigo-800";
     case "finished":

@@ -26,7 +26,7 @@ const DeliveryStatusManager = ({
   // Get current status
   const isReady = matchesStatus(order.status, 'ready-to-deliver');
   const isInTransit = matchesStatus(order.status, 'in-delivery');
-  const isDelivered = matchesStatus(order.status, 'delivery-confirmed');
+  const isWaitingFeedback = matchesStatus(order.status, 'waiting-feedback');
   
   // Function to update the status
   const updateStatus = async (newStatus: OrderStatus) => {
@@ -40,8 +40,8 @@ const DeliveryStatusManager = ({
         status: newStatus 
       };
       
-      // If transitioning to delivery confirmed, automatically set delivery time if not set
-      if (newStatus === 'delivery-confirmed' && !order.actualDeliveryTime) {
+      // If transitioning to waiting-feedback, automatically set delivery time if not set
+      if (newStatus === 'waiting-feedback' && !order.actualDeliveryTime) {
         updatedOrder.actualDeliveryTime = new Date();
       }
       
@@ -105,8 +105,8 @@ const DeliveryStatusManager = ({
     );
   }
   
-  // Delivered -> Add data button
-  if (isDelivered) {
+  // Waiting feedback -> Add feedback button
+  if (isWaitingFeedback) {
     return (
       <>
         <Button 
@@ -115,7 +115,7 @@ const DeliveryStatusManager = ({
           onClick={openDeliveryInfoDialog}
         >
           <MessageSquare className={`h-4 w-4 ${compact ? '' : 'mr-1'}`} />
-          {!compact && "Add Delivery Data"}
+          {!compact && "Add Feedback"}
         </Button>
         
         <DeliveryInfoDialog 
