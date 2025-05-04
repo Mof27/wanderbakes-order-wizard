@@ -38,6 +38,8 @@ const getStatusColor = (status: string) => {
       return "bg-indigo-100 text-indigo-800";
     case "finished":
       return "bg-lime-100 text-lime-800";
+    case "archived":
+      return "bg-slate-100 text-slate-800";
     case "cancelled":
       return "bg-red-100 text-red-800";
     default:
@@ -56,6 +58,7 @@ const statusOptions: OrderStatus[] = [
   "delivery-confirmed",
   "waiting-feedback",
   "finished",
+  "archived",
   "cancelled"
 ];
 
@@ -65,13 +68,18 @@ const OrderStatusDropdown = ({ order }: OrderStatusDropdownProps) => {
   
   // Determine if status change is locked based on current status
   // Updated to include 'ready-to-deliver' in locked statuses
-  const isStatusLocked = ['in-kitchen', 'waiting-photo', 'in-delivery', 'ready-to-deliver'].includes(order.status);
+  const isStatusLocked = ['in-kitchen', 'waiting-photo', 'in-delivery', 'ready-to-deliver', 'archived'].includes(order.status);
   
   // Function to determine if a status is allowed to change to based on current status
   const canChangeTo = (targetStatus: OrderStatus): boolean => {
     // If trying to change to 'incomplete', only allow it if already 'incomplete'
     if (targetStatus === 'incomplete') {
       return order.status === 'incomplete';
+    }
+    
+    // If the order is archived, only allow restoration to 'finished'
+    if (order.status === 'archived') {
+      return targetStatus === 'finished';
     }
     
     // If not in a locked status, we can change to any other status
@@ -89,7 +97,8 @@ const OrderStatusDropdown = ({ order }: OrderStatusDropdownProps) => {
       'in-delivery': ['delivery-confirmed', 'cancelled'],
       'delivery-confirmed': ['waiting-feedback', 'cancelled'],
       'waiting-feedback': ['finished', 'cancelled'],
-      'finished': ['cancelled'],
+      'finished': ['archived', 'cancelled'],
+      'archived': ['finished'], // Can restore from archived to finished
       'cancelled': []
     };
     
@@ -102,10 +111,19 @@ const OrderStatusDropdown = ({ order }: OrderStatusDropdownProps) => {
     
     setIsUpdating(true);
     try {
-      await updateOrder({
-        ...order,
-        status
-      });
+      // Special handling for archiving - add archivedDate
+      if (status === 'archived') {
+        await updateOrder({
+          ...order,
+          status,
+          archivedDate: new Date()
+        });
+      } else {
+        await updateOrder({
+          ...order,
+          status
+        });
+      }
       toast.success(`Status updated to ${status.replace('-', ' ')}`);
     } catch (error) {
       toast.error("Failed to update status");
@@ -128,6 +146,8 @@ const OrderStatusDropdown = ({ order }: OrderStatusDropdownProps) => {
       return 'Manage from Delivery page';
     } else if (status === 'in-kitchen' || status === 'waiting-photo') {
       return 'Manage from Kitchen page';
+    } else if (status === 'archived') {
+      return 'Manage from Archived page';
     }
     return null;
   };

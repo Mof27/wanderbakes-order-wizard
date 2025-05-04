@@ -79,7 +79,7 @@ export type Order = {
   id: string;
   customer: Customer;
   status: OrderStatus;
-  kitchenStatus?: KitchenOrderStatus; // Add kitchenStatus field to track kitchen-specific status
+  kitchenStatus?: KitchenOrderStatus;
   orderDate?: Date;
   deliveryDate: Date;
   deliveryAddress: string;
@@ -89,12 +89,12 @@ export type Order = {
   cakeFlavor: string;
   cakeSize: string;
   cakeShape: string;
-  customShape?: string; // Add customShape field for the order
+  customShape?: string;
   cakeTier: number;
   tierDetails?: TierDetail[];
   useSameFlavor: boolean;
   useSameCover?: boolean;
-  coverColor: CakeColor; // Support both legacy string and new color structure
+  coverColor: CakeColor;
   coverType?: CoverType;
   cakeText?: string;
   greetingCard?: string;
@@ -108,12 +108,13 @@ export type Order = {
   deliveryMethod?: DeliveryMethod;
   deliveryTimeSlot?: string;
   deliveryPrice?: number;
-  printHistory?: PrintEvent[]; // New field to track print history
-  finishedCakePhotos?: string[]; // URLs or base64 encoded images
-  deliveryDocumentationPhotos?: string[]; // New field for delivery documentation photos
-  actualDeliveryTime?: Date; // When the cake was actually delivered
-  customerFeedback?: string; // Any feedback or complaints
-  orderTags?: OrderTag[]; // Metadata tags for the order
+  printHistory?: PrintEvent[];
+  finishedCakePhotos?: string[];
+  deliveryDocumentationPhotos?: string[];
+  actualDeliveryTime?: Date;
+  customerFeedback?: string;
+  orderTags?: OrderTag[];
+  archivedDate?: Date; // Add field to track when the order was archived
 };
 
 export type Ingredient = {
@@ -131,8 +132,9 @@ export type OrderStatus =
   'ready-to-deliver' | 
   'in-delivery' | 
   'delivery-confirmed' | 
-  'waiting-feedback' |  // New status
-  'finished' |          // New status
+  'waiting-feedback' |
+  'finished' |
+  'archived' |    // Add the new archived status
   'cancelled';
 
 // Kitchen-specific status types

@@ -26,6 +26,10 @@ export const matchesStatus = (orderStatus: OrderStatus, targetStatus: string): b
   if (targetStatus === "waiting-feedback") {
     return orderStatus === "waiting-feedback";
   }
+
+  if (targetStatus === "archived") {
+    return orderStatus === "archived";
+  }
   
   // Direct comparison for other statuses
   return orderStatus === targetStatus as OrderStatus;

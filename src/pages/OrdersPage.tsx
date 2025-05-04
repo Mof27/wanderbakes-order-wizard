@@ -4,7 +4,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
-import { Plus, Grid, List, Info } from "lucide-react";
+import { Plus, Grid, List, Info, Archive } from "lucide-react";
 import OrderList from "@/components/orders/OrderList";
 import OrderCard from "@/components/orders/OrderCard";
 import DateRangePicker from "@/components/orders/DateRangePicker";
@@ -36,7 +36,7 @@ const OrdersPage = () => {
   
   // Filter orders based on date range and status
   useEffect(() => {
-    let result = [...orders];
+    let result = [...orders].filter(order => order.status !== 'archived'); // Filter out archived orders
     
     // Filter by date range if selected
     if (dateRange[0] && dateRange[1]) {
@@ -74,6 +74,12 @@ const OrdersPage = () => {
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Orders</h1>
         <div className="flex gap-2">
+          <Link to="/orders/archived">
+            <Button variant="outline" size="sm" className="h-9">
+              <Archive className="h-4 w-4 mr-2" />
+              Archived Orders
+            </Button>
+          </Link>
           <Link to="/workflow">
             <Button variant="outline" size="sm" className="h-9">
               <Info className="h-4 w-4 mr-2" />

@@ -30,6 +30,8 @@ export const getStatusColor = (status: string) => {
       return "bg-indigo-100 text-indigo-800";
     case "finished":
       return "bg-lime-100 text-lime-800";
+    case "archived":
+      return "bg-slate-100 text-slate-800";
     case "cancelled":
       return "bg-red-100 text-red-800";
     default:

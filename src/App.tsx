@@ -17,6 +17,7 @@ import ScanQrPage from "./pages/ScanQrPage";
 import KitchenLeaderPage from "./pages/KitchenLeaderPage";
 import DeliveryPage from "./pages/DeliveryPage";
 import WorkflowPage from "./pages/WorkflowPage";
+import ArchivedOrdersPage from "./pages/ArchivedOrdersPage";
 import NotFound from "./pages/NotFound";
 import { AppProvider } from "./context/AppContext";
 import { useEffect } from "react";
@@ -86,6 +87,11 @@ const App = () => {
                 <Route path="/orders/scan" element={
                   <MainLayout>
                     <ScanQrPage />
+                  </MainLayout>
+                } />
+                <Route path="/orders/archived" element={
+                  <MainLayout>
+                    <ArchivedOrdersPage />
                   </MainLayout>
                 } />
                 <Route path="/kitchen" element={

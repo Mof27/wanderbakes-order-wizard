@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -6,9 +5,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { OrderStatus, OrderTag } from "@/types";
-import { Edit, Info, Camera, Image } from "lucide-react";
+import { Edit, Info, Camera, Image, Archive } from "lucide-react";
 import { matchesStatus } from "@/lib/statusHelpers";
 import DeliveryInfoDialog from "@/components/delivery/DeliveryInfoDialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 interface DeliveryRecapSectionProps {
   orderId?: string;
@@ -64,6 +64,20 @@ const DeliveryRecapSection: React.FC<DeliveryRecapSectionProps> = ({
     onTagsChange(newTags);
   };
 
+  // Handle archive order
+  const handleArchiveOrder = () => {
+    if (onStatusChange) {
+      onStatusChange('archived');
+    }
+  };
+
+  // Automatically transition to finished status when feedback is provided
+  useEffect(() => {
+    if (status === 'waiting-feedback' && customerFeedback.trim() && actualDeliveryTime && onStatusChange) {
+      onStatusChange('finished');
+    }
+  }, [status, customerFeedback, actualDeliveryTime, onStatusChange]);
+
   // Get the appropriate help message based on status
   const getStatusGuidance = () => {
     if (!status) return null;
@@ -86,17 +100,17 @@ const DeliveryRecapSection: React.FC<DeliveryRecapSectionProps> = ({
     } else if (matchesStatus(status, 'delivery-confirmed')) {
       return {
         type: 'info',
-        message: 'Delivery has been confirmed. Please collect customer feedback and delivery photos to complete the order.'
+        message: 'Delivery has been confirmed. Please collect customer feedback to complete the order.'
       };
     } else if (matchesStatus(status, 'waiting-feedback')) {
       return {
         type: 'warning',
-        message: 'This order is waiting for customer feedback. Once feedback is collected, you can mark the order as finished.'
+        message: 'This order is waiting for customer feedback. Once feedback is collected, the order will automatically be marked as finished.'
       };
     } else if (matchesStatus(status, 'finished')) {
       return {
         type: 'success',
-        message: 'This order has been finished and archived. No further changes can be made unless reopened.'
+        message: 'This order has been finished. You can now archive it if no further changes are needed.'
       };
     }
     
@@ -126,13 +140,12 @@ const DeliveryRecapSection: React.FC<DeliveryRecapSectionProps> = ({
                              status === 'finished' ||
                              customerFeedback !== '';
 
+  // Show Archive button only for finished orders
+  const showArchiveButton = status === 'finished';
+
   // Handle update when dialog is saved
   const handleInfoDialogSaved = () => {
     // Dialog will close automatically when saved
-    // If we're in waiting-feedback status and have feedback, enable the finish button
-    if (status === 'waiting-feedback' && customerFeedback && actualDeliveryTime) {
-      // No automatic status change, let user decide
-    }
   };
 
   return (
@@ -156,7 +169,34 @@ const DeliveryRecapSection: React.FC<DeliveryRecapSectionProps> = ({
       
       {/* "Edit Delivery Information" button */}
       {(showPhotosSection || showDeliverySection || showFeedbackSection) && (
-        <div className="flex justify-end">
+        <div className="flex justify-end gap-2">
+          {showArchiveButton && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  className="mb-4"
+                  variant="outline"
+                >
+                  <Archive className="h-4 w-4 mr-2" />
+                  Archive Order
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Archive this order?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will move the order to the archives. You can restore it later if needed.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleArchiveOrder}>
+                    Archive Order
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
           <Button
             onClick={() => setShowInfoDialog(true)}
             className="mb-4"
