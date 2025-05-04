@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon, ChevronDown } from "lucide-react";
@@ -54,17 +55,37 @@ const presets = [
 
 const DateRangePicker: React.FC<DateRangePickerProps> = ({ dateRange, onDateRangeChange }) => {
   const [isOpen, setIsOpen] = useState(false);
+  // Temporary date range state for custom selection before applying
+  const [tempDateRange, setTempDateRange] = useState<[Date | null, Date | null]>([null, null]);
 
   // Clear date range selection
   const handleClear = () => {
     onDateRangeChange([null, null]);
+    setTempDateRange([null, null]);
     setIsOpen(false);
   };
 
-  // Handle preset selection
+  // Handle preset selection - apply immediately
   const handlePresetClick = (preset: typeof presets[number]) => {
     onDateRangeChange(preset.getValue());
+    setTempDateRange([null, null]); // Reset temp range
     setIsOpen(false);
+  };
+  
+  // Handle apply button click - only now we update the actual dateRange
+  const handleApplyClick = () => {
+    if (tempDateRange[0] && tempDateRange[1]) {
+      onDateRangeChange(tempDateRange);
+      setIsOpen(false);
+    }
+  };
+
+  // When opening the popover, initialize the temp date range with current selection
+  const handleOpenChange = (open: boolean) => {
+    if (open) {
+      setTempDateRange([dateRange[0], dateRange[1]]);
+    }
+    setIsOpen(open);
   };
 
   // Format the display string for selected date range
@@ -81,7 +102,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({ dateRange, onDateRang
   };
 
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
+    <Popover open={isOpen} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -134,14 +155,25 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({ dateRange, onDateRang
         <Calendar
           initialFocus
           mode="range"
-          defaultMonth={dateRange[0] || undefined}
-          selected={{ from: dateRange[0] || undefined, to: dateRange[1] || undefined }}
+          defaultMonth={tempDateRange[0] || dateRange[0] || undefined}
+          selected={{ 
+            from: tempDateRange[0] || undefined, 
+            to: tempDateRange[1] || undefined 
+          }}
           onSelect={(range) => {
-            onDateRangeChange([range?.from || null, range?.to || null]);
+            setTempDateRange([range?.from || null, range?.to || null]);
           }}
           numberOfMonths={2}
           className={cn("p-3 pointer-events-auto")}
         />
+        <div className="flex items-center justify-end p-4 border-t">
+          <Button 
+            onClick={handleApplyClick}
+            disabled={!tempDateRange[0] || !tempDateRange[1]}
+          >
+            Apply
+          </Button>
+        </div>
       </PopoverContent>
     </Popover>
   );
