@@ -1,15 +1,15 @@
-
 import { Order } from "@/types";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Edit, Upload, Trash2 } from "lucide-react";
+import { Edit, Upload, Eye, Trash2 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { formatDate, formatCurrency } from "@/lib/utils";
 import OrderStatusDropdown from "./OrderStatusDropdown";
 import { matchesStatus } from "@/lib/statusHelpers";
 import DeliveryStatusManager from "@/components/delivery/DeliveryStatusManager";
 import { useState } from "react";
+import CakePhotoUploadDialog from "./CakePhotoUploadDialog";
 
 interface OrderCardProps {
   order: Order;
@@ -41,15 +41,24 @@ const getStatusColor = (status: string) => {
 const OrderCard = ({ order }: OrderCardProps) => {
   const { deleteOrder } = useApp();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [photoDialogOpen, setPhotoDialogOpen] = useState(false);
   
   // Determine if this order is in a delivery-related status
   const isInDeliveryFlow = matchesStatus(order.status, 'ready-to-deliver') || 
                          matchesStatus(order.status, 'in-delivery') ||
                          matchesStatus(order.status, 'delivery-confirmed');
 
+  // Determine if this is in waiting-photo status
+  const isWaitingPhoto = matchesStatus(order.status, 'waiting-photo');
+
   // Handle status changes to trigger a refresh
   const handleStatusChange = () => {
     setRefreshTrigger(prev => prev + 1);
+  };
+
+  // Open the photo upload dialog
+  const handleOpenPhotoDialog = () => {
+    setPhotoDialogOpen(true);
   };
 
   // Determine context-specific action button based on status
@@ -62,18 +71,17 @@ const OrderCard = ({ order }: OrderCardProps) => {
              />;
     }
     
-    // For waiting for photo status, show upload photos button
-    if (order.status === "waiting-photo") {
+    // For waiting for photo status, show photo upload button
+    if (isWaitingPhoto) {
       return (
-        <Link to={`/orders/${order.id}?tab=delivery-recap`}>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="bg-purple-100 text-purple-800 hover:bg-purple-200"
-          >
-            <Upload className="h-4 w-4 mr-1" /> Upload Photos
-          </Button>
-        </Link>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={handleOpenPhotoDialog}
+          className="bg-purple-100 text-purple-800 hover:bg-purple-200"
+        >
+          <Upload className="h-4 w-4 mr-1" /> Upload Photos
+        </Button>
       );
     }
 
@@ -88,63 +96,76 @@ const OrderCard = ({ order }: OrderCardProps) => {
   };
 
   return (
-    <Card className="overflow-hidden">
-      <CardHeader className="bg-muted py-2">
-        <div className="flex justify-between items-center">
-          <p className="font-medium">{order.id}</p>
-          <OrderStatusDropdown order={order} />
-        </div>
-      </CardHeader>
-      <CardContent className="py-4 space-y-3">
-        <div>
-          <p className="text-sm font-medium">{order.customer.name}</p>
-          <p className="text-xs text-muted-foreground">{order.customer.whatsappNumber}</p>
-        </div>
-        
-        <div className="text-sm">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Delivery:</span>
-            <span className="font-medium">
-              {formatDate(order.deliveryDate)}
-            </span>
+    <>
+      <Card className="overflow-hidden">
+        <CardHeader className="bg-muted py-2">
+          <div className="flex justify-between items-center">
+            <p className="font-medium">{order.id}</p>
+            <OrderStatusDropdown order={order} />
           </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Flavor:</span>
-            <span>{order.cakeFlavor}</span>
+        </CardHeader>
+        <CardContent className="py-4 space-y-3">
+          <div>
+            <p className="text-sm font-medium">{order.customer.name}</p>
+            <p className="text-xs text-muted-foreground">{order.customer.whatsappNumber}</p>
           </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Size:</span>
-            <span>{order.cakeSize}</span>
+          
+          <div className="text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Delivery:</span>
+              <span className="font-medium">
+                {formatDate(order.deliveryDate)}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Flavor:</span>
+              <span>{order.cakeFlavor}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Size:</span>
+              <span>{order.cakeSize}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Design:</span>
+              <span>{order.cakeDesign}</span>
+            </div>
           </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Design:</span>
-            <span>{order.cakeDesign}</span>
-          </div>
-        </div>
 
-        {order.cakeText && (
-          <div className="text-sm bg-muted p-2 rounded">
-            <p className="italic">"{order.cakeText}"</p>
-          </div>
-        )}
+          {order.cakeText && (
+            <div className="text-sm bg-muted p-2 rounded">
+              <p className="italic">"{order.cakeText}"</p>
+            </div>
+          )}
 
-        <div className="text-right text-lg font-semibold">
-          {formatCurrency(order.cakePrice)}
-        </div>
-      </CardContent>
-      <CardFooter className="bg-muted py-2 flex justify-between">
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={() => deleteOrder(order.id)} 
-          className="text-red-500 hover:text-red-700"
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
-        
-        {getActionButton()}
-      </CardFooter>
-    </Card>
+          <div className="text-right text-lg font-semibold">
+            {formatCurrency(order.cakePrice)}
+          </div>
+        </CardContent>
+        <CardFooter className="bg-muted py-2 flex justify-between">
+          <Link to={`/orders/${order.id}`}>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="h-8"
+            >
+              <Eye className="h-4 w-4 mr-1" /> View
+            </Button>
+          </Link>
+          
+          {getActionButton()}
+        </CardFooter>
+      </Card>
+      
+      {/* Photo Upload Dialog */}
+      {isWaitingPhoto && (
+        <CakePhotoUploadDialog 
+          order={order}
+          open={photoDialogOpen}
+          onClose={() => setPhotoDialogOpen(false)}
+          onSuccess={handleStatusChange}
+        />
+      )}
+    </>
   );
 };
 

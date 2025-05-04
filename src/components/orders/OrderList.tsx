@@ -24,9 +24,10 @@ const OrderList = ({ orders, onOrderClick }: OrderListProps) => {
           <TableRow>
             <TableHead className="w-[100px]">Order ID</TableHead>
             <TableHead>Customer</TableHead>
-            <TableHead>Cake</TableHead>
-            <TableHead>Delivery Date</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead>Delivery Date</TableHead>
+            <TableHead>Cake</TableHead>
+            <TableHead>Price</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
