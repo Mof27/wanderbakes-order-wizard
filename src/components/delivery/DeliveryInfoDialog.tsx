@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useApp } from "@/context/AppContext";
 import { 
@@ -11,7 +12,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/components/ui/sonner";
@@ -19,7 +19,6 @@ import {
   ImagePlus,
   Clock,
   User,
-  MessageSquare,
   Loader2,
   Save,
   Camera,
@@ -64,9 +63,6 @@ const DeliveryInfoDialog = ({
   const [recipientType, setRecipientType] = useState<RecipientType>("customer");
   const [recipientName, setRecipientName] = useState<string>("");
   
-  // Feedback
-  const [feedback, setFeedback] = useState<string>(order.customerFeedback || "");
-  
   // Reset form state when order changes
   useEffect(() => {
     setPhotos(order.deliveryDocumentationPhotos || []);
@@ -74,7 +70,6 @@ const DeliveryInfoDialog = ({
     setActualDeliveryTime(order.actualDeliveryTime || new Date());
     setRecipientType("customer");
     setRecipientName("");
-    setFeedback(order.customerFeedback || "");
     
     // Set the most appropriate tab based on edit mode
     if (editMode === 'all') {
@@ -138,12 +133,11 @@ const DeliveryInfoDialog = ({
     setIsLoading(true);
     
     try {
-      // Create updated order object
+      // Create updated order object - no longer include customerFeedback
       const updatedOrder: Order = {
         ...order,
         actualDeliveryTime: actualDeliveryTime || new Date(),
         deliveryDocumentationPhotos: photos,
-        customerFeedback: feedback,
       };
       
       // Only update cake photos when in 'all' edit mode
@@ -153,7 +147,6 @@ const DeliveryInfoDialog = ({
       
       // Determine if we need to update the status
       // If coming from 'in-delivery', move straight to 'waiting-feedback'
-      // instead of the previous 'delivery-confirmed' status
       if (order.status === 'in-delivery') {
         updatedOrder.status = 'waiting-feedback';
       }
@@ -363,19 +356,7 @@ const DeliveryInfoDialog = ({
             )}
           </div>
 
-          {/* Customer Feedback Section */}
-          <div className="grid gap-2">
-            <Label className="text-base font-semibold flex items-center">
-              <MessageSquare className="h-4 w-4 mr-2" /> Customer Feedback
-            </Label>
-            
-            <Textarea 
-              value={feedback}
-              onChange={(e) => setFeedback(e.target.value)}
-              placeholder="Enter any customer feedback or delivery notes"
-              className="min-h-[100px]"
-            />
-          </div>
+          {/* Customer Feedback Section - REMOVED */}
         </div>
 
         <DialogFooter>

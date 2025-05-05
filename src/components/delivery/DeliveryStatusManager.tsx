@@ -7,6 +7,7 @@ import { Truck, CheckCircle2, MessageSquare, Clock } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 import { matchesStatus } from "@/lib/statusHelpers";
 import DeliveryInfoDialog from "./DeliveryInfoDialog";
+import FeedbackDialog from "@/components/orders/FeedbackDialog";
 
 interface DeliveryStatusManagerProps {
   order: Order;
@@ -22,6 +23,7 @@ const DeliveryStatusManager = ({
   const { updateOrder } = useApp();
   const [isUpdating, setIsUpdating] = useState(false);
   const [showInfoDialog, setShowInfoDialog] = useState(false);
+  const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
   
   // Get current status
   const isReady = matchesStatus(order.status, 'ready-to-deliver');
@@ -62,6 +64,11 @@ const DeliveryStatusManager = ({
   // Handle opening the delivery info dialog
   const openDeliveryInfoDialog = () => {
     setShowInfoDialog(true);
+  };
+
+  // Handle opening the feedback dialog
+  const openFeedbackDialog = () => {
+    setShowFeedbackDialog(true);
   };
   
   // Ready to deliver -> Start delivery button
@@ -105,22 +112,22 @@ const DeliveryStatusManager = ({
     );
   }
   
-  // Waiting feedback -> Add feedback button
+  // Waiting feedback -> Add feedback button (now using FeedbackDialog)
   if (isWaitingFeedback) {
     return (
       <>
         <Button 
           size={compact ? "sm" : "default"}
           className="bg-indigo-600 hover:bg-indigo-700 text-white"
-          onClick={openDeliveryInfoDialog}
+          onClick={openFeedbackDialog}
         >
           <MessageSquare className={`h-4 w-4 ${compact ? '' : 'mr-1'}`} />
           {!compact && "Add Feedback"}
         </Button>
         
-        <DeliveryInfoDialog 
-          open={showInfoDialog} 
-          onOpenChange={setShowInfoDialog} 
+        <FeedbackDialog 
+          open={showFeedbackDialog} 
+          onOpenChange={setShowFeedbackDialog} 
           order={order}
           onSaved={onStatusChange}
         />
