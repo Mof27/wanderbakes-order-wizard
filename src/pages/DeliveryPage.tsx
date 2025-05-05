@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from "react";
 import { useApp } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
@@ -6,9 +5,10 @@ import { Card } from "@/components/ui/card";
 import { Helmet } from "react-helmet-async";
 import DeliveryDateFilter from "@/components/delivery/DeliveryDateFilter";
 import DeliveryStatusFilter from "@/components/delivery/DeliveryStatusFilter";
+import DeliveryTimeSlotFilter from "@/components/delivery/DeliveryTimeSlotFilter";
 import { Order } from "@/types";
 import { matchesStatus, isInDeliveryStatus, shouldShowInAllStatusesDelivery } from "@/lib/statusHelpers";
-import { startOfDay, endOfDay, addDays, format } from "date-fns";
+import { startOfDay, endOfDay, addDays, format, isBefore, isAfter, parseISO, addHours, differenceInHours } from "date-fns";
 import { Link } from "react-router-dom";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -63,10 +63,56 @@ const formatTimeSlotDisplay = (timeSlot?: string): string => {
   return timeSlot;
 };
 
+// Helper to determine if an order is late or within 2 hours of delivery
+const getOrderTimeStatus = (order: Order): 'late' | 'within-2-hours' | null => {
+  // Get current time
+  const now = new Date();
+  const deliveryDate = new Date(order.deliveryDate);
+  
+  // Early return if it's a future date (not today)
+  if (isAfter(startOfDay(deliveryDate), startOfDay(now))) {
+    return null;
+  }
+  
+  // Parse the time slot to get the end time
+  let endTimeHour: number = 20; // Default to end of day (8pm)
+  
+  if (order.deliveryTimeSlot === 'slot1') {
+    endTimeHour = 13; // 1pm
+  } else if (order.deliveryTimeSlot === 'slot2') {
+    endTimeHour = 16; // 4pm
+  } else if (order.deliveryTimeSlot === 'slot3') {
+    endTimeHour = 20; // 8pm
+  } else if (order.deliveryTimeSlot) {
+    // Try to parse custom time slot
+    const timeMatch = order.deliveryTimeSlot.match(/(\d{1,2})[:.]\d{2}/);
+    if (timeMatch) {
+      endTimeHour = parseInt(timeMatch[1], 10) + 1; // Assuming 1 hour window
+    }
+  }
+  
+  // Set end time to specified hour on delivery date
+  const endTime = new Date(deliveryDate);
+  endTime.setHours(endTimeHour, 0, 0, 0);
+  
+  // If current time is after end time, it's late
+  if (isAfter(now, endTime)) {
+    return 'late';
+  }
+  
+  // If within 2 hours of end time
+  if (differenceInHours(endTime, now) <= 2) {
+    return 'within-2-hours';
+  }
+  
+  return null;
+};
+
 const DeliveryPage = () => {
   const { orders } = useApp();
   const [dateFilter, setDateFilter] = useState<'today' | 'tomorrow' | 'd-plus-2' | 'all'>('today');
-  const [statusFilter, setStatusFilter] = useState<'ready' | 'in-transit' | 'delivery-statuses' | 'all-statuses'>('delivery-statuses');
+  const [statusFilter, setStatusFilter] = useState<'ready' | 'in-transit' | 'delivery-statuses' | 'all-statuses'>('all-statuses');
+  const [timeSlotFilter, setTimeSlotFilter] = useState<'all' | 'late' | 'within-2-hours' | 'slot1' | 'slot2' | 'slot3'>('all');
   const [refreshKey, setRefreshKey] = useState(0);
   
   // Add state for photo upload dialog
@@ -130,11 +176,30 @@ const DeliveryPage = () => {
     });
   };
   
+  // Filter orders based on selected time slot
+  const filterOrdersByTimeSlot = (orders: Order[], timeSlotFilter: string): Order[] => {
+    if (timeSlotFilter === 'all') {
+      return orders;
+    }
+    
+    return orders.filter(order => {
+      // Handle time-based filters (late or within 2 hours)
+      if (timeSlotFilter === 'late' || timeSlotFilter === 'within-2-hours') {
+        const timeStatus = getOrderTimeStatus(order);
+        return timeStatus === timeSlotFilter;
+      }
+      
+      // Handle specific time slots
+      return order.deliveryTimeSlot === timeSlotFilter;
+    });
+  };
+  
   // Get filtered orders
   const filteredOrders = useMemo(() => {
     let filtered = [...orders];
     filtered = filterOrdersByDate(filtered, dateFilter);
     filtered = filterOrdersByStatus(filtered, statusFilter);
+    filtered = filterOrdersByTimeSlot(filtered, timeSlotFilter);
     
     // Sort orders - first by status priority, then by time slot
     return filtered.sort((a, b) => {
@@ -183,7 +248,7 @@ const DeliveryPage = () => {
       
       return 0;
     });
-  }, [orders, dateFilter, statusFilter, refreshKey]);
+  }, [orders, dateFilter, statusFilter, timeSlotFilter, refreshKey]);
 
   const dateTitles = {
     'today': `Today (${format(new Date(), 'dd MMM')})`,
@@ -200,6 +265,29 @@ const DeliveryPage = () => {
   // Helper to determine if an order is in waiting-photo status
   const isWaitingPhoto = (status: string): boolean => {
     return status === 'waiting-photo';
+  };
+  
+  // Helper to determine if an order is late or within 2 hours based on time slot
+  const getTimeStatusBadge = (order: Order) => {
+    const timeStatus = getOrderTimeStatus(order);
+    
+    if (timeStatus === 'late') {
+      return (
+        <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200">
+          Late
+        </Badge>
+      );
+    }
+    
+    if (timeStatus === 'within-2-hours') {
+      return (
+        <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-200">
+          &lt; 2 Hours
+        </Badge>
+      );
+    }
+    
+    return null;
   };
 
   return (
@@ -219,16 +307,23 @@ const DeliveryPage = () => {
         </Button>
       </div>
       
-      <div className="flex flex-col md:flex-row gap-4 md:items-center">
+      <div className="flex flex-col gap-4">
         <DeliveryDateFilter
           value={dateFilter}
           onChange={setDateFilter}
         />
         
-        <DeliveryStatusFilter
-          value={statusFilter}
-          onChange={setStatusFilter}
-        />
+        <div className="flex flex-col md:flex-row gap-4 md:items-start">
+          <DeliveryStatusFilter
+            value={statusFilter}
+            onChange={setStatusFilter}
+          />
+          
+          <DeliveryTimeSlotFilter
+            value={timeSlotFilter}
+            onChange={setTimeSlotFilter}
+          />
+        </div>
       </div>
       
       <div>
@@ -282,17 +377,22 @@ const DeliveryPage = () => {
                         )}
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center">
-                          <CalendarClock className="h-4 w-4 mr-2 text-muted-foreground" />
-                          <span className="font-medium">
-                            {formatTimeSlotDisplay(order.deliveryTimeSlot)}
-                          </span>
+                        <div className="flex flex-col space-y-1">
+                          <div className="flex items-center">
+                            <CalendarClock className="h-4 w-4 mr-2 text-muted-foreground" />
+                            <span className="font-medium">
+                              {formatTimeSlotDisplay(order.deliveryTimeSlot)}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            {getTimeStatusBadge(order)}
+                            {order.deliveryArea && (
+                              <Badge variant="secondary" className="text-xs">
+                                {order.deliveryArea}
+                              </Badge>
+                            )}
+                          </div>
                         </div>
-                        {order.deliveryArea && (
-                          <Badge variant="secondary" className="mt-1 text-xs">
-                            {order.deliveryArea}
-                          </Badge>
-                        )}
                       </TableCell>
                       <TableCell>
                         <div>
