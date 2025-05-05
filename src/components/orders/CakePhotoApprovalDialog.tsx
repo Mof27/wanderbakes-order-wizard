@@ -34,31 +34,33 @@ const CakePhotoApprovalDialog = ({ order, open, onClose, onSuccess }: CakePhotoA
     setLoading(true);
     try {
       // Update to ready-to-deliver status with approval info
-      const updatedOrder = await updateOrder({
+      const updatedOrderData: Partial<Order> = {
         ...order,
         status: "ready-to-deliver",
         approvedBy: "Manager", // In a real app, this would come from the logged-in user
         approvalDate: new Date()
-      });
+      };
       
-      // Add log entry - fixed spread type issue and orderLogs property access
-      if (updatedOrder) {
-        await updateOrder({
-          ...updatedOrder,
-          orderLogs: [
-            ...(updatedOrder.orderLogs || []),
-            {
-              id: `log_${Date.now()}`,
-              timestamp: new Date(),
-              type: 'status-change',
-              previousStatus: 'pending-approval',
-              newStatus: 'ready-to-deliver',
-              note: 'Cake photos approved',
-              user: "Manager" // In a real app, this would come from the logged-in user
-            }
-          ]
-        });
-      }
+      await updateOrder(updatedOrderData);
+      
+      // Add log entry in a separate update to avoid the void type issue
+      const orderLogs = [
+        ...(order.orderLogs || []),
+        {
+          id: `log_${Date.now()}`,
+          timestamp: new Date(),
+          type: 'status-change',
+          previousStatus: 'pending-approval',
+          newStatus: 'ready-to-deliver',
+          note: 'Cake photos approved',
+          user: "Manager" // In a real app, this would come from the logged-in user
+        }
+      ];
+      
+      await updateOrder({
+        ...order,
+        orderLogs
+      });
       
       toast.success(`Cake photos approved. Order ${order.id} is now ready for delivery.`);
       if (onSuccess) onSuccess();
@@ -80,30 +82,32 @@ const CakePhotoApprovalDialog = ({ order, open, onClose, onSuccess }: CakePhotoA
     setLoading(true);
     try {
       // Update to needs-revision status with notes
-      const updatedOrder = await updateOrder({
+      const updatedOrderData: Partial<Order> = {
         ...order,
         status: "needs-revision",
         revisionNotes: revisionNotes
-      });
+      };
       
-      // Add log entry - fixed spread type issue and orderLogs property access
-      if (updatedOrder) {
-        await updateOrder({
-          ...updatedOrder,
-          orderLogs: [
-            ...(updatedOrder.orderLogs || []),
-            {
-              id: `log_${Date.now()}`,
-              timestamp: new Date(),
-              type: 'status-change',
-              previousStatus: 'pending-approval',
-              newStatus: 'needs-revision',
-              note: `Revision requested: ${revisionNotes}`,
-              user: "Manager" // In a real app, this would come from the logged-in user
-            }
-          ]
-        });
-      }
+      await updateOrder(updatedOrderData);
+      
+      // Add log entry in a separate update to avoid the void type issue
+      const orderLogs = [
+        ...(order.orderLogs || []),
+        {
+          id: `log_${Date.now()}`,
+          timestamp: new Date(),
+          type: 'status-change',
+          previousStatus: 'pending-approval',
+          newStatus: 'needs-revision',
+          note: `Revision requested: ${revisionNotes}`,
+          user: "Manager" // In a real app, this would come from the logged-in user
+        }
+      ];
+      
+      await updateOrder({
+        ...order,
+        orderLogs
+      });
       
       toast.info(`Revision requested for order ${order.id}.`);
       if (onSuccess) onSuccess();

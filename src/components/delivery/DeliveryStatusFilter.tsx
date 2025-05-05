@@ -1,11 +1,11 @@
 
 import { Button } from "@/components/ui/button";
-import { Truck, Package, CheckCircle2, Calendar } from "lucide-react";
+import { Truck, Package, CheckCircle2, Calendar, CheckSquare2, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type DeliveryStatusFilterProps = {
-  value: 'ready' | 'in-transit' | 'delivery-statuses' | 'all-statuses';
-  onChange: (value: 'ready' | 'in-transit' | 'delivery-statuses' | 'all-statuses') => void;
+  value: 'ready' | 'in-transit' | 'pending-approval' | 'needs-revision' | 'delivery-statuses' | 'all-statuses';
+  onChange: (value: 'ready' | 'in-transit' | 'pending-approval' | 'needs-revision' | 'delivery-statuses' | 'all-statuses') => void;
 };
 
 const DeliveryStatusFilter = ({ value, onChange }: DeliveryStatusFilterProps) => {
@@ -37,6 +37,32 @@ const DeliveryStatusFilter = ({ value, onChange }: DeliveryStatusFilterProps) =>
         >
           <Truck className="h-4 w-4 mr-2" />
           In Transit
+        </Button>
+        
+        <Button
+          variant="outline"
+          size="sm"
+          className={cn(
+            "min-w-24",
+            value === 'pending-approval' && "bg-indigo-100 text-indigo-800 border-indigo-200"
+          )}
+          onClick={() => onChange('pending-approval')}
+        >
+          <CheckSquare2 className="h-4 w-4 mr-2" />
+          Needs Approval
+        </Button>
+        
+        <Button
+          variant="outline"
+          size="sm"
+          className={cn(
+            "min-w-24",
+            value === 'needs-revision' && "bg-amber-100 text-amber-800 border-amber-200"
+          )}
+          onClick={() => onChange('needs-revision')}
+        >
+          <AlertTriangle className="h-4 w-4 mr-2" />
+          Needs Revision
         </Button>
         
         <Button
