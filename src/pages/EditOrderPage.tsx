@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from "react";
-import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
 import OrderForm from "@/components/orders/OrderForm";
 import { Helmet } from "react-helmet-async";
@@ -16,6 +15,7 @@ import { matchesStatus } from "@/lib/statusHelpers";
 const EditOrderPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const { orders, updateOrder } = useApp();
   const [order, setOrder] = useState(id ? orders.find(o => o.id === id) : null);
@@ -24,6 +24,28 @@ const EditOrderPage = () => {
   
   // Get the tab from query parameters
   const defaultTab = searchParams.get('tab') || 'required';
+  
+  // Determine the referrer based on URL state or pathname pattern
+  const getReferrer = () => {
+    // First check for explicit referrer in state
+    if (location.state && location.state.referrer) {
+      return location.state.referrer;
+    }
+    
+    // Otherwise check URL patterns
+    const path = location.pathname;
+    const referrerFromPath = location.pathname.split('/')[1]; // Get first segment after /
+    
+    if (referrerFromPath === 'kitchen') {
+      return 'kitchen';
+    } else if (referrerFromPath === 'delivery') {
+      return 'delivery';
+    } else {
+      return 'orders'; // Default referrer
+    }
+  };
+  
+  const referrer = getReferrer();
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -60,13 +82,18 @@ const EditOrderPage = () => {
       }
     }
   };
+  
+  // Handle going back based on referrer
+  const handleGoBack = () => {
+    navigate(`/${referrer}`);
+  };
 
   if (!order) {
     return (
       <div>
-        <Button variant="outline" onClick={() => navigate("/orders")} className="mb-4">
+        <Button variant="outline" onClick={handleGoBack} className="mb-4">
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Orders
+          Back to {referrer.charAt(0).toUpperCase() + referrer.slice(1)}
         </Button>
         <p>Order not found</p>
       </div>
@@ -78,9 +105,9 @@ const EditOrderPage = () => {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold">Edit Order</h1>
-          <Button variant="outline" onClick={() => navigate("/orders")}>
+          <Button variant="outline" onClick={handleGoBack}>
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Orders
+            Back to {referrer.charAt(0).toUpperCase() + referrer.slice(1)}
           </Button>
         </div>
         <Skeleton className="w-full h-[600px]" />
@@ -110,9 +137,9 @@ const EditOrderPage = () => {
         <div className="flex gap-2">
           <OrderPrintButton order={order} />
           <DeliveryLabelPrintButton order={order} />
-          <Button variant="outline" onClick={() => navigate("/orders")}>
+          <Button variant="outline" onClick={handleGoBack}>
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Orders
+            Back to {referrer.charAt(0).toUpperCase() + referrer.slice(1)}
           </Button>
         </div>
       </div>
@@ -134,7 +161,8 @@ const EditOrderPage = () => {
         order={order} 
         settings={settings} 
         defaultTab={activeTab}
-        onStatusChange={handleStatusUpdate} 
+        onStatusChange={handleStatusUpdate}
+        referrer={referrer} // Pass referrer to OrderForm
       />
     </div>
   );

@@ -9,6 +9,8 @@ interface ActionButtonsProps {
   handleSaveDraft: () => void;
   handleSubmitOrder: () => void;
   formData?: Partial<Order>;
+  referrer?: string; // Add referrer prop
+  onGoBack?: () => void; // Add onGoBack handler
 }
 
 const ActionButtons = ({ 
@@ -16,8 +18,22 @@ const ActionButtons = ({
   isFormValid,
   handleSaveDraft,
   handleSubmitOrder,
-  formData
+  formData,
+  referrer,
+  onGoBack
 }: ActionButtonsProps) => {
+  // Get the back button text based on referrer
+  const getBackButtonText = () => {
+    switch (referrer) {
+      case 'kitchen':
+        return 'Back to Kitchen';
+      case 'delivery':
+        return 'Back to Delivery';
+      default:
+        return 'Back to Orders';
+    }
+  };
+
   return (
     <div className="flex flex-wrap gap-2 justify-between items-center pt-6 border-t">
       <div className="space-x-2">
@@ -38,9 +54,19 @@ const ActionButtons = ({
           {isEditMode ? "Update Order" : "Create Order"}
         </Button>
       </div>
-      {formData && (
-        <OrderPrintButton order={formData} />
-      )}
+      
+      <div className="flex gap-2">
+        {formData && (
+          <OrderPrintButton order={formData} />
+        )}
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onGoBack}
+        >
+          {getBackButtonText()}
+        </Button>
+      </div>
     </div>
   );
 };

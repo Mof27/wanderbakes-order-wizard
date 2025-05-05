@@ -158,7 +158,10 @@ const OrdersPage = () => {
           size="sm" 
           onClick={(e) => {
             e.stopPropagation();
-            navigate(`/orders/${order.id}`);
+            // Pass referrer information via state
+            navigate(`/orders/${order.id}`, {
+              state: { referrer: 'orders' }
+            });
           }}
         >
           <Eye className="h-4 w-4" />

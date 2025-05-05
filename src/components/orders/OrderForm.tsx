@@ -23,15 +23,17 @@ import AddNewAddressDialog from "./OrderFormComponents/AddNewAddressDialog";
 import ActionButtons from "./OrderFormComponents/ActionButtons";
 import OrderPrintButton from "./OrderPrintButton";
 import DeliveryRecapSection from "./OrderFormComponents/DeliveryRecapSection";
+import OrderLogSection from "./OrderFormComponents/OrderLogSection";
 
 interface OrderFormProps {
   order?: Order;
   settings?: SettingsData | null;
   defaultTab?: string;
-  onStatusChange?: (newStatus: OrderStatus) => Promise<void>; // Add this line
+  onStatusChange?: (newStatus: OrderStatus) => Promise<void>;
+  referrer?: string;
 }
 
-const OrderForm = ({ order, settings, defaultTab = "required", onStatusChange }: OrderFormProps) => {
+const OrderForm = ({ order, settings, defaultTab = "required", onStatusChange, referrer }: OrderFormProps) => {
   const navigate = useNavigate();
   const { addOrder, updateOrder, updateCustomer } = useApp();
   const [customer, setCustomer] = useState<Customer | null>(order?.customer || null);
@@ -54,7 +56,7 @@ const OrderForm = ({ order, settings, defaultTab = "required", onStatusChange }:
   
   // Use the defaultTab prop to set the initial activeTab state
   const [activeTab, setActiveTab] = useState(
-    defaultTab === "delivery-recap" || defaultTab === "optional" 
+    defaultTab === "delivery-recap" || defaultTab === "optional" || defaultTab === "order-log"
       ? defaultTab 
       : "required"
   );
@@ -608,13 +610,52 @@ const OrderForm = ({ order, settings, defaultTab = "required", onStatusChange }:
     return baseRequirements;
   };
 
+  // Find timestamps for different order stages - for metrics in log view
+  const findOrderStageTimestamp = (type: string): Date | undefined => {
+    if (!order?.orderLogs) return undefined;
+    
+    // For order in kitchen time
+    if (type === 'in-kitchen') {
+      const inKitchenLog = order.orderLogs.find(log => 
+        log.type === 'status-change' && log.newStatus === 'in-kitchen'
+      );
+      return inKitchenLog ? new Date(inKitchenLog.timestamp) : undefined;
+    }
+    
+    // For order completed time (waiting-photo)
+    if (type === 'completed') {
+      const completedLog = order.orderLogs.find(log => 
+        log.type === 'status-change' && log.newStatus === 'waiting-photo'
+      );
+      return completedLog ? new Date(completedLog.timestamp) : undefined;
+    }
+    
+    // For delivery time
+    if (type === 'delivered') {
+      return order.actualDeliveryTime ? new Date(order.actualDeliveryTime) : undefined;
+    }
+    
+    return undefined;
+  };
+
+  // Handle going back with referrer info
+  const handleGoBack = () => {
+    // Navigate to the referrer page if provided, otherwise default to orders page
+    if (referrer) {
+      navigate(`/${referrer}`);
+    } else {
+      navigate("/orders");
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-4">
+        <TabsList className="grid w-full grid-cols-4 mb-4">
           <TabsTrigger value="required">Required Information</TabsTrigger>
           <TabsTrigger value="optional">Additional Details</TabsTrigger>
           <TabsTrigger value="delivery-recap">Delivery & Data Recap</TabsTrigger>
+          <TabsTrigger value="order-log">Order Log</TabsTrigger>
         </TabsList>
         
         <TabsContent value="required" className="space-y-6">
@@ -743,6 +784,7 @@ const OrderForm = ({ order, settings, defaultTab = "required", onStatusChange }:
         
         <TabsContent value="delivery-recap" className="space-y-6">
           <DeliveryRecapSection
+            orderId={order?.id}
             status={order?.status}
             finishedCakePhotos={finishedCakePhotos}
             deliveryDocumentationPhotos={deliveryDocumentationPhotos}
@@ -755,6 +797,16 @@ const OrderForm = ({ order, settings, defaultTab = "required", onStatusChange }:
             onFeedbackChange={setCustomerFeedback}
             onTagsChange={setOrderTags}
             onStatusChange={onStatusChange}
+          />
+        </TabsContent>
+        
+        <TabsContent value="order-log" className="space-y-6">
+          <OrderLogSection
+            logs={order?.orderLogs || []} 
+            orderCreatedAt={order?.createdAt || new Date()}
+            orderCompletedAt={findOrderStageTimestamp('completed')}
+            orderInKitchenAt={findOrderStageTimestamp('in-kitchen')}
+            orderDeliveredAt={findOrderStageTimestamp('delivered')}
           />
         </TabsContent>
       </Tabs>
@@ -774,6 +826,8 @@ const OrderForm = ({ order, settings, defaultTab = "required", onStatusChange }:
         handleSaveDraft={handleSaveDraft}
         handleSubmitOrder={handleSubmitOrder}
         formData={getCompleteOrderData()}
+        referrer={referrer}
+        onGoBack={handleGoBack}
       />
     </div>
   );
