@@ -1,13 +1,12 @@
+
 import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { OrderStatus, OrderTag } from "@/types";
-import { Edit, Info, Camera, Image, Archive } from "lucide-react";
+import { Camera, Image, Archive } from "lucide-react";
 import { matchesStatus } from "@/lib/statusHelpers";
-import DeliveryInfoDialog from "@/components/delivery/DeliveryInfoDialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 interface DeliveryRecapSectionProps {
@@ -51,10 +50,6 @@ const DeliveryRecapSection: React.FC<DeliveryRecapSectionProps> = ({
   onTagsChange,
   onStatusChange,
 }) => {
-  // Show DeliveryInfoDialog for editing delivery information
-  const [showInfoDialog, setShowInfoDialog] = useState(false);
-  const [activePhotoTab, setActivePhotoTab] = useState<string>("cake-photos");
-  
   // Handle tag changes directly
   const handleTagChange = (tag: OrderTag, checked: boolean) => {
     const newTags = checked 
@@ -135,11 +130,6 @@ const DeliveryRecapSection: React.FC<DeliveryRecapSectionProps> = ({
   // Show Archive button only for finished orders
   const showArchiveButton = status === 'finished';
 
-  // Handle update when dialog is saved
-  const handleInfoDialogSaved = () => {
-    // Dialog will close automatically when saved
-  };
-
   return (
     <div className="space-y-6">
       {/* Status guidance alert */}
@@ -159,75 +149,33 @@ const DeliveryRecapSection: React.FC<DeliveryRecapSectionProps> = ({
         </Alert>
       )}
       
-      {/* "Edit Delivery Information" button */}
-      {(showPhotosSection || showDeliverySection || showFeedbackSection) && (
-        <div className="flex justify-end gap-2">
-          {showArchiveButton && (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  className="mb-4"
-                  variant="outline"
-                >
-                  <Archive className="h-4 w-4 mr-2" />
+      {/* Archive button for finished orders */}
+      {showArchiveButton && (
+        <div className="flex justify-end">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="outline"
+              >
+                <Archive className="h-4 w-4 mr-2" />
+                Archive Order
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Archive this order?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will move the order to the archives. You can restore it later if needed.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleArchiveOrder}>
                   Archive Order
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Archive this order?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This will move the order to the archives. You can restore it later if needed.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleArchiveOrder}>
-                    Archive Order
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          )}
-          <Button
-            onClick={() => setShowInfoDialog(true)}
-            className="mb-4"
-            variant="outline"
-          >
-            <Edit className="h-4 w-4 mr-2" />
-            Edit Delivery Information
-          </Button>
-          
-          {/* DeliveryInfoDialog for editing all delivery information */}
-          <DeliveryInfoDialog 
-            open={showInfoDialog} 
-            onOpenChange={setShowInfoDialog} 
-            order={{
-              id: orderId || '',
-              deliveryDate: new Date(),
-              actualDeliveryTime,
-              deliveryDocumentationPhotos,
-              finishedCakePhotos,
-              customerFeedback,
-              status: status || 'in-queue',
-              customer: { id: '', name: '', whatsappNumber: '', addresses: [], createdAt: new Date() },
-              cakeFlavor: '',
-              cakeSize: '',
-              cakeShape: '',
-              cakeDesign: '',
-              cakeTier: 1,
-              coverColor: { type: 'solid', color: '#000000' },
-              cakePrice: 0,
-              deliveryAddress: '',
-              createdAt: new Date(),
-              updatedAt: new Date(),
-              // Add missing required properties for Order
-              useSameFlavor: true,
-              useSameCover: true
-            }}
-            onSaved={handleInfoDialogSaved}
-            editMode="all" // New prop to indicate we're editing all fields
-          />
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       )}
       
