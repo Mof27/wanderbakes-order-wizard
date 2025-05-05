@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { OrderLogEvent } from "@/types";
+import { OrderLogEvent, CakeRevision } from "@/types";
 import { formatDistanceToNow, format, differenceInMinutes, differenceInHours, differenceInDays } from "date-fns";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import StatusBadge from "@/components/orders/StatusBadge";
-import { Info, FileText, Clock, Calendar } from "lucide-react";
+import { Info, FileText, Clock, Calendar, History } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface OrderLogSectionProps {
@@ -12,6 +12,7 @@ interface OrderLogSectionProps {
   orderCompletedAt?: Date;
   orderInKitchenAt?: Date;
   orderDeliveredAt?: Date;
+  revisionHistory?: CakeRevision[]; // Add new prop for revision history
 }
 
 const OrderLogSection: React.FC<OrderLogSectionProps> = ({ 
@@ -19,7 +20,8 @@ const OrderLogSection: React.FC<OrderLogSectionProps> = ({
   orderCreatedAt,
   orderCompletedAt,
   orderInKitchenAt,
-  orderDeliveredAt
+  orderDeliveredAt,
+  revisionHistory = [] // Default to empty array if not provided
 }) => {
   const [filter, setFilter] = useState<string | null>(null);
 
@@ -89,6 +91,26 @@ const OrderLogSection: React.FC<OrderLogSectionProps> = ({
         tooltip: `From order (${format(new Date(orderCreatedAt), 'PP')}) to delivery (${format(new Date(orderDeliveredAt), 'PP')})`
       });
     }
+    
+    // Add new metric for revision count
+    const revisionCount = revisionHistory ? revisionHistory.length : 0;
+    
+    // Determine tooltip content based on revision history
+    let revisionTooltip = "No revisions needed, approved on first submission";
+    
+    if (revisionCount > 0 && revisionHistory.length > 0) {
+      const firstSubmission = revisionHistory[0].timestamp;
+      const lastRevision = revisionHistory[revisionHistory.length - 1].timestamp;
+      
+      revisionTooltip = `${revisionCount} ${revisionCount === 1 ? 'revision' : 'revisions'} needed from ${format(new Date(firstSubmission), 'PP')} to ${format(new Date(lastRevision), 'PP')}`;
+    }
+    
+    metrics.push({
+      label: "Revisions Until Approval",
+      value: revisionCount.toString(),
+      icon: <History className="h-4 w-4" />,
+      tooltip: revisionTooltip
+    });
     
     return metrics;
   };

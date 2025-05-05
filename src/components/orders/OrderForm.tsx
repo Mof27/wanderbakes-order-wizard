@@ -811,6 +811,7 @@ const OrderForm = ({ order, settings, defaultTab = "required", onStatusChange, r
             orderCompletedAt={findOrderStageTimestamp('completed')}
             orderInKitchenAt={findOrderStageTimestamp('in-kitchen')}
             orderDeliveredAt={findOrderStageTimestamp('delivered')}
+            revisionHistory={order?.revisionHistory || []} // Pass the revision history to the component
           />
         </TabsContent>
       </Tabs>
