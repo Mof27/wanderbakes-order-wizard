@@ -342,7 +342,7 @@ const DeliveryPage = () => {
                   <TableHead className="w-[150px]">
                     <div className="flex items-center">
                       <CalendarClock className="h-4 w-4 mr-2" />
-                      Time Slot
+                      Delivery Time
                     </div>
                   </TableHead>
                   <TableHead>Customer</TableHead>
