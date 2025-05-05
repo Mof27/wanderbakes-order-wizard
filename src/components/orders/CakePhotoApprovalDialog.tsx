@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useApp } from "@/context/AppContext";
-import { CakeRevision, Order } from "@/types";
+import { CakeRevision, Order, OrderLogEvent } from "@/types";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { formatDate } from "@/lib/utils";
 import RevisionHistoryView from "./RevisionHistoryView";
 
-// Import Textarea from the correct location - it's in ui/textarea, not ui/input
+// Import Textarea from the correct location
 import { Textarea } from "@/components/ui/textarea";
 
 interface CakePhotoApprovalDialogProps {
@@ -33,34 +33,34 @@ const CakePhotoApprovalDialog = ({ order, open, onClose, onSuccess }: CakePhotoA
   const handleApprove = async () => {
     setLoading(true);
     try {
-      // Update to ready-to-deliver status with approval info
-      const updatedOrderData: Partial<Order> = {
-        ...order,
-        status: "ready-to-deliver",
+      // Create a complete Order object with updated values
+      const updatedOrder = {
+        ...order, // Keep all existing properties
+        status: "ready-to-deliver" as const, // Type assertion to be specific
         approvedBy: "Manager", // In a real app, this would come from the logged-in user
         approvalDate: new Date()
       };
       
-      await updateOrder(updatedOrderData);
+      await updateOrder(updatedOrder);
       
-      // Add log entry in a separate update to avoid the void type issue
-      const orderLogs = [
-        ...(order.orderLogs || []),
-        {
-          id: `log_${Date.now()}`,
-          timestamp: new Date(),
-          type: 'status-change',
-          previousStatus: 'pending-approval',
-          newStatus: 'ready-to-deliver',
-          note: 'Cake photos approved',
-          user: "Manager" // In a real app, this would come from the logged-in user
-        }
-      ];
+      // Create a properly typed OrderLogEvent object
+      const newLogEvent: OrderLogEvent = {
+        id: `log_${Date.now()}`,
+        timestamp: new Date(),
+        type: "status-change", // Use the specific literal type
+        previousStatus: "pending-approval",
+        newStatus: "ready-to-deliver",
+        note: 'Cake photos approved',
+        user: "Manager" // In a real app, this would come from the logged-in user
+      };
       
-      await updateOrder({
+      // Update order logs in a separate update
+      const orderWithLogs = {
         ...order,
-        orderLogs
-      });
+        orderLogs: [...(order.orderLogs || []), newLogEvent]
+      };
+      
+      await updateOrder(orderWithLogs);
       
       toast.success(`Cake photos approved. Order ${order.id} is now ready for delivery.`);
       if (onSuccess) onSuccess();
@@ -81,33 +81,33 @@ const CakePhotoApprovalDialog = ({ order, open, onClose, onSuccess }: CakePhotoA
 
     setLoading(true);
     try {
-      // Update to needs-revision status with notes
-      const updatedOrderData: Partial<Order> = {
-        ...order,
-        status: "needs-revision",
+      // Create a complete Order object with updated values
+      const updatedOrder = {
+        ...order, // Keep all existing properties
+        status: "needs-revision" as const, // Type assertion to be specific
         revisionNotes: revisionNotes
       };
       
-      await updateOrder(updatedOrderData);
+      await updateOrder(updatedOrder);
       
-      // Add log entry in a separate update to avoid the void type issue
-      const orderLogs = [
-        ...(order.orderLogs || []),
-        {
-          id: `log_${Date.now()}`,
-          timestamp: new Date(),
-          type: 'status-change',
-          previousStatus: 'pending-approval',
-          newStatus: 'needs-revision',
-          note: `Revision requested: ${revisionNotes}`,
-          user: "Manager" // In a real app, this would come from the logged-in user
-        }
-      ];
+      // Create a properly typed OrderLogEvent object
+      const newLogEvent: OrderLogEvent = {
+        id: `log_${Date.now()}`,
+        timestamp: new Date(),
+        type: "status-change", // Use the specific literal type
+        previousStatus: "pending-approval",
+        newStatus: "needs-revision",
+        note: `Revision requested: ${revisionNotes}`,
+        user: "Manager" // In a real app, this would come from the logged-in user
+      };
       
-      await updateOrder({
+      // Update order logs in a separate update
+      const orderWithLogs = {
         ...order,
-        orderLogs
-      });
+        orderLogs: [...(order.orderLogs || []), newLogEvent]
+      };
+      
+      await updateOrder(orderWithLogs);
       
       toast.info(`Revision requested for order ${order.id}.`);
       if (onSuccess) onSuccess();
