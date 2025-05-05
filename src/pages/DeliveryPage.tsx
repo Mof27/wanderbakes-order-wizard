@@ -11,10 +11,11 @@ import { startOfDay, endOfDay, addDays, format } from "date-fns";
 import { Link } from "react-router-dom";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { CalendarClock } from "lucide-react";
+import { CalendarClock, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 import DeliveryStatusManager from "@/components/delivery/DeliveryStatusManager";
 import StatusBadge from "@/components/orders/StatusBadge";
+import CakePhotoUploadDialog from "@/components/orders/CakePhotoUploadDialog";
 
 // Helper function to determine the time slot background color
 const getTimeSlotColor = (timeSlot?: string): string => {
@@ -65,11 +66,27 @@ const DeliveryPage = () => {
   const { orders } = useApp();
   const [dateFilter, setDateFilter] = useState<'today' | 'tomorrow' | 'd-plus-2' | 'all'>('today');
   const [statusFilter, setStatusFilter] = useState<'ready' | 'in-transit' | 'delivery-statuses' | 'all-statuses'>('delivery-statuses');
-  const [refreshKey, setRefreshKey] = useState(0); // To force refresh when order status changes
+  const [refreshKey, setRefreshKey] = useState(0);
+  
+  // Add state for photo upload dialog
+  const [photoDialogOpen, setPhotoDialogOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   // Force a refresh of the component when an order status changes
   const handleStatusChange = () => {
     setRefreshKey(prev => prev + 1);
+  };
+  
+  // Handle opening the photo upload dialog
+  const handleOpenPhotoDialog = (order: Order) => {
+    setSelectedOrder(order);
+    setPhotoDialogOpen(true);
+  };
+  
+  // Handle when photo upload is successful
+  const handlePhotoSuccess = () => {
+    setPhotoDialogOpen(false);
+    handleStatusChange();
   };
 
   // Filter orders based on selected date filter
@@ -178,6 +195,11 @@ const DeliveryPage = () => {
   const isStatusActionableInDelivery = (status: string): boolean => {
     return status === 'ready-to-deliver' || status === 'in-delivery';
   };
+  
+  // Helper to determine if an order is in waiting-photo status
+  const isWaitingPhoto = (status: string): boolean => {
+    return status === 'waiting-photo';
+  };
 
   return (
     <div className="space-y-6">
@@ -235,6 +257,7 @@ const DeliveryPage = () => {
               <TableBody>
                 {filteredOrders.map((order) => {
                   const timeSlotClass = getTimeSlotColor(order.deliveryTimeSlot);
+                  const isWaitingForPhoto = isWaitingPhoto(order.status);
                   
                   return (
                     <TableRow 
@@ -304,19 +327,28 @@ const DeliveryPage = () => {
                               onStatusChange={handleStatusChange}
                               compact={true}
                             />
+                          ) : isWaitingForPhoto ? (
+                            <Button 
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleOpenPhotoDialog(order)}
+                              className="bg-purple-100 text-purple-800 border-purple-200 hover:bg-purple-200"
+                            >
+                              <Upload className="h-4 w-4 mr-1" /> Upload Photos
+                            </Button>
                           ) : (
                             <Button 
                               variant="outline"
                               size="sm"
                               asChild
-                              className={order.status === 'in-kitchen' || order.status === 'waiting-photo' 
+                              className={order.status === 'in-kitchen' 
                                 ? "bg-yellow-50 text-yellow-800 border-yellow-200 hover:bg-yellow-100"
                                 : ""}
                             >
-                              <Link to={order.status === 'in-kitchen' || order.status === 'waiting-photo' 
+                              <Link to={order.status === 'in-kitchen' 
                                 ? "/kitchen" 
                                 : `/orders/${order.id}`}>
-                                {order.status === 'in-kitchen' || order.status === 'waiting-photo' 
+                                {order.status === 'in-kitchen' 
                                   ? "Go to Kitchen" 
                                   : "Manage Order"}
                               </Link>
@@ -336,6 +368,16 @@ const DeliveryPage = () => {
           </Card>
         )}
       </div>
+      
+      {/* Cake Photo Upload Dialog */}
+      {selectedOrder && (
+        <CakePhotoUploadDialog 
+          order={selectedOrder}
+          open={photoDialogOpen}
+          onClose={() => setPhotoDialogOpen(false)}
+          onSuccess={handlePhotoSuccess}
+        />
+      )}
     </div>
   );
 };

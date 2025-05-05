@@ -4,7 +4,7 @@ import { useApp } from "@/context/AppContext";
 import { Order } from "@/types";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Upload, X, Plus, Image as ImageIcon } from "lucide-react";
+import { Upload, X, Plus, Camera } from "lucide-react";
 import { toast } from "sonner";
 
 interface CakePhotoUploadDialogProps {
