@@ -13,7 +13,7 @@ type DeliveryTimeSlotFilterProps = {
 const DeliveryTimeSlotFilter = ({ value, onChange }: DeliveryTimeSlotFilterProps) => {
   return (
     <div className="flex flex-col space-y-2">
-      <span className="text-sm font-medium">Time Slot</span>
+      <span className="text-sm font-medium">Delivery Time</span>
       <div className="flex flex-wrap gap-2">
         <Button
           variant="outline"
