@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "@/components/ui/sonner";
 import CakePhotoUploadDialog from "@/components/orders/CakePhotoUploadDialog";
-import DeliveryInfoDialog from "@/components/delivery/DeliveryInfoDialog";
+import FeedbackDialog from "@/components/orders/FeedbackDialog";
 import { getWorkflowStatus } from "@/lib/statusHelpers";
 
 const OrdersPage = () => {
@@ -217,6 +217,8 @@ const OrdersPage = () => {
       <Helmet>
         <title>Orders | Cake Shop</title>
       </Helmet>
+      
+      {/* Header section */}
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Orders</h1>
         <div className="flex gap-2">
@@ -241,6 +243,7 @@ const OrdersPage = () => {
         </div>
       </div>
       
+      {/* Filters section */}
       <div className="flex justify-between items-center">
         <div className="w-full max-w-md">
           <DateRangePicker 
@@ -267,12 +270,14 @@ const OrdersPage = () => {
         </div>
       </div>
       
+      {/* Status filter chips */}
       <StatusFilterChips 
         options={statusOptions} 
         selectedOption={selectedStatusOption} 
         onChange={handleStatusFilterChange}
       />
       
+      {/* Order list/grid view */}
       {viewMode === 'list' ? (
         <OrderList 
           orders={filteredOrders} 
@@ -321,9 +326,9 @@ const OrdersPage = () => {
         />
       )}
 
-      {/* Feedback Dialog */}
+      {/* Feedback Dialog - Now using our new dedicated FeedbackDialog component */}
       {selectedOrderForFeedback && (
-        <DeliveryInfoDialog 
+        <FeedbackDialog 
           order={selectedOrderForFeedback}
           open={feedbackDialogOpen}
           onOpenChange={setFeedbackDialogOpen}
