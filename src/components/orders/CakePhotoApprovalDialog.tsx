@@ -5,11 +5,13 @@ import { CakeRevision, Order } from "@/types";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/input";
 import { CheckCircle2, XCircle, Clock, History } from "lucide-react";
 import { toast } from "sonner";
 import { formatDate } from "@/lib/utils";
 import RevisionHistoryView from "./RevisionHistoryView";
+
+// Import Textarea from the correct location - it's in ui/textarea, not ui/input
+import { Textarea } from "@/components/ui/textarea";
 
 interface CakePhotoApprovalDialogProps {
   order: Order;
@@ -39,22 +41,24 @@ const CakePhotoApprovalDialog = ({ order, open, onClose, onSuccess }: CakePhotoA
         approvalDate: new Date()
       });
       
-      // Add log entry
-      await updateOrder({
-        ...updatedOrder,
-        orderLogs: [
-          ...(updatedOrder.orderLogs || []),
-          {
-            id: `log_${Date.now()}`,
-            timestamp: new Date(),
-            type: 'status-change',
-            previousStatus: 'pending-approval',
-            newStatus: 'ready-to-deliver',
-            note: 'Cake photos approved',
-            user: "Manager" // In a real app, this would come from the logged-in user
-          }
-        ]
-      });
+      // Add log entry - fixed spread type issue and orderLogs property access
+      if (updatedOrder) {
+        await updateOrder({
+          ...updatedOrder,
+          orderLogs: [
+            ...(updatedOrder.orderLogs || []),
+            {
+              id: `log_${Date.now()}`,
+              timestamp: new Date(),
+              type: 'status-change',
+              previousStatus: 'pending-approval',
+              newStatus: 'ready-to-deliver',
+              note: 'Cake photos approved',
+              user: "Manager" // In a real app, this would come from the logged-in user
+            }
+          ]
+        });
+      }
       
       toast.success(`Cake photos approved. Order ${order.id} is now ready for delivery.`);
       if (onSuccess) onSuccess();
@@ -82,22 +86,24 @@ const CakePhotoApprovalDialog = ({ order, open, onClose, onSuccess }: CakePhotoA
         revisionNotes: revisionNotes
       });
       
-      // Add log entry
-      await updateOrder({
-        ...updatedOrder,
-        orderLogs: [
-          ...(updatedOrder.orderLogs || []),
-          {
-            id: `log_${Date.now()}`,
-            timestamp: new Date(),
-            type: 'status-change',
-            previousStatus: 'pending-approval',
-            newStatus: 'needs-revision',
-            note: `Revision requested: ${revisionNotes}`,
-            user: "Manager" // In a real app, this would come from the logged-in user
-          }
-        ]
-      });
+      // Add log entry - fixed spread type issue and orderLogs property access
+      if (updatedOrder) {
+        await updateOrder({
+          ...updatedOrder,
+          orderLogs: [
+            ...(updatedOrder.orderLogs || []),
+            {
+              id: `log_${Date.now()}`,
+              timestamp: new Date(),
+              type: 'status-change',
+              previousStatus: 'pending-approval',
+              newStatus: 'needs-revision',
+              note: `Revision requested: ${revisionNotes}`,
+              user: "Manager" // In a real app, this would come from the logged-in user
+            }
+          ]
+        });
+      }
       
       toast.info(`Revision requested for order ${order.id}.`);
       if (onSuccess) onSuccess();

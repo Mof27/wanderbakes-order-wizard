@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Check, ChevronDown } from "lucide-react";
 import { useApp } from "@/context/AppContext";
@@ -27,6 +28,10 @@ const getStatusColor = (status: string) => {
       return "bg-yellow-100 text-yellow-800";
     case "waiting-photo":
       return "bg-purple-100 text-purple-800";
+    case "pending-approval":
+      return "bg-indigo-100 text-indigo-800";
+    case "needs-revision":
+      return "bg-amber-100 text-amber-800";
     case "ready-to-deliver":
       return "bg-green-100 text-green-800";
     case "in-delivery":
@@ -50,6 +55,8 @@ const statusOptions: OrderStatus[] = [
   "in-queue",
   "in-kitchen",
   "waiting-photo",
+  "pending-approval",
+  "needs-revision",
   "ready-to-deliver",
   "in-delivery",
   "waiting-feedback",
@@ -64,7 +71,7 @@ const OrderStatusDropdown = ({ order }: OrderStatusDropdownProps) => {
   
   // Determine if status change is locked based on current status
   // Updated to include 'ready-to-deliver' in locked statuses
-  const isStatusLocked = ['in-kitchen', 'waiting-photo', 'in-delivery', 'ready-to-deliver', 'archived'].includes(order.status);
+  const isStatusLocked = ['in-kitchen', 'waiting-photo', 'in-delivery', 'ready-to-deliver', 'archived', 'pending-approval', 'needs-revision'].includes(order.status);
   
   // Function to determine if a status is allowed to change to based on current status
   const canChangeTo = (targetStatus: OrderStatus): boolean => {
@@ -88,7 +95,9 @@ const OrderStatusDropdown = ({ order }: OrderStatusDropdownProps) => {
       'incomplete': ['in-queue', 'cancelled'],
       'in-queue': ['in-kitchen', 'cancelled'],
       'in-kitchen': ['waiting-photo', 'cancelled'],
-      'waiting-photo': ['ready-to-deliver', 'cancelled'],
+      'waiting-photo': ['pending-approval', 'cancelled'], // Updated to go to pending-approval
+      'pending-approval': ['ready-to-deliver', 'needs-revision', 'cancelled'], // New status transitions
+      'needs-revision': ['pending-approval', 'cancelled'], // New status transitions
       'ready-to-deliver': ['cancelled'], // Can only cancel from Orders page once ready to deliver
       'in-delivery': ['waiting-feedback', 'cancelled'],
       'waiting-feedback': ['finished', 'cancelled'],
