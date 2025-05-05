@@ -64,7 +64,7 @@ const DeliveryTimeSlotFilter = ({ value, onChange }: DeliveryTimeSlotFilterProps
           onClick={() => onChange('slot1')}
         >
           <CalendarClock className="h-4 w-4 mr-2" />
-          10:00-13:00
+          Slot 1 (10:00-13:00)
         </Button>
         
         <Button
@@ -77,7 +77,7 @@ const DeliveryTimeSlotFilter = ({ value, onChange }: DeliveryTimeSlotFilterProps
           onClick={() => onChange('slot2')}
         >
           <CalendarClock className="h-4 w-4 mr-2" />
-          13:00-16:00
+          Slot 2 (13:00-16:00)
         </Button>
         
         <Button
@@ -90,7 +90,7 @@ const DeliveryTimeSlotFilter = ({ value, onChange }: DeliveryTimeSlotFilterProps
           onClick={() => onChange('slot3')}
         >
           <CalendarClock className="h-4 w-4 mr-2" />
-          16:00-20:00
+          Slot 3 (16:00-20:00)
         </Button>
       </div>
     </div>
