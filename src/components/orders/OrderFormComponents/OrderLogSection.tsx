@@ -1,9 +1,8 @@
-
 import { useState } from "react";
 import { OrderLogEvent } from "@/types";
 import { formatDistanceToNow, format, differenceInMinutes, differenceInHours, differenceInDays } from "date-fns";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { StatusBadge } from "@/components/orders/StatusBadge";
+import StatusBadge from "@/components/orders/StatusBadge";
 import { Info, FileText, Clock, Calendar } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
