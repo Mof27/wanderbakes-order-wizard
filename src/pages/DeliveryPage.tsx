@@ -12,12 +12,13 @@ import { startOfDay, endOfDay, addDays, format, isBefore, isAfter, parseISO, add
 import { Link } from "react-router-dom";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { CalendarClock, Upload, CheckSquare2, XCircle } from "lucide-react";
+import { CalendarClock, Upload, CheckSquare2, XCircle, User, Car, ExternalLink, Truck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import DeliveryStatusManager from "@/components/delivery/DeliveryStatusManager";
 import StatusBadge from "@/components/orders/StatusBadge";
 import CakePhotoUploadDialog from "@/components/orders/CakePhotoUploadDialog";
 import CakePhotoApprovalDialog from "@/components/orders/CakePhotoApprovalDialog";
+import DriverAssignmentDialog from "@/components/delivery/DriverAssignmentDialog";
 
 // Helper function to determine the time slot background color
 const getTimeSlotColor = (timeSlot?: string): string => {
@@ -109,6 +110,44 @@ const getOrderTimeStatus = (order: Order): 'late' | 'within-2-hours' | null => {
   return null;
 };
 
+// Helper function to get driver badge based on delivery assignment
+const getDriverBadge = (order: Order) => {
+  if (!order.deliveryAssignment) return null;
+  
+  const { driverType, driverName } = order.deliveryAssignment;
+  let icon;
+  let label;
+  
+  switch (driverType) {
+    case "driver-1":
+      icon = <Car className="h-4 w-4 mr-1" />;
+      label = "Driver 1";
+      return (
+        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+          {icon} {label}
+        </Badge>
+      );
+    case "driver-2":
+      icon = <Car className="h-4 w-4 mr-1" />;
+      label = "Driver 2";
+      return (
+        <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-200">
+          {icon} {label}
+        </Badge>
+      );
+    case "3rd-party":
+      icon = <ExternalLink className="h-4 w-4 mr-1" />;
+      label = driverName || "3rd Party";
+      return (
+        <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+          {icon} {label}
+        </Badge>
+      );
+    default:
+      return null;
+  }
+};
+
 const DeliveryPage = () => {
   const { orders } = useApp();
   const [dateFilter, setDateFilter] = useState<'today' | 'tomorrow' | 'd-plus-2' | 'all'>('today');
@@ -116,9 +155,10 @@ const DeliveryPage = () => {
   const [timeSlotFilter, setTimeSlotFilter] = useState<'all' | 'late' | 'within-2-hours' | 'slot1' | 'slot2' | 'slot3'>('all');
   const [refreshKey, setRefreshKey] = useState(0);
   
-  // Add state for photo dialogs
+  // Add state for dialogs
   const [photoUploadDialogOpen, setPhotoUploadDialogOpen] = useState(false);
   const [photoApprovalDialogOpen, setPhotoApprovalDialogOpen] = useState(false);
+  const [driverAssignmentDialogOpen, setDriverAssignmentDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   // Force a refresh of the component when an order status changes
@@ -138,10 +178,22 @@ const DeliveryPage = () => {
     setPhotoApprovalDialogOpen(true);
   };
   
+  // Handle opening the driver assignment dialog
+  const handleOpenDriverDialog = (order: Order) => {
+    setSelectedOrder(order);
+    setDriverAssignmentDialogOpen(true);
+  };
+  
   // Handle when photo upload is successful
   const handlePhotoSuccess = () => {
     setPhotoUploadDialogOpen(false);
     setPhotoApprovalDialogOpen(false);
+    handleStatusChange();
+  };
+  
+  // Handle successful driver assignment
+  const handleDriverAssignmentSuccess = () => {
+    setDriverAssignmentDialogOpen(false);
     handleStatusChange();
   };
 
@@ -377,6 +429,12 @@ const DeliveryPage = () => {
                   <TableHead className="w-[80px]">Order ID</TableHead>
                   <TableHead className="w-[120px]">Status</TableHead>
                   <TableHead className="w-[120px]">Delivery Method</TableHead>
+                  <TableHead className="w-[130px]">
+                    <div className="flex items-center">
+                      <User className="h-4 w-4 mr-2" />
+                      Driver
+                    </div>
+                  </TableHead>
                   <TableHead className="w-[150px]">
                     <div className="flex items-center">
                       <CalendarClock className="h-4 w-4 mr-2" />
@@ -394,6 +452,8 @@ const DeliveryPage = () => {
                   const isWaitingForPhoto = isWaitingPhoto(order.status);
                   const isPendingForApproval = isPendingApproval(order.status);
                   const isNeedingRevision = isNeedsRevision(order.status);
+                  const isReadyToDeliver = matchesStatus(order.status, 'ready-to-deliver');
+                  const hasDriverAssignment = !!order.deliveryAssignment;
                   
                   return (
                     <TableRow 
@@ -417,6 +477,11 @@ const DeliveryPage = () => {
                           </Badge>
                         ) : (
                           '-'
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {getDriverBadge(order) || (
+                          <span className="text-muted-foreground">Not assigned</span>
                         )}
                       </TableCell>
                       <TableCell>
@@ -465,7 +530,16 @@ const DeliveryPage = () => {
                             </Link>
                           </Button>
                           
-                          {isStatusActionableInDelivery(order.status) ? (
+                          {isReadyToDeliver && !hasDriverAssignment ? (
+                            <Button 
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleOpenDriverDialog(order)}
+                              className="bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200"
+                            >
+                              <User className="h-4 w-4 mr-1" /> Assign Driver
+                            </Button>
+                          ) : isStatusActionableInDelivery(order.status) ? (
                             isNeedingRevision ? (
                               <Button 
                                 variant="outline"
@@ -525,7 +599,7 @@ const DeliveryPage = () => {
         )}
       </div>
       
-      {/* Cake Photo Upload Dialog */}
+      {/* Dialogs */}
       {selectedOrder && (
         <>
           <CakePhotoUploadDialog 
@@ -540,6 +614,13 @@ const DeliveryPage = () => {
             open={photoApprovalDialogOpen}
             onClose={() => setPhotoApprovalDialogOpen(false)}
             onSuccess={handlePhotoSuccess}
+          />
+          
+          <DriverAssignmentDialog
+            order={selectedOrder}
+            open={driverAssignmentDialogOpen}
+            onOpenChange={setDriverAssignmentDialogOpen}
+            onSuccess={handleDriverAssignmentSuccess}
           />
         </>
       )}

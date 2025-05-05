@@ -1,5 +1,4 @@
-
-import { Order, OrderStatus, PrintEvent, OrderLogEvent, CakeRevision } from "@/types";
+import { Order, OrderStatus, PrintEvent, OrderLogEvent, CakeRevision, DeliveryAssignment } from "@/types";
 import { BaseRepository } from "./base.repository";
 
 export interface OrderRepository extends BaseRepository<Order> {
@@ -8,7 +7,8 @@ export interface OrderRepository extends BaseRepository<Order> {
   getByTimeFrame(timeFrame: 'today' | 'this-week' | 'this-month'): Promise<Order[]>;
   updatePrintHistory(orderId: string, printEvent: PrintEvent): Promise<Order>;
   addOrderLog(orderId: string, logEvent: Omit<OrderLogEvent, 'id'>): Promise<Order>;
-  addRevision(orderId: string, revision: Omit<CakeRevision, 'id'>): Promise<Order>; // New method
+  addRevision(orderId: string, revision: Omit<CakeRevision, 'id'>): Promise<Order>;
+  assignDriver(orderId: string, assignment: Omit<DeliveryAssignment, 'assignedAt'>): Promise<Order>; // New method
 }
 
 export class MockOrderRepository implements OrderRepository {
@@ -208,6 +208,37 @@ export class MockOrderRepository implements OrderRepository {
       ...this.orders[index],
       revisionHistory,
       revisionCount,
+      updatedAt: new Date()
+    };
+    
+    return this.orders[index];
+  }
+  
+  async assignDriver(orderId: string, assignment: Omit<DeliveryAssignment, 'assignedAt'>): Promise<Order> {
+    const index = this.orders.findIndex(o => o.id === orderId);
+    if (index === -1) throw new Error(`Order with id ${orderId} not found`);
+    
+    // Create complete assignment object with timestamp
+    const completeAssignment: DeliveryAssignment = {
+      ...assignment,
+      assignedAt: new Date()
+    };
+    
+    // Add log entry for driver assignment
+    const orderLogs = [...(this.orders[index].orderLogs || [])];
+    orderLogs.push({
+      id: `log_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+      timestamp: new Date(),
+      type: 'driver-assigned',
+      note: `Assigned to ${assignment.driverType}${assignment.driverName ? ` (${assignment.driverName})` : ''}`,
+      metadata: { assignment }
+    });
+    
+    // Update order with new assignment and logs
+    this.orders[index] = {
+      ...this.orders[index],
+      deliveryAssignment: completeAssignment,
+      orderLogs,
       updatedAt: new Date()
     };
     

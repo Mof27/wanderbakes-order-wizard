@@ -5,18 +5,26 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatDate, cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
-import { MapPin, Truck, Package, Calendar, CheckCircle2, Clock, CheckSquare2, XCircle } from "lucide-react";
+import { MapPin, Truck, Package, Calendar, CheckCircle2, Clock, CheckSquare2, XCircle, User, Car, ExternalLink } from "lucide-react";
 import { matchesStatus, isInApprovalFlow } from "@/lib/statusHelpers";
+import { useState } from "react";
+import DriverAssignmentDialog from "./DriverAssignmentDialog";
 
 interface DeliveryCardProps {
   order: Order;
+  onStatusChange?: () => void;
 }
 
-const DeliveryCard = ({ order }: DeliveryCardProps) => {
+const DeliveryCard = ({ order, onStatusChange }: DeliveryCardProps) => {
+  const [showDriverDialog, setShowDriverDialog] = useState(false);
+  
   const isReady = matchesStatus(order.status, 'ready-to-deliver');
   const isInTransit = matchesStatus(order.status, 'in-delivery');
   const isPendingApproval = matchesStatus(order.status, 'pending-approval');
   const isNeedsRevision = matchesStatus(order.status, 'needs-revision');
+  
+  // Check if order has a driver assignment
+  const hasDriverAssignment = !!order.deliveryAssignment;
   
   const getStatusBadge = () => {
     if (isPendingApproval) {
@@ -61,6 +69,47 @@ const DeliveryCard = ({ order }: DeliveryCardProps) => {
     }
     return null;
   };
+  
+  // Get driver badge if driver is assigned
+  const getDriverBadge = () => {
+    if (!order.deliveryAssignment) return null;
+    
+    const { driverType, driverName } = order.deliveryAssignment;
+    
+    let icon = <Truck className="h-3 w-3 mr-1" />;
+    let label = "Unknown";
+    let color = "";
+    
+    switch (driverType) {
+      case "driver-1":
+        icon = <Car className="h-3 w-3 mr-1" />;
+        label = "Driver 1";
+        color = "bg-blue-100 text-blue-800 hover:bg-blue-200";
+        break;
+      case "driver-2":
+        icon = <Car className="h-3 w-3 mr-1" />;
+        label = "Driver 2";
+        color = "bg-indigo-100 text-indigo-800 hover:bg-indigo-200";
+        break;
+      case "3rd-party":
+        icon = <ExternalLink className="h-3 w-3 mr-1" />;
+        label = driverName || "3rd Party";
+        color = "bg-purple-100 text-purple-800 hover:bg-purple-200";
+        break;
+    }
+    
+    return (
+      <Badge className={cn(color)}>
+        {icon} {label}
+      </Badge>
+    );
+  };
+
+  // Handle driver dialog
+  const handleDriverSuccess = () => {
+    setShowDriverDialog(false);
+    if (onStatusChange) onStatusChange();
+  };
 
   return (
     <Card className={cn(
@@ -73,11 +122,14 @@ const DeliveryCard = ({ order }: DeliveryCardProps) => {
           {getStatusBadge()}
           {getRevisionBadge()}
         </div>
-        {order.deliveryMethod && (
-          <Badge variant="outline" className="capitalize">
-            {order.deliveryMethod === 'flat-rate' ? 'Shop Delivery' : order.deliveryMethod}
-          </Badge>
-        )}
+        <div className="flex items-center gap-2">
+          {getDriverBadge()}
+          {order.deliveryMethod && (
+            <Badge variant="outline" className="capitalize">
+              {order.deliveryMethod === 'flat-rate' ? 'Shop Delivery' : order.deliveryMethod}
+            </Badge>
+          )}
+        </div>
       </CardHeader>
       
       <CardContent className="p-4 space-y-3">
@@ -124,6 +176,13 @@ const DeliveryCard = ({ order }: DeliveryCardProps) => {
             <span>{order.cakeSize} {order.cakeShape}, {order.cakeFlavor}</span>
           </div>
         </div>
+        
+        {order.deliveryAssignment?.notes && (
+          <div className="p-2 bg-muted rounded text-sm">
+            <p className="font-medium mb-1">Delivery Instructions:</p>
+            <p className="text-muted-foreground">{order.deliveryAssignment.notes}</p>
+          </div>
+        )}
       </CardContent>
       
       <CardFooter className="bg-muted px-4 py-3 flex justify-between">
@@ -162,16 +221,36 @@ const DeliveryCard = ({ order }: DeliveryCardProps) => {
             </Button>
           )}
           
-          {isReady && (
+          {isReady && !hasDriverAssignment && (
             <Button 
               size="sm"
-              className="bg-orange-600 hover:bg-orange-700 text-white"
-              asChild
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+              onClick={() => setShowDriverDialog(true)}
             >
-              <Link to={`/orders/${order.id}?tab=delivery-recap`}>
-                <Truck className="h-4 w-4 mr-1" /> Start Delivery
-              </Link>
+              <User className="h-4 w-4 mr-1" /> Assign Driver
             </Button>
+          )}
+          
+          {isReady && hasDriverAssignment && (
+            <>
+              <Button 
+                size="sm"
+                variant="outline"
+                onClick={() => setShowDriverDialog(true)}
+              >
+                <User className="h-4 w-4 mr-1" /> Change Driver
+              </Button>
+              
+              <Button 
+                size="sm"
+                className="bg-orange-600 hover:bg-orange-700 text-white"
+                asChild
+              >
+                <Link to={`/orders/${order.id}?tab=delivery-recap&action=start-delivery`}>
+                  <Truck className="h-4 w-4 mr-1" /> Start Delivery
+                </Link>
+              </Button>
+            </>
           )}
           
           {isInTransit && (
@@ -187,6 +266,13 @@ const DeliveryCard = ({ order }: DeliveryCardProps) => {
           )}
         </div>
       </CardFooter>
+      
+      <DriverAssignmentDialog 
+        open={showDriverDialog}
+        onOpenChange={setShowDriverDialog}
+        order={order}
+        onSuccess={handleDriverSuccess}
+      />
     </Card>
   );
 };

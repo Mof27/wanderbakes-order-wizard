@@ -3,12 +3,13 @@ import { useState } from "react";
 import { useApp } from "@/context/AppContext";
 import { Order, OrderStatus } from "@/types";
 import { Button } from "@/components/ui/button";
-import { Truck, CheckCircle2, MessageSquare, Clock, CheckSquare2, XCircle } from "lucide-react";
+import { Truck, CheckCircle2, MessageSquare, Clock, CheckSquare2, XCircle, User } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 import { matchesStatus } from "@/lib/statusHelpers";
 import DeliveryInfoDialog from "./DeliveryInfoDialog";
 import FeedbackDialog from "@/components/orders/FeedbackDialog";
 import CakePhotoApprovalDialog from "@/components/orders/CakePhotoApprovalDialog";
+import DriverAssignmentDialog from "./DriverAssignmentDialog";
 
 interface DeliveryStatusManagerProps {
   order: Order;
@@ -26,6 +27,7 @@ const DeliveryStatusManager = ({
   const [showInfoDialog, setShowInfoDialog] = useState(false);
   const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
   const [showApprovalDialog, setShowApprovalDialog] = useState(false);
+  const [showDriverDialog, setShowDriverDialog] = useState(false);
   
   // Get current status
   const isReady = matchesStatus(order.status, 'ready-to-deliver');
@@ -33,6 +35,9 @@ const DeliveryStatusManager = ({
   const isWaitingFeedback = matchesStatus(order.status, 'waiting-feedback');
   const isPendingApproval = matchesStatus(order.status, 'pending-approval');
   const isNeedsRevision = matchesStatus(order.status, 'needs-revision');
+  
+  // Check if driver is assigned
+  const hasDriverAssignment = !!order.deliveryAssignment;
   
   // Function to update the status
   const updateStatus = async (newStatus: OrderStatus) => {
@@ -69,6 +74,7 @@ const DeliveryStatusManager = ({
   const openDeliveryInfoDialog = () => setShowInfoDialog(true);
   const openFeedbackDialog = () => setShowFeedbackDialog(true);
   const openApprovalDialog = () => setShowApprovalDialog(true);
+  const openDriverDialog = () => setShowDriverDialog(true);
   
   // Pending approval -> open approval dialog
   if (isPendingApproval) {
@@ -109,19 +115,61 @@ const DeliveryStatusManager = ({
     );
   }
 
-  // Ready to deliver -> Start delivery button
+  // Ready to deliver -> show driver assignment or start delivery buttons
   if (isReady) {
+    // If we have a driver assignment, show start delivery button
+    if (hasDriverAssignment) {
+      return (
+        <>
+          <div className="flex items-center gap-2">
+            <Button 
+              size={compact ? "sm" : "default"}
+              variant="outline"
+              onClick={openDriverDialog}
+            >
+              <User className={`h-4 w-4 ${compact ? '' : 'mr-1'}`} />
+              {!compact && "Change Driver"}
+            </Button>
+            
+            <Button 
+              size={compact ? "sm" : "default"}
+              className={`bg-orange-600 hover:bg-orange-700 text-white ${isUpdating ? 'opacity-70' : ''}`}
+              disabled={isUpdating}
+              onClick={() => updateStatus('in-delivery')}
+            >
+              <Truck className={`h-4 w-4 ${compact ? '' : 'mr-1'}`} /> 
+              {!compact && "Start Delivery"}
+            </Button>
+          </div>
+          
+          <DriverAssignmentDialog 
+            open={showDriverDialog}
+            onOpenChange={setShowDriverDialog}
+            order={order}
+            onSuccess={onStatusChange}
+          />
+        </>
+      );
+    }
+    
+    // No driver assignment yet, show assign driver button
     return (
       <>
         <Button 
           size={compact ? "sm" : "default"}
-          className={`bg-orange-600 hover:bg-orange-700 text-white ${isUpdating ? 'opacity-70' : ''}`}
-          disabled={isUpdating}
-          onClick={() => updateStatus('in-delivery')}
+          className={`bg-blue-600 hover:bg-blue-700 text-white ${isUpdating ? 'opacity-70' : ''}`}
+          onClick={openDriverDialog}
         >
-          <Truck className={`h-4 w-4 ${compact ? '' : 'mr-1'}`} /> 
-          {!compact && "Start Delivery"}
+          <User className={`h-4 w-4 ${compact ? '' : 'mr-1'}`} /> 
+          {!compact && "Assign Driver"}
         </Button>
+        
+        <DriverAssignmentDialog 
+          open={showDriverDialog}
+          onOpenChange={setShowDriverDialog}
+          order={order}
+          onSuccess={onStatusChange}
+        />
       </>
     );
   }

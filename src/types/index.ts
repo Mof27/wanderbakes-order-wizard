@@ -62,8 +62,19 @@ export interface CustomColor {
 export type CakeColor = SolidColor | GradientColor | CustomColor;
 
 export type DeliveryMethod = 'flat-rate' | 'lalamove' | 'self-pickup';
+export type DriverType = 'driver-1' | 'driver-2' | '3rd-party';
 
 export type FlatRateTimeSlot = 'slot1' | 'slot2' | 'slot3';
+
+// New type for delivery assignment
+export interface DeliveryAssignment {
+  driverType: DriverType;
+  driverName?: string; // Optional for 3rd-party driver names
+  assignedAt: Date;
+  assignedBy?: string;
+  notes?: string; // Optional delivery instructions
+  status?: 'pending' | 'in-progress' | 'completed';
+}
 
 // New type for print event tracking
 export interface PrintEvent {
@@ -76,7 +87,7 @@ export interface PrintEvent {
 export interface OrderLogEvent {
   id: string;
   timestamp: Date;
-  type: 'status-change' | 'photo-upload' | 'note-added' | 'delivery-update' | 'feedback-added' | 'print';
+  type: 'status-change' | 'photo-upload' | 'note-added' | 'delivery-update' | 'feedback-added' | 'print' | 'driver-assigned';
   previousStatus?: OrderStatus;
   newStatus?: OrderStatus;
   user?: string;
@@ -143,6 +154,9 @@ export type Order = {
   revisionNotes?: string;
   approvedBy?: string;
   approvalDate?: Date;
+  
+  // New field for driver assignment
+  deliveryAssignment?: DeliveryAssignment;
 };
 
 export type Ingredient = {
