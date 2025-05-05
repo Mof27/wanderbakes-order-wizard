@@ -466,11 +466,22 @@ const DeliveryPage = () => {
                           </Button>
                           
                           {isStatusActionableInDelivery(order.status) ? (
-                            <DeliveryStatusManager 
-                              order={order} 
-                              onStatusChange={handleStatusChange}
-                              compact={true}
-                            />
+                            isNeedingRevision ? (
+                              <Button 
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleOpenPhotoDialog(order)}
+                                className="bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-200"
+                              >
+                                <Upload className="h-4 w-4 mr-1" /> Upload Revision
+                              </Button>
+                            ) : (
+                              <DeliveryStatusManager 
+                                order={order} 
+                                onStatusChange={handleStatusChange}
+                                compact={true}
+                              />
+                            )
                           ) : isWaitingForPhoto ? (
                             <Button 
                               variant="outline"
