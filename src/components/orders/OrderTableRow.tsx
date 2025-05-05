@@ -8,10 +8,16 @@ import StatusBadge from "./StatusBadge";
 interface OrderTableRowProps {
   order: Order;
   onClick?: () => void;
-  customActions?: React.ReactNode; // Add this prop for custom actions
+  customActions?: React.ReactNode;
+  useWorkflowStatus?: boolean; // Add this prop for workflow status display
 }
 
-const OrderTableRow: React.FC<OrderTableRowProps> = ({ order, onClick, customActions }) => {
+const OrderTableRow: React.FC<OrderTableRowProps> = ({ 
+  order, 
+  onClick, 
+  customActions,
+  useWorkflowStatus = true // Default to showing workflow status in Orders page
+}) => {
   const navigate = useNavigate();
 
   const handleClick = () => {
@@ -30,7 +36,10 @@ const OrderTableRow: React.FC<OrderTableRowProps> = ({ order, onClick, customAct
       <TableCell>#{order.id.substring(order.id.length - 5)}</TableCell>
       <TableCell>{order.customer.name}</TableCell>
       <TableCell>
-        <StatusBadge status={order.status} />
+        <StatusBadge 
+          status={order.status} 
+          useWorkflowStatus={useWorkflowStatus} 
+        />
       </TableCell>
       <TableCell>
         {new Date(order.deliveryDate).toLocaleDateString('en-US', {

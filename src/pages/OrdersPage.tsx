@@ -22,6 +22,7 @@ import {
 import { toast } from "@/components/ui/sonner";
 import CakePhotoUploadDialog from "@/components/orders/CakePhotoUploadDialog";
 import DeliveryInfoDialog from "@/components/delivery/DeliveryInfoDialog";
+import { getWorkflowStatus } from "@/lib/statusHelpers";
 
 const OrdersPage = () => {
   const { orders, setDateRange, dateRange, updateOrder } = useApp();
@@ -36,7 +37,7 @@ const OrdersPage = () => {
   const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
   const [selectedOrderForFeedback, setSelectedOrderForFeedback] = useState<Order | null>(null);
   
-  // Create status filter options - removed "delivery-confirmed" as it's now redundant
+  // Create status filter options - updated to match workflow statuses
   const statusOptions: FilterOption[] = [
     { id: 'all', label: 'All Orders', value: 'all' },
     { id: 'incomplete', label: 'Incomplete', value: 'incomplete' },
@@ -71,9 +72,12 @@ const OrdersPage = () => {
       });
     }
     
-    // Filter by status if not "all"
+    // Filter by status if not "all" - using workflow status for consistency
     if (selectedStatusOption.value !== 'all') {
-      result = result.filter(order => order.status === selectedStatusOption.value);
+      result = result.filter(order => {
+        // Use the workflow status helper to map granular statuses to parent workflow status
+        return getWorkflowStatus(order.status) === selectedStatusOption.value;
+      });
     }
     
     setFilteredOrders(result);

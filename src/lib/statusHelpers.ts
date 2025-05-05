@@ -50,3 +50,17 @@ export const isInDeliveryStatus = (orderStatus: OrderStatus): boolean => {
 export const shouldShowInAllStatusesDelivery = (orderStatus: OrderStatus): boolean => {
   return !["cancelled", "finished", "archived"].includes(orderStatus);
 };
+
+/**
+ * Helper function to get simplified workflow status for Orders page display and filtering
+ * This maps granular statuses to their parent workflow status
+ */
+export const getWorkflowStatus = (orderStatus: OrderStatus): string => {
+  // All delivery-related statuses map to "in-delivery" for Orders page
+  if (orderStatus === "ready-to-deliver" || orderStatus === "in-delivery") {
+    return "in-delivery";
+  }
+  
+  // For other statuses, return as is
+  return orderStatus;
+};

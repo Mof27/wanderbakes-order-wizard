@@ -7,6 +7,7 @@ import { OrderStatus } from "@/types";
 interface StatusBadgeProps {
   status: OrderStatus;
   className?: string;
+  useWorkflowStatus?: boolean; // New prop to optionally use simplified workflow status
 }
 
 // Status color mapping function - consolidated from multiple components
@@ -49,15 +50,22 @@ export const formatStatusLabel = (status: string): string => {
 const StatusBadge: React.FC<StatusBadgeProps> = ({
   status,
   className,
+  useWorkflowStatus = false,
 }) => {
+  // For Orders page view, map delivery statuses to "In Delivery"
+  const displayStatus = useWorkflowStatus && 
+    (status === "ready-to-deliver" || status === "in-delivery") 
+      ? "in-delivery" 
+      : status;
+
   return (
     <Badge 
       className={cn(
-        getStatusColor(status),
+        getStatusColor(displayStatus),
         className
       )}
     >
-      {formatStatusLabel(status)}
+      {formatStatusLabel(displayStatus)}
     </Badge>
   );
 };

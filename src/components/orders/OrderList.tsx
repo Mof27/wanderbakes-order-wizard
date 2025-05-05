@@ -6,10 +6,16 @@ import OrderTableRow from "./OrderTableRow";
 interface OrderListProps {
   orders: Order[];
   onOrderClick?: (orderId: string) => void;
-  renderActions?: (order: Order) => React.ReactNode; // Add this line to support custom action rendering
+  renderActions?: (order: Order) => React.ReactNode;
+  useWorkflowStatus?: boolean; // Add this prop to control status display
 }
 
-const OrderList = ({ orders, onOrderClick, renderActions }: OrderListProps) => {
+const OrderList = ({ 
+  orders, 
+  onOrderClick, 
+  renderActions,
+  useWorkflowStatus = true // Default to using workflow status in Orders page
+}: OrderListProps) => {
   if (orders.length === 0) {
     return (
       <div className="text-center py-10">
@@ -38,7 +44,8 @@ const OrderList = ({ orders, onOrderClick, renderActions }: OrderListProps) => {
               key={order.id} 
               order={order} 
               onClick={() => onOrderClick && onOrderClick(order.id)}
-              customActions={renderActions ? renderActions(order) : undefined} // Pass custom actions to the row
+              customActions={renderActions ? renderActions(order) : undefined}
+              useWorkflowStatus={useWorkflowStatus}
             />
           ))}
         </TableBody>
