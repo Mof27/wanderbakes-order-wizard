@@ -685,7 +685,7 @@ const OrderForm = ({ order, settings, defaultTab = "required", onStatusChange, r
   return (
     <div className="space-y-6">
       {readOnly && (
-        <Alert variant="warning" className="bg-amber-50 border-amber-200">
+        <Alert variant="default" className="bg-amber-50 border-amber-200">
           <Archive className="h-4 w-4" />
           <AlertTitle>Read-Only Mode</AlertTitle>
           <p>This archived order cannot be modified when accessed from Customer Records. 

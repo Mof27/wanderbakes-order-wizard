@@ -7,9 +7,10 @@ import { useEffect, useState } from "react";
 interface CakePriceSectionProps {
   cakePrice: number;
   onPriceChange: (price: number) => void;
+  readOnly?: boolean;
 }
 
-const CakePriceSection = ({ cakePrice, onPriceChange }: CakePriceSectionProps) => {
+const CakePriceSection = ({ cakePrice, onPriceChange, readOnly = false }: CakePriceSectionProps) => {
   const [displayValue, setDisplayValue] = useState<string>("");
 
   // Format the initial price value
@@ -54,6 +55,7 @@ const CakePriceSection = ({ cakePrice, onPriceChange }: CakePriceSectionProps) =
           onBlur={handleBlur}
           className="pl-10"
           required
+          disabled={readOnly}
         />
       </div>
     </div>

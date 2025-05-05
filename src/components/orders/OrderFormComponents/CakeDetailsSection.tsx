@@ -43,6 +43,7 @@ interface CakeDetailsSectionProps {
   handleToggleSameCover: (checked: boolean) => void;
   handleTierDetailChange: (tierIndex: number, field: keyof TierDetail, value: string | CakeColor | CoverType) => void;
   setActiveTab: (tab: string) => void;
+  readOnly?: boolean;
 }
 
 const CakeDetailsSection = ({
@@ -63,7 +64,8 @@ const CakeDetailsSection = ({
   handleToggleSameFlavor,
   handleToggleSameCover,
   handleTierDetailChange,
-  setActiveTab
+  setActiveTab,
+  readOnly = false
 }: CakeDetailsSectionProps) => {
   // Convert legacy string color to CakeColor object if needed
   const coverColor = formData.coverColor;
@@ -85,6 +87,7 @@ const CakeDetailsSection = ({
                 value={formData.cakeDesign}
                 onChange={handleInputChange}
                 placeholder="Description of cake design"
+                disabled={readOnly}
               />
             </div>
 
@@ -93,6 +96,7 @@ const CakeDetailsSection = ({
               <Select 
                 value={cakeFlavor} 
                 onValueChange={(value) => setCakeFlavor(value)}
+                disabled={readOnly}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select cake flavor" />
@@ -111,8 +115,9 @@ const CakeDetailsSection = ({
               <ToggleGroup
                 type="single"
                 value={formData.cakeShape}
-                onValueChange={(value) => value && handleSelectChange("cakeShape", value)}
+                onValueChange={(value) => value && !readOnly && handleSelectChange("cakeShape", value)}
                 className="justify-start"
+                disabled={readOnly}
               >
                 <ToggleGroupItem value="Round" aria-label="Round" className="px-4 py-2 flex gap-2 items-center">
                   <Circle className="h-4 w-4" />
@@ -139,6 +144,7 @@ const CakeDetailsSection = ({
                   value={formData.customShape || ""}
                   onChange={handleInputChange}
                   placeholder="Describe the custom cake shape"
+                  disabled={readOnly}
                 />
               </div>
             )}
@@ -208,6 +214,7 @@ const CakeDetailsSection = ({
                     value={formData.coverType || "buttercream"}
                     onValueChange={(value) => value && handleCoverTypeChange(value as CoverType)}
                     className="justify-start"
+                    disabled={readOnly}
                   >
                     <ToggleGroupItem value="buttercream" aria-label="Buttercream" className="px-4 py-2 flex gap-2 items-center">
                       <Droplet className="h-4 w-4" />
@@ -266,6 +273,7 @@ const CakeDetailsSection = ({
                         value={formData.coverType || "buttercream"}
                         onValueChange={(value) => value && handleCoverTypeChange(value as CoverType)}
                         className="justify-start"
+                        disabled={readOnly}
                       >
                         <ToggleGroupItem value="buttercream" aria-label="Buttercream" className="px-4 py-2 flex gap-2 items-center">
                           <Droplet className="h-4 w-4" />
@@ -304,6 +312,7 @@ const CakeDetailsSection = ({
                             value={tierDetails[index]?.shape || "Round"}
                             onValueChange={(value) => value && handleTierDetailChange(index, "shape", value)}
                             className="justify-start"
+                            disabled={readOnly}
                           >
                             <ToggleGroupItem value="Round" aria-label="Round" className="px-3 py-1 flex gap-1 items-center text-sm">
                               <Circle className="h-3 w-3" />
@@ -329,6 +338,7 @@ const CakeDetailsSection = ({
                               value={tierDetails[index]?.customShape || ""}
                               onChange={(e) => handleTierDetailChange(index, "customShape", e.target.value)}
                               placeholder="Describe the custom cake shape"
+                              disabled={readOnly}
                             />
                           </div>
                         )}
@@ -399,6 +409,7 @@ const CakeDetailsSection = ({
                                 value={tierDetails[index]?.coverType || "buttercream"}
                                 onValueChange={(value) => value && handleTierDetailChange(index, "coverType", value as CoverType)}
                                 className="justify-start"
+                                disabled={readOnly}
                               >
                                 <ToggleGroupItem value="buttercream" aria-label="Buttercream" className="px-3 py-1 flex gap-1 items-center text-sm">
                                   <Droplet className="h-3 w-3" />

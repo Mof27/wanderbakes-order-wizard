@@ -12,13 +12,15 @@ interface DateSelectionSectionProps {
   setOrderDate: (date: Date | undefined) => void;
   deliveryDate: Date | undefined;
   setDeliveryDate: (date: Date | undefined) => void;
+  readOnly?: boolean;
 }
 
 const DateSelectionSection = ({ 
   orderDate, 
   setOrderDate, 
   deliveryDate, 
-  setDeliveryDate 
+  setDeliveryDate,
+  readOnly = false
 }: DateSelectionSectionProps) => {
   return (
     <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
@@ -26,13 +28,14 @@ const DateSelectionSection = ({
       <div className="space-y-2">
         <Label htmlFor="orderDate">Order Date *</Label>
         <Popover>
-          <PopoverTrigger asChild>
+          <PopoverTrigger asChild disabled={readOnly}>
             <Button
               variant="outline"
               className={cn(
                 "w-full justify-start text-left font-normal",
                 !orderDate && "text-muted-foreground"
               )}
+              disabled={readOnly}
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
               {orderDate ? (
@@ -54,7 +57,7 @@ const DateSelectionSection = ({
                 today.setHours(0, 0, 0, 0);
                 const threeDaysAgo = subDays(today, 3);
                 // Disable dates more than 3 days in the past or any future dates
-                return date < threeDaysAgo || date > today;
+                return date < threeDaysAgo || date > today || readOnly;
               }}
             />
           </PopoverContent>
@@ -64,13 +67,14 @@ const DateSelectionSection = ({
       <div className="space-y-2">
         <Label htmlFor="deliveryDate">Delivery Date *</Label>
         <Popover>
-          <PopoverTrigger asChild>
+          <PopoverTrigger asChild disabled={readOnly}>
             <Button
               variant="outline"
               className={cn(
                 "w-full justify-start text-left font-normal",
                 !deliveryDate && "text-muted-foreground"
               )}
+              disabled={readOnly}
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
               {deliveryDate ? (
@@ -87,6 +91,7 @@ const DateSelectionSection = ({
               onSelect={setDeliveryDate}
               initialFocus
               className="pointer-events-auto"
+              disabled={readOnly}
             />
           </PopoverContent>
         </Popover>

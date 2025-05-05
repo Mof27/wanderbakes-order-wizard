@@ -7,9 +7,10 @@ import { PackingItem } from "@/types";
 interface PackingSectionProps {
   packingItems: PackingItem[];
   handlePackingItemChange: (itemId: string, checked: boolean) => void;
+  readOnly?: boolean;
 }
 
-const PackingSection = ({ packingItems, handlePackingItemChange }: PackingSectionProps) => {
+const PackingSection = ({ packingItems, handlePackingItemChange, readOnly = false }: PackingSectionProps) => {
   return (
     <Card>
       <CardContent className="pt-6">
@@ -23,10 +24,11 @@ const PackingSection = ({ packingItems, handlePackingItemChange }: PackingSectio
                 onCheckedChange={(checked) => 
                   handlePackingItemChange(item.id, checked === true)
                 }
+                disabled={readOnly}
               />
               <Label 
                 htmlFor={`packing-${item.id}`}
-                className="cursor-pointer"
+                className={`${readOnly ? "" : "cursor-pointer"}`}
               >
                 {item.name}
               </Label>

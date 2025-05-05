@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -23,6 +22,7 @@ interface DeliveryRecapSectionProps {
   onFeedbackChange: (feedback: string) => void;
   onTagsChange: (tags: OrderTag[]) => void;
   onStatusChange?: (status: OrderStatus) => void;
+  readOnly?: boolean;
 }
 
 const availableTags: { value: OrderTag; label: string }[] = [
@@ -49,6 +49,7 @@ const DeliveryRecapSection: React.FC<DeliveryRecapSectionProps> = ({
   onFeedbackChange,
   onTagsChange,
   onStatusChange,
+  readOnly = false
 }) => {
   // Handle tag changes directly
   const handleTagChange = (tag: OrderTag, checked: boolean) => {
@@ -127,8 +128,8 @@ const DeliveryRecapSection: React.FC<DeliveryRecapSectionProps> = ({
                              status === 'finished' ||
                              customerFeedback !== '';
 
-  // Show Archive button only for finished orders
-  const showArchiveButton = status === 'finished';
+  // Show Archive button only for finished orders - hide if readOnly
+  const showArchiveButton = status === 'finished' && !readOnly;
 
   return (
     <div className="space-y-6">
@@ -149,8 +150,8 @@ const DeliveryRecapSection: React.FC<DeliveryRecapSectionProps> = ({
         </Alert>
       )}
       
-      {/* Archive button for finished orders */}
-      {showArchiveButton && (
+      {/* Archive button for finished orders - hide if readOnly */}
+      {showArchiveButton && !readOnly && (
         <div className="flex justify-end">
           <AlertDialog>
             <AlertDialogTrigger asChild>
@@ -258,7 +259,7 @@ const DeliveryRecapSection: React.FC<DeliveryRecapSectionProps> = ({
         </div>
       )}
       
-      {/* Order tags section */}
+      {/* Order tags section - make checkboxes respect readOnly */}
       <div className="space-y-3">
         <h3 className="text-lg font-medium">Order Tags</h3>
         <div className="grid grid-cols-2 gap-4">
@@ -267,7 +268,8 @@ const DeliveryRecapSection: React.FC<DeliveryRecapSectionProps> = ({
               <Checkbox
                 id={`tag-${tag.value}`}
                 checked={orderTags?.includes(tag.value)}
-                onCheckedChange={(checked) => handleTagChange(tag.value, checked === true)}
+                onCheckedChange={(checked) => !readOnly && handleTagChange(tag.value, checked === true)}
+                disabled={readOnly}
               />
               <Label htmlFor={`tag-${tag.value}`}>{tag.label}</Label>
             </div>
@@ -275,8 +277,8 @@ const DeliveryRecapSection: React.FC<DeliveryRecapSectionProps> = ({
         </div>
       </div>
       
-      {/* Add "Finish Order" button only for waiting-feedback status */}
-      {status === 'waiting-feedback' && customerFeedback.trim() && actualDeliveryTime && (
+      {/* Add "Finish Order" button only for waiting-feedback status - hide if readOnly */}
+      {status === 'waiting-feedback' && customerFeedback.trim() && actualDeliveryTime && !readOnly && (
         <div className="flex justify-end">
           <Button 
             className="bg-lime-600 hover:bg-lime-700"

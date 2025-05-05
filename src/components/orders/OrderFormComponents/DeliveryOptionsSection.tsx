@@ -35,6 +35,7 @@ interface DeliveryOptionsSectionProps {
   onMethodChange: (method: DeliveryMethod) => void;
   onTimeSlotChange: (timeSlot: string) => void;
   onPriceChange: (price: number) => void;
+  readOnly?: boolean;
 }
 
 const DeliveryOptionsSection = ({
@@ -43,7 +44,8 @@ const DeliveryOptionsSection = ({
   deliveryPrice,
   onMethodChange,
   onTimeSlotChange,
-  onPriceChange
+  onPriceChange,
+  readOnly = false
 }: DeliveryOptionsSectionProps) => {
   const [displayPrice, setDisplayPrice] = useState<string>("");
   
@@ -88,19 +90,20 @@ const DeliveryOptionsSection = ({
           type="single" 
           value={deliveryMethod} 
           onValueChange={(value) => {
-            if (value) onMethodChange(value as DeliveryMethod);
+            if (value && !readOnly) onMethodChange(value as DeliveryMethod);
           }}
           className="justify-start"
+          disabled={readOnly}
         >
-          <ToggleGroupItem value="flat-rate" aria-label="Flat Rate Delivery">
+          <ToggleGroupItem value="flat-rate" aria-label="Flat Rate Delivery" disabled={readOnly}>
             <Package className="h-4 w-4 mr-2" />
             Flat Rate
           </ToggleGroupItem>
-          <ToggleGroupItem value="lalamove" aria-label="Lalamove">
+          <ToggleGroupItem value="lalamove" aria-label="Lalamove" disabled={readOnly}>
             <Clock10 className="h-4 w-4 mr-2" />
             Lalamove
           </ToggleGroupItem>
-          <ToggleGroupItem value="self-pickup" aria-label="Self-Pickup">
+          <ToggleGroupItem value="self-pickup" aria-label="Self-Pickup" disabled={readOnly}>
             <UserRound className="h-4 w-4 mr-2" />
             Self-Pickup
           </ToggleGroupItem>
@@ -114,6 +117,7 @@ const DeliveryOptionsSection = ({
           <Select 
             value={deliveryTimeSlot} 
             onValueChange={onTimeSlotChange}
+            disabled={readOnly}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select delivery time slot" />
@@ -128,6 +132,7 @@ const DeliveryOptionsSection = ({
           <Select 
             value={deliveryTimeSlot} 
             onValueChange={onTimeSlotChange}
+            disabled={readOnly}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select delivery time" />
@@ -157,6 +162,7 @@ const DeliveryOptionsSection = ({
             onBlur={handleBlur}
             className="pl-10"
             required
+            disabled={readOnly}
           />
         </div>
       </div>

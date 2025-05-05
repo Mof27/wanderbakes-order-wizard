@@ -8,9 +8,10 @@ import CustomerSearch from "@/components/customers/CustomerSearch";
 interface CustomerSectionProps {
   customer: Customer | null;
   setCustomer: (customer: Customer | null) => void;
+  readOnly?: boolean;
 }
 
-const CustomerSection = ({ customer, setCustomer }: CustomerSectionProps) => {
+const CustomerSection = ({ customer, setCustomer, readOnly = false }: CustomerSectionProps) => {
   if (!customer) {
     return (
       <Card>
@@ -31,13 +32,15 @@ const CustomerSection = ({ customer, setCustomer }: CustomerSectionProps) => {
             <p className="text-sm text-muted-foreground">{customer.whatsappNumber}</p>
             {customer.email && <p className="text-sm">{customer.email}</p>}
           </div>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => setCustomer(null)}
-          >
-            Change
-          </Button>
+          {!readOnly && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setCustomer(null)}
+            >
+              Change
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>

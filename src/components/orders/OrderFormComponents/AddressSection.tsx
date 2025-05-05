@@ -21,6 +21,7 @@ interface AddressSectionProps {
   handleSelectChange: (name: string, value: string | number) => void;
   areaOptions: string[];
   openNewAddressDialog: () => void;
+  readOnly?: boolean;
 }
 
 const AddressSection = ({
@@ -32,7 +33,8 @@ const AddressSection = ({
   handleInputChange,
   handleSelectChange,
   areaOptions,
-  openNewAddressDialog
+  openNewAddressDialog,
+  readOnly = false
 }: AddressSectionProps) => {
   return (
     <div className="space-y-2">
@@ -42,6 +44,7 @@ const AddressSection = ({
         <Select 
           value={selectedAddressId || "new"} 
           onValueChange={setSelectedAddressId}
+          disabled={readOnly}
         >
           <SelectTrigger id="addressSelect" className="mb-2">
             <SelectValue placeholder="Select delivery address" />
@@ -93,6 +96,7 @@ const AddressSection = ({
                   placeholder="Full delivery address"
                   required
                   className="min-h-[80px]"
+                  disabled={readOnly}
                 />
               </div>
               
@@ -101,6 +105,7 @@ const AddressSection = ({
                 <Select 
                   value={formData.deliveryArea} 
                   onValueChange={(value) => handleSelectChange("deliveryArea", value)}
+                  disabled={readOnly}
                 >
                   <SelectTrigger id="deliveryArea">
                     <SelectValue placeholder="Select area" />
@@ -122,10 +127,11 @@ const AddressSection = ({
                   onChange={handleInputChange}
                   placeholder="Special delivery instructions"
                   className="min-h-[60px]"
+                  disabled={readOnly}
                 />
               </div>
               
-              {customer && (
+              {customer && !readOnly && (
                 <Button
                   type="button"
                   variant="outline"
