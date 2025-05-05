@@ -1,3 +1,4 @@
+
 import { useState, useMemo } from "react";
 import { useApp } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
@@ -316,7 +317,7 @@ const DeliveryPage = () => {
                             size="sm"
                             asChild
                           >
-                            <Link to={`/orders/${order.id}`}>
+                            <Link to={`/orders/${order.id}`} state={{ referrer: 'delivery' }}>
                               View Order
                             </Link>
                           </Button>
@@ -347,7 +348,8 @@ const DeliveryPage = () => {
                             >
                               <Link to={order.status === 'in-kitchen' 
                                 ? "/kitchen" 
-                                : `/orders/${order.id}`}>
+                                : `/orders/${order.id}`}
+                                state={{ referrer: 'delivery' }}>
                                 {order.status === 'in-kitchen' 
                                   ? "Go to Kitchen" 
                                   : "Manage Order"}
