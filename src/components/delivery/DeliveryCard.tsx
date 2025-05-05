@@ -3,7 +3,7 @@ import { Order } from "@/types";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { formatDate } from "@/lib/utils";
+import { formatDate, cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { MapPin, Truck, Package, Calendar, CheckCircle2, Clock, CheckSquare2, XCircle } from "lucide-react";
 import { matchesStatus, isInApprovalFlow } from "@/lib/statusHelpers";
