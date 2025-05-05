@@ -74,6 +74,7 @@ export interface DeliveryAssignment {
   assignedBy?: string;
   notes?: string; // Optional delivery instructions
   status?: 'pending' | 'in-progress' | 'completed';
+  isPreliminary?: boolean; // New field to indicate pre-assignment
 }
 
 // New type for print event tracking

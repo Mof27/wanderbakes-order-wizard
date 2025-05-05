@@ -8,7 +8,7 @@ export interface OrderRepository extends BaseRepository<Order> {
   updatePrintHistory(orderId: string, printEvent: PrintEvent): Promise<Order>;
   addOrderLog(orderId: string, logEvent: Omit<OrderLogEvent, 'id'>): Promise<Order>;
   addRevision(orderId: string, revision: Omit<CakeRevision, 'id'>): Promise<Order>;
-  assignDriver(orderId: string, assignment: Omit<DeliveryAssignment, 'assignedAt'>): Promise<Order>; // New method
+  assignDriver(orderId: string, assignment: Omit<DeliveryAssignment, 'assignedAt'>): Promise<Order>; // Method for driver assignment
 }
 
 export class MockOrderRepository implements OrderRepository {
@@ -230,7 +230,7 @@ export class MockOrderRepository implements OrderRepository {
       id: `log_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
       timestamp: new Date(),
       type: 'driver-assigned',
-      note: `Assigned to ${assignment.driverType}${assignment.driverName ? ` (${assignment.driverName})` : ''}`,
+      note: `${assignment.isPreliminary ? 'Pre-assigned' : 'Assigned'} to ${assignment.driverType}${assignment.driverName ? ` (${assignment.driverName})` : ''}`,
       metadata: { assignment }
     });
     

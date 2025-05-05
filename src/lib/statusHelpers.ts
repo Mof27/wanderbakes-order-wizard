@@ -1,4 +1,3 @@
-
 import { OrderStatus } from "@/types";
 
 /**
@@ -107,4 +106,19 @@ export const getRevisionStatusText = (order: { status: OrderStatus; revisionCoun
     return `Revision #${order.revisionCount} Pending Approval`;
   }
   return "Pending Approval";
+};
+
+/**
+ * Helper function to determine if an order has a preliminary driver assignment
+ */
+export const hasPreliminaryAssignment = (order: { deliveryAssignment?: { isPreliminary?: boolean } }): boolean => {
+  return !!order.deliveryAssignment?.isPreliminary;
+};
+
+/**
+ * Helper function to determine if an order can be pre-assigned to a driver
+ */
+export const canPreAssignDriver = (status: OrderStatus): boolean => {
+  // Orders in these statuses can have a driver pre-assigned
+  return ['in-queue', 'in-kitchen', 'waiting-photo', 'pending-approval'].includes(status);
 };

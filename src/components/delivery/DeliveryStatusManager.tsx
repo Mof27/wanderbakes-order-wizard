@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useApp } from "@/context/AppContext";
 import { Order, OrderStatus } from "@/types";
@@ -10,17 +9,20 @@ import DeliveryInfoDialog from "./DeliveryInfoDialog";
 import FeedbackDialog from "@/components/orders/FeedbackDialog";
 import CakePhotoApprovalDialog from "@/components/orders/CakePhotoApprovalDialog";
 import DriverAssignmentDialog from "./DriverAssignmentDialog";
+import NotesSection from "../orders/OrderFormComponents/NotesSection";
 
 interface DeliveryStatusManagerProps {
   order: Order;
   onStatusChange?: () => void; // Optional callback for when status changes
   compact?: boolean; // For more compact UI in table view
+  showPreAssign?: boolean; // New prop to show pre-assignment option
 }
 
 const DeliveryStatusManager = ({ 
   order, 
   onStatusChange,
-  compact = false 
+  compact = false,
+  showPreAssign = false
 }: DeliveryStatusManagerProps) => {
   const { updateOrder } = useApp();
   const [isUpdating, setIsUpdating] = useState(false);
@@ -28,6 +30,7 @@ const DeliveryStatusManager = ({
   const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
   const [showApprovalDialog, setShowApprovalDialog] = useState(false);
   const [showDriverDialog, setShowDriverDialog] = useState(false);
+  const [isPreliminary, setIsPreliminary] = useState(false);
   
   // Get current status
   const isReady = matchesStatus(order.status, 'ready-to-deliver');
@@ -35,9 +38,12 @@ const DeliveryStatusManager = ({
   const isWaitingFeedback = matchesStatus(order.status, 'waiting-feedback');
   const isPendingApproval = matchesStatus(order.status, 'pending-approval');
   const isNeedsRevision = matchesStatus(order.status, 'needs-revision');
+  const isInKitchen = matchesStatus(order.status, 'in-kitchen') || 
+                     matchesStatus(order.status, 'waiting-photo');
   
   // Check if driver is assigned
   const hasDriverAssignment = !!order.deliveryAssignment;
+  const hasPreliminaryAssignment = hasDriverAssignment && order.deliveryAssignment?.isPreliminary;
   
   // Function to update the status
   const updateStatus = async (newStatus: OrderStatus) => {
@@ -74,8 +80,13 @@ const DeliveryStatusManager = ({
   const openDeliveryInfoDialog = () => setShowInfoDialog(true);
   const openFeedbackDialog = () => setShowFeedbackDialog(true);
   const openApprovalDialog = () => setShowApprovalDialog(true);
-  const openDriverDialog = () => setShowDriverDialog(true);
   
+  // Open driver dialog with preliminary flag
+  const openDriverDialog = (preliminary = false) => {
+    setIsPreliminary(preliminary);
+    setShowDriverDialog(true);
+  };
+
   // Pending approval -> open approval dialog
   if (isPendingApproval) {
     return (
@@ -99,7 +110,7 @@ const DeliveryStatusManager = ({
     );
   }
   
-  // Needs revision -> handle differently (will be handled by CakePhotoUploadDialog in OrderCard)
+  // Needs revision -> handle differently
   if (isNeedsRevision) {
     return (
       <>
@@ -119,37 +130,74 @@ const DeliveryStatusManager = ({
   if (isReady) {
     // If we have a driver assignment, show start delivery button
     if (hasDriverAssignment) {
-      return (
-        <>
-          <div className="flex items-center gap-2">
-            <Button 
-              size={compact ? "sm" : "default"}
-              variant="outline"
-              onClick={openDriverDialog}
-            >
-              <User className={`h-4 w-4 ${compact ? '' : 'mr-1'}`} />
-              {!compact && "Change Driver"}
-            </Button>
+      // If it's a preliminary assignment, convert it to final
+      if (hasPreliminaryAssignment) {
+        return (
+          <>
+            <div className="flex items-center gap-2">
+              <Button 
+                size={compact ? "sm" : "default"}
+                variant="outline"
+                onClick={() => openDriverDialog(false)}
+              >
+                <User className={`h-4 w-4 ${compact ? '' : 'mr-1'}`} />
+                {!compact && "Change Driver"}
+              </Button>
+              
+              <Button 
+                size={compact ? "sm" : "default"}
+                className={`bg-orange-600 hover:bg-orange-700 text-white ${isUpdating ? 'opacity-70' : ''}`}
+                disabled={isUpdating}
+                onClick={() => updateStatus('in-delivery')}
+              >
+                <Truck className={`h-4 w-4 ${compact ? '' : 'mr-1'}`} /> 
+                {!compact && "Start Delivery"}
+              </Button>
+            </div>
             
-            <Button 
-              size={compact ? "sm" : "default"}
-              className={`bg-orange-600 hover:bg-orange-700 text-white ${isUpdating ? 'opacity-70' : ''}`}
-              disabled={isUpdating}
-              onClick={() => updateStatus('in-delivery')}
-            >
-              <Truck className={`h-4 w-4 ${compact ? '' : 'mr-1'}`} /> 
-              {!compact && "Start Delivery"}
-            </Button>
-          </div>
-          
-          <DriverAssignmentDialog 
-            open={showDriverDialog}
-            onOpenChange={setShowDriverDialog}
-            order={order}
-            onSuccess={onStatusChange}
-          />
-        </>
-      );
+            <DriverAssignmentDialog 
+              open={showDriverDialog}
+              onOpenChange={setShowDriverDialog}
+              order={order}
+              onSuccess={onStatusChange}
+              isPreliminary={isPreliminary}
+            />
+          </>
+        );
+      } else {
+        return (
+          <>
+            <div className="flex items-center gap-2">
+              <Button 
+                size={compact ? "sm" : "default"}
+                variant="outline"
+                onClick={() => openDriverDialog(false)}
+              >
+                <User className={`h-4 w-4 ${compact ? '' : 'mr-1'}`} />
+                {!compact && "Change Driver"}
+              </Button>
+              
+              <Button 
+                size={compact ? "sm" : "default"}
+                className={`bg-orange-600 hover:bg-orange-700 text-white ${isUpdating ? 'opacity-70' : ''}`}
+                disabled={isUpdating}
+                onClick={() => updateStatus('in-delivery')}
+              >
+                <Truck className={`h-4 w-4 ${compact ? '' : 'mr-1'}`} /> 
+                {!compact && "Start Delivery"}
+              </Button>
+            </div>
+            
+            <DriverAssignmentDialog 
+              open={showDriverDialog}
+              onOpenChange={setShowDriverDialog}
+              order={order}
+              onSuccess={onStatusChange}
+              isPreliminary={isPreliminary}
+            />
+          </>
+        );
+      }
     }
     
     // No driver assignment yet, show assign driver button
@@ -158,7 +206,7 @@ const DeliveryStatusManager = ({
         <Button 
           size={compact ? "sm" : "default"}
           className={`bg-blue-600 hover:bg-blue-700 text-white ${isUpdating ? 'opacity-70' : ''}`}
-          onClick={openDriverDialog}
+          onClick={() => openDriverDialog(false)}
         >
           <User className={`h-4 w-4 ${compact ? '' : 'mr-1'}`} /> 
           {!compact && "Assign Driver"}
@@ -169,6 +217,7 @@ const DeliveryStatusManager = ({
           onOpenChange={setShowDriverDialog}
           order={order}
           onSuccess={onStatusChange}
+          isPreliminary={isPreliminary}
         />
       </>
     );
@@ -198,7 +247,7 @@ const DeliveryStatusManager = ({
     );
   }
   
-  // Waiting feedback -> Add feedback button (now using FeedbackDialog)
+  // Waiting feedback -> Add feedback button 
   if (isWaitingFeedback) {
     return (
       <>
@@ -219,6 +268,56 @@ const DeliveryStatusManager = ({
         />
       </>
     );
+  }
+  
+  // If we should show pre-assign option (for early statuses)
+  if (showPreAssign) {
+    // Show different UI based on whether there's already a pre-assignment
+    if (hasPreliminaryAssignment) {
+      return (
+        <>
+          <Button 
+            size={compact ? "sm" : "default"}
+            variant="outline"
+            onClick={() => openDriverDialog(true)}
+            className="gap-2"
+          >
+            <User className={`h-4 w-4`} />
+            {!compact ? "Change Pre-Assigned Driver" : "Change Pre-Assignment"}
+          </Button>
+          
+          <DriverAssignmentDialog 
+            open={showDriverDialog}
+            onOpenChange={setShowDriverDialog}
+            order={order}
+            onSuccess={onStatusChange}
+            isPreliminary={isPreliminary}
+          />
+        </>
+      );
+    } else {
+      return (
+        <>
+          <Button 
+            size={compact ? "sm" : "default"}
+            variant="outline"
+            onClick={() => openDriverDialog(true)}
+            className="gap-2 border-blue-200 text-blue-700 hover:bg-blue-50"
+          >
+            <User className={`h-4 w-4`} />
+            {!compact ? "Pre-Assign Driver" : "Pre-Assign"}
+          </Button>
+          
+          <DriverAssignmentDialog 
+            open={showDriverDialog}
+            onOpenChange={setShowDriverDialog}
+            order={order}
+            onSuccess={onStatusChange}
+            isPreliminary={isPreliminary}
+          />
+        </>
+      );
+    }
   }
   
   // For any other status, show a button to open the info dialog

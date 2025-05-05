@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatDate, cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
-import { MapPin, Truck, Package, Calendar, CheckCircle2, Clock, CheckSquare2, XCircle, User, Car, ExternalLink } from "lucide-react";
+import { MapPin, Truck, Package, Calendar, CheckCircle2, Clock, CheckSquare2, XCircle, User, Car, ExternalLink, AlertCircle } from "lucide-react";
 import { matchesStatus, isInApprovalFlow } from "@/lib/statusHelpers";
 import { useState } from "react";
 import DriverAssignmentDialog from "./DriverAssignmentDialog";
@@ -17,14 +17,17 @@ interface DeliveryCardProps {
 
 const DeliveryCard = ({ order, onStatusChange }: DeliveryCardProps) => {
   const [showDriverDialog, setShowDriverDialog] = useState(false);
+  const [isPreliminary, setIsPreliminary] = useState(false);
   
   const isReady = matchesStatus(order.status, 'ready-to-deliver');
   const isInTransit = matchesStatus(order.status, 'in-delivery');
   const isPendingApproval = matchesStatus(order.status, 'pending-approval');
   const isNeedsRevision = matchesStatus(order.status, 'needs-revision');
+  const canPreAssign = !isReady && !isInTransit;
   
   // Check if order has a driver assignment
   const hasDriverAssignment = !!order.deliveryAssignment;
+  const hasPreliminaryAssignment = hasDriverAssignment && order.deliveryAssignment?.isPreliminary;
   
   const getStatusBadge = () => {
     if (isPendingApproval) {
@@ -74,7 +77,7 @@ const DeliveryCard = ({ order, onStatusChange }: DeliveryCardProps) => {
   const getDriverBadge = () => {
     if (!order.deliveryAssignment) return null;
     
-    const { driverType, driverName } = order.deliveryAssignment;
+    const { driverType, driverName, isPreliminary } = order.deliveryAssignment;
     
     let icon = <Truck className="h-3 w-3 mr-1" />;
     let label = "Unknown";
@@ -99,13 +102,18 @@ const DeliveryCard = ({ order, onStatusChange }: DeliveryCardProps) => {
     }
     
     return (
-      <Badge className={cn(color)}>
-        {icon} {label}
+      <Badge className={cn(color, isPreliminary && "border-dashed border")}>
+        {icon} {label} {isPreliminary && <AlertCircle className="h-3 w-3 ml-1" />}
       </Badge>
     );
   };
 
   // Handle driver dialog
+  const openDriverDialog = (preliminary = false) => {
+    setIsPreliminary(preliminary);
+    setShowDriverDialog(true);
+  };
+
   const handleDriverSuccess = () => {
     setShowDriverDialog(false);
     if (onStatusChange) onStatusChange();
@@ -225,7 +233,7 @@ const DeliveryCard = ({ order, onStatusChange }: DeliveryCardProps) => {
             <Button 
               size="sm"
               className="bg-blue-600 hover:bg-blue-700 text-white"
-              onClick={() => setShowDriverDialog(true)}
+              onClick={() => openDriverDialog(false)}
             >
               <User className="h-4 w-4 mr-1" /> Assign Driver
             </Button>
@@ -236,7 +244,7 @@ const DeliveryCard = ({ order, onStatusChange }: DeliveryCardProps) => {
               <Button 
                 size="sm"
                 variant="outline"
-                onClick={() => setShowDriverDialog(true)}
+                onClick={() => openDriverDialog(false)}
               >
                 <User className="h-4 w-4 mr-1" /> Change Driver
               </Button>
@@ -251,6 +259,27 @@ const DeliveryCard = ({ order, onStatusChange }: DeliveryCardProps) => {
                 </Link>
               </Button>
             </>
+          )}
+          
+          {canPreAssign && !hasDriverAssignment && (
+            <Button 
+              size="sm"
+              variant="outline"
+              className="border-blue-200 text-blue-700 hover:bg-blue-50"
+              onClick={() => openDriverDialog(true)}
+            >
+              <User className="h-4 w-4 mr-1" /> Pre-Assign Driver
+            </Button>
+          )}
+          
+          {canPreAssign && hasPreliminaryAssignment && (
+            <Button 
+              size="sm"
+              variant="outline"
+              onClick={() => openDriverDialog(true)}
+            >
+              <User className="h-4 w-4 mr-1" /> Change Pre-Assignment
+            </Button>
           )}
           
           {isInTransit && (
@@ -272,6 +301,7 @@ const DeliveryCard = ({ order, onStatusChange }: DeliveryCardProps) => {
         onOpenChange={setShowDriverDialog}
         order={order}
         onSuccess={handleDriverSuccess}
+        isPreliminary={isPreliminary}
       />
     </Card>
   );

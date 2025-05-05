@@ -9,20 +9,23 @@ import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Car, Truck, ExternalLink } from "lucide-react";
+import { AlertCircle, Car, Truck, ExternalLink } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface DriverAssignmentDialogProps {
   order: Order;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
+  isPreliminary?: boolean; // New prop to indicate if this is a pre-assignment
 }
 
 const DriverAssignmentDialog = ({
   order,
   open,
   onOpenChange,
-  onSuccess
+  onSuccess,
+  isPreliminary = false
 }: DriverAssignmentDialogProps) => {
   const { updateOrder } = useApp();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -39,6 +42,10 @@ const DriverAssignmentDialog = ({
     existingAssignment?.notes || ""
   );
   
+  // Determine if we're updating an existing assignment
+  const isUpdating = !!existingAssignment;
+  const wasPreliminary = existingAssignment?.isPreliminary;
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -47,7 +54,8 @@ const DriverAssignmentDialog = ({
       // Create assignment object
       const assignment: Omit<DeliveryAssignment, 'assignedAt'> = {
         driverType,
-        notes: notes.trim() || undefined
+        notes: notes.trim() || undefined,
+        isPreliminary: isPreliminary
       };
       
       // Only include driver name for 3rd-party
@@ -64,7 +72,12 @@ const DriverAssignmentDialog = ({
         }
       });
       
-      toast.success(`Order ${order.id} assigned to ${getDriverDisplayName(driverType, driverName)}`);
+      // Show appropriate toast message based on assignment type
+      if (isPreliminary) {
+        toast.success(`Order ${order.id} pre-assigned to ${getDriverDisplayName(driverType, driverName)}`);
+      } else {
+        toast.success(`Order ${order.id} assigned to ${getDriverDisplayName(driverType, driverName)}`);
+      }
       
       if (onSuccess) {
         onSuccess();
@@ -72,7 +85,7 @@ const DriverAssignmentDialog = ({
       
       onOpenChange(false);
     } catch (error) {
-      toast.error("Failed to assign driver");
+      toast.error(`Failed to ${isPreliminary ? 'pre-assign' : 'assign'} driver`);
       console.error("Error assigning driver:", error);
     } finally {
       setIsSubmitting(false);
@@ -108,8 +121,28 @@ const DriverAssignmentDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Assign Delivery Driver</DialogTitle>
+          <DialogTitle>
+            {isPreliminary ? "Pre-Assign Delivery Driver" : "Assign Delivery Driver"}
+          </DialogTitle>
         </DialogHeader>
+        
+        {isPreliminary && (
+          <Alert className="bg-blue-50 border-blue-200 text-blue-800">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              This is a preliminary assignment for planning purposes. You'll confirm the driver when the order is ready for delivery.
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        {wasPreliminary && !isPreliminary && (
+          <Alert className="bg-green-50 border-green-200 text-green-800">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Converting preliminary assignment to final delivery assignment.
+            </AlertDescription>
+          </Alert>
+        )}
         
         <form onSubmit={handleSubmit} className="space-y-6 pt-2">
           <div className="space-y-4">
@@ -185,7 +218,10 @@ const DriverAssignmentDialog = ({
               className="gap-2"
             >
               {getDriverIcon(driverType)}
-              {isSubmitting ? "Assigning..." : "Assign Driver"}
+              {isSubmitting 
+                ? (isPreliminary ? "Pre-Assigning..." : "Assigning...") 
+                : (isPreliminary ? "Pre-Assign Driver" : "Assign Driver")
+              }
             </Button>
           </DialogFooter>
         </form>

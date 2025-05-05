@@ -1,3 +1,4 @@
+
 import { useState, useMemo } from "react";
 import { useApp } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,7 @@ import { startOfDay, endOfDay, addDays, format, isBefore, isAfter, parseISO, add
 import { Link } from "react-router-dom";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { CalendarClock, Upload, CheckSquare2, XCircle, User, Car, ExternalLink, Truck } from "lucide-react";
+import { CalendarClock, Upload, CheckSquare2, XCircle, User, Car, ExternalLink, Truck, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import DeliveryStatusManager from "@/components/delivery/DeliveryStatusManager";
 import StatusBadge from "@/components/orders/StatusBadge";
@@ -114,33 +115,39 @@ const getOrderTimeStatus = (order: Order): 'late' | 'within-2-hours' | null => {
 const getDriverBadge = (order: Order) => {
   if (!order.deliveryAssignment) return null;
   
-  const { driverType, driverName } = order.deliveryAssignment;
+  const { driverType, driverName, isPreliminary } = order.deliveryAssignment;
   let icon;
   let label;
+  let className = "";
+  
+  // For preliminary assignments, use a different style
+  if (isPreliminary) {
+    className = "bg-blue-50 text-blue-700 border-blue-200 border border-dashed";
+  }
   
   switch (driverType) {
     case "driver-1":
       icon = <Car className="h-4 w-4 mr-1" />;
       label = "Driver 1";
       return (
-        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-          {icon} {label}
+        <Badge variant="outline" className={cn("bg-blue-50 text-blue-700 border-blue-200", isPreliminary && "border-dashed")}>
+          {icon} {label} {isPreliminary && <AlertCircle className="h-3 w-3 ml-1 text-blue-500" />}
         </Badge>
       );
     case "driver-2":
       icon = <Car className="h-4 w-4 mr-1" />;
       label = "Driver 2";
       return (
-        <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-200">
-          {icon} {label}
+        <Badge variant="outline" className={cn("bg-indigo-50 text-indigo-700 border-indigo-200", isPreliminary && "border-dashed")}>
+          {icon} {label} {isPreliminary && <AlertCircle className="h-3 w-3 ml-1 text-indigo-500" />}
         </Badge>
       );
     case "3rd-party":
       icon = <ExternalLink className="h-4 w-4 mr-1" />;
       label = driverName || "3rd Party";
       return (
-        <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
-          {icon} {label}
+        <Badge variant="outline" className={cn("bg-purple-50 text-purple-700 border-purple-200", isPreliminary && "border-dashed")}>
+          {icon} {label} {isPreliminary && <AlertCircle className="h-3 w-3 ml-1 text-purple-500" />}
         </Badge>
       );
     default:
@@ -454,6 +461,8 @@ const DeliveryPage = () => {
                   const isNeedingRevision = isNeedsRevision(order.status);
                   const isReadyToDeliver = matchesStatus(order.status, 'ready-to-deliver');
                   const hasDriverAssignment = !!order.deliveryAssignment;
+                  const hasPreliminaryAssignment = hasDriverAssignment && order.deliveryAssignment?.isPreliminary;
+                  const canPreAssign = !isReadyToDeliver && !matchesStatus(order.status, 'in-delivery');
                   
                   return (
                     <TableRow 
@@ -565,6 +574,14 @@ const DeliveryPage = () => {
                             >
                               <Upload className="h-4 w-4 mr-1" /> Upload Photos
                             </Button>
+                          ) : canPreAssign ? (
+                            // Pre-assign driver option for orders not ready yet
+                            <DeliveryStatusManager 
+                              order={order} 
+                              onStatusChange={handleStatusChange}
+                              compact={true}
+                              showPreAssign={true}
+                            />
                           ) : (
                             <Button 
                               variant="outline"
@@ -621,6 +638,7 @@ const DeliveryPage = () => {
             open={driverAssignmentDialogOpen}
             onOpenChange={setDriverAssignmentDialogOpen}
             onSuccess={handleDriverAssignmentSuccess}
+            isPreliminary={selectedOrder.status !== 'ready-to-deliver'}
           />
         </>
       )}
