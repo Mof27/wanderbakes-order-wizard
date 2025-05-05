@@ -478,7 +478,8 @@ const OrderForm = ({ order, settings, defaultTab = "required", onStatusChange, r
       deliveryDate,
       cakeFlavor,
       ingredients,
-      status: "incomplete" as const,
+      // Keep existing status for updates, or use "incomplete" for new orders
+      status: order ? order.status : "incomplete" as const,
       tierDetails: formData.cakeTier > 1 ? tierDetails.slice(0, formData.cakeTier) : undefined,
       useSameFlavor,
       useSameCover,
@@ -502,7 +503,8 @@ const OrderForm = ({ order, settings, defaultTab = "required", onStatusChange, r
       addOrder(orderData);
     }
     
-    navigate("/orders");
+    // Navigate to the referrer page if provided, otherwise default to orders page
+    navigate(referrer ? `/${referrer}` : "/orders");
   };
 
   const handleSubmitOrder = () => {
@@ -516,7 +518,8 @@ const OrderForm = ({ order, settings, defaultTab = "required", onStatusChange, r
       deliveryDate,
       cakeFlavor,
       ingredients,
-      status: "in-queue" as const,
+      // Only set status to "in-queue" for new orders, keep existing status for updates
+      status: order ? order.status : "in-queue" as const,
       tierDetails: formData.cakeTier > 1 ? tierDetails.slice(0, formData.cakeTier) : undefined,
       useSameFlavor,
       useSameCover,
@@ -540,7 +543,8 @@ const OrderForm = ({ order, settings, defaultTab = "required", onStatusChange, r
       addOrder(orderData);
     }
     
-    navigate("/orders");
+    // Navigate to the referrer page if provided, otherwise default to orders page
+    navigate(referrer ? `/${referrer}` : "/orders");
   };
 
   // Create a complete order object for printing
