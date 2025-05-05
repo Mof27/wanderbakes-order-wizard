@@ -1,10 +1,10 @@
 
 import { useState } from "react";
 import { useApp } from "@/context/AppContext";
-import { Order } from "@/types";
+import { CakeRevision, Order } from "@/types";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Upload, X, Plus, Camera } from "lucide-react";
+import { Upload, X, Plus, Camera, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 
 interface CakePhotoUploadDialogProps {
@@ -18,6 +18,10 @@ const CakePhotoUploadDialog = ({ order, open, onClose, onSuccess }: CakePhotoUpl
   const { updateOrder } = useApp();
   const [photos, setPhotos] = useState<string[]>(order.finishedCakePhotos || []);
   const [loading, setLoading] = useState(false);
+  
+  // Check if we're in revision mode
+  const isRevisionMode = order.status === "needs-revision";
+  const revisionCount = order.revisionCount || 0;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -46,13 +50,35 @@ const CakePhotoUploadDialog = ({ order, open, onClose, onSuccess }: CakePhotoUpl
 
     setLoading(true);
     try {
+      // Create a revision record if we have existing photos
+      let revisionHistory = [...(order.revisionHistory || [])];
+      
+      // If we have existing photos and this is not the first upload,
+      // save them to revision history
+      if (order.finishedCakePhotos && order.finishedCakePhotos.length > 0) {
+        const newRevision: CakeRevision = {
+          id: `rev_${Date.now()}`,
+          timestamp: new Date(),
+          photos: order.finishedCakePhotos,
+          notes: order.revisionNotes
+        };
+        revisionHistory.push(newRevision);
+      }
+
+      // Calculate the new revision count
+      const newRevisionCount = isRevisionMode ? revisionCount + 1 : revisionCount;
+      
       const updatedOrder = await updateOrder({
         ...order,
         finishedCakePhotos: photos,
-        status: "ready-to-deliver"
+        status: "pending-approval", // Changed from ready-to-deliver to pending-approval
+        revisionCount: newRevisionCount,
+        revisionHistory: revisionHistory,
+        // Clear revision notes if we're uploading a new version
+        revisionNotes: isRevisionMode ? "" : order.revisionNotes
       });
       
-      toast.success("Cake photos uploaded successfully");
+      toast.success(`Cake photos ${isRevisionMode ? 're-' : ''}uploaded successfully. Awaiting approval.`);
       if (onSuccess) onSuccess();
       onClose();
     } catch (error) {
@@ -67,12 +93,24 @@ const CakePhotoUploadDialog = ({ order, open, onClose, onSuccess }: CakePhotoUpl
     <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Upload Cake Photos</DialogTitle>
+          <DialogTitle>
+            {isRevisionMode ? `Re-upload Cake Photos (Revision ${revisionCount + 1})` : "Upload Cake Photos"}
+          </DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4 py-4">
+          {isRevisionMode && order.revisionNotes && (
+            <div className="bg-amber-50 border border-amber-200 p-3 rounded-md space-y-2">
+              <div className="flex items-center text-amber-800">
+                <AlertTriangle className="h-4 w-4 mr-2" />
+                <span className="font-medium">Revision Requested</span>
+              </div>
+              <p className="text-sm text-amber-700">{order.revisionNotes}</p>
+            </div>
+          )}
+          
           <p className="text-sm text-muted-foreground">
-            Upload photos of the finished cake. These will be shown to the customer and delivery staff.
+            Upload photos of the finished cake. These will be reviewed before proceeding to delivery.
           </p>
           
           <div className="grid grid-cols-2 gap-2">
@@ -117,7 +155,7 @@ const CakePhotoUploadDialog = ({ order, open, onClose, onSuccess }: CakePhotoUpl
             {loading ? "Uploading..." : (
               <>
                 <Upload className="h-4 w-4" />
-                Upload & Mark Ready
+                {isRevisionMode ? "Submit Revision" : "Submit for Approval"}
               </>
             )}
           </Button>

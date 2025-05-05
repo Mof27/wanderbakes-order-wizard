@@ -1,11 +1,12 @@
+
 import { Order } from "@/types";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils";
 import { Link } from "react-router-dom";
-import { MapPin, Truck, Package, Calendar, CheckCircle2, Clock } from "lucide-react";
-import { matchesStatus } from "@/lib/statusHelpers";
+import { MapPin, Truck, Package, Calendar, CheckCircle2, Clock, CheckSquare2, XCircle } from "lucide-react";
+import { matchesStatus, isInApprovalFlow } from "@/lib/statusHelpers";
 
 interface DeliveryCardProps {
   order: Order;
@@ -14,8 +15,24 @@ interface DeliveryCardProps {
 const DeliveryCard = ({ order }: DeliveryCardProps) => {
   const isReady = matchesStatus(order.status, 'ready-to-deliver');
   const isInTransit = matchesStatus(order.status, 'in-delivery');
+  const isPendingApproval = matchesStatus(order.status, 'pending-approval');
+  const isNeedsRevision = matchesStatus(order.status, 'needs-revision');
   
   const getStatusBadge = () => {
+    if (isPendingApproval) {
+      return (
+        <Badge className="bg-indigo-100 text-indigo-800 hover:bg-indigo-200">
+          <CheckSquare2 className="h-3 w-3 mr-1" /> Pending Approval
+        </Badge>
+      );
+    }
+    if (isNeedsRevision) {
+      return (
+        <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-200">
+          <XCircle className="h-3 w-3 mr-1" /> Needs Revision
+        </Badge>
+      );
+    }
     if (isReady) {
       return (
         <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
@@ -33,12 +50,25 @@ const DeliveryCard = ({ order }: DeliveryCardProps) => {
     return null;
   };
 
+  // Get revision badge if applicable
+  const getRevisionBadge = () => {
+    if (order.revisionCount && order.revisionCount > 0) {
+      return (
+        <Badge variant="outline" className="ml-2">
+          Rev #{order.revisionCount}
+        </Badge>
+      );
+    }
+    return null;
+  };
+
   return (
     <Card className="overflow-hidden border-l-4 hover:shadow-md transition-shadow">
       <CardHeader className="bg-muted py-3 px-4 flex flex-row items-center justify-between">
         <div className="flex items-center space-x-2">
           <span className="font-medium">{order.id}</span>
           {getStatusBadge()}
+          {getRevisionBadge()}
         </div>
         {order.deliveryMethod && (
           <Badge variant="outline" className="capitalize">
@@ -105,6 +135,30 @@ const DeliveryCard = ({ order }: DeliveryCardProps) => {
         </Button>
         
         <div className="space-x-2">
+          {isPendingApproval && (
+            <Button 
+              size="sm"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white"
+              asChild
+            >
+              <Link to={`/orders/${order.id}?tab=delivery-recap`}>
+                <CheckSquare2 className="h-4 w-4 mr-1" /> Review Photos
+              </Link>
+            </Button>
+          )}
+
+          {isNeedsRevision && (
+            <Button 
+              size="sm"
+              className="bg-amber-600 hover:bg-amber-700 text-white"
+              asChild
+            >
+              <Link to={`/orders/${order.id}?tab=delivery-recap`}>
+                <XCircle className="h-4 w-4 mr-1" /> Revision Needed
+              </Link>
+            </Button>
+          )}
+          
           {isReady && (
             <Button 
               size="sm"

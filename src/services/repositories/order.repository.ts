@@ -1,4 +1,5 @@
-import { Order, OrderStatus, PrintEvent, OrderLogEvent } from "@/types";
+
+import { Order, OrderStatus, PrintEvent, OrderLogEvent, CakeRevision } from "@/types";
 import { BaseRepository } from "./base.repository";
 
 export interface OrderRepository extends BaseRepository<Order> {
@@ -6,7 +7,8 @@ export interface OrderRepository extends BaseRepository<Order> {
   getByCustomerId(customerId: string): Promise<Order[]>;
   getByTimeFrame(timeFrame: 'today' | 'this-week' | 'this-month'): Promise<Order[]>;
   updatePrintHistory(orderId: string, printEvent: PrintEvent): Promise<Order>;
-  addOrderLog(orderId: string, logEvent: Omit<OrderLogEvent, 'id'>): Promise<Order>; // New method
+  addOrderLog(orderId: string, logEvent: Omit<OrderLogEvent, 'id'>): Promise<Order>;
+  addRevision(orderId: string, revision: Omit<CakeRevision, 'id'>): Promise<Order>; // New method
 }
 
 export class MockOrderRepository implements OrderRepository {
@@ -176,6 +178,36 @@ export class MockOrderRepository implements OrderRepository {
     this.orders[index] = {
       ...this.orders[index],
       orderLogs,
+      updatedAt: new Date()
+    };
+    
+    return this.orders[index];
+  }
+  
+  async addRevision(orderId: string, revision: Omit<CakeRevision, 'id'>): Promise<Order> {
+    const index = this.orders.findIndex(o => o.id === orderId);
+    if (index === -1) throw new Error(`Order with id ${orderId} not found`);
+    
+    // Generate ID for the revision
+    const revisionId = `rev_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    
+    // Get existing revisions or initialize empty array
+    const revisionHistory = [...(this.orders[index].revisionHistory || [])];
+    
+    // Add new revision event
+    revisionHistory.push({
+      ...revision,
+      id: revisionId
+    });
+    
+    // Update revisionCount
+    const revisionCount = (this.orders[index].revisionCount || 0) + 1;
+    
+    // Update order with new revision history
+    this.orders[index] = {
+      ...this.orders[index],
+      revisionHistory,
+      revisionCount,
       updatedAt: new Date()
     };
     

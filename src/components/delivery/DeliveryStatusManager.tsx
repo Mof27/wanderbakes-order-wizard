@@ -3,11 +3,12 @@ import { useState } from "react";
 import { useApp } from "@/context/AppContext";
 import { Order, OrderStatus } from "@/types";
 import { Button } from "@/components/ui/button";
-import { Truck, CheckCircle2, MessageSquare, Clock } from "lucide-react";
+import { Truck, CheckCircle2, MessageSquare, Clock, CheckSquare2, XCircle } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 import { matchesStatus } from "@/lib/statusHelpers";
 import DeliveryInfoDialog from "./DeliveryInfoDialog";
 import FeedbackDialog from "@/components/orders/FeedbackDialog";
+import CakePhotoApprovalDialog from "@/components/orders/CakePhotoApprovalDialog";
 
 interface DeliveryStatusManagerProps {
   order: Order;
@@ -24,11 +25,14 @@ const DeliveryStatusManager = ({
   const [isUpdating, setIsUpdating] = useState(false);
   const [showInfoDialog, setShowInfoDialog] = useState(false);
   const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
+  const [showApprovalDialog, setShowApprovalDialog] = useState(false);
   
   // Get current status
   const isReady = matchesStatus(order.status, 'ready-to-deliver');
   const isInTransit = matchesStatus(order.status, 'in-delivery');
   const isWaitingFeedback = matchesStatus(order.status, 'waiting-feedback');
+  const isPendingApproval = matchesStatus(order.status, 'pending-approval');
+  const isNeedsRevision = matchesStatus(order.status, 'needs-revision');
   
   // Function to update the status
   const updateStatus = async (newStatus: OrderStatus) => {
@@ -61,16 +65,50 @@ const DeliveryStatusManager = ({
     }
   };
   
-  // Handle opening the delivery info dialog
-  const openDeliveryInfoDialog = () => {
-    setShowInfoDialog(true);
-  };
-
-  // Handle opening the feedback dialog
-  const openFeedbackDialog = () => {
-    setShowFeedbackDialog(true);
-  };
+  // Handle dialogs
+  const openDeliveryInfoDialog = () => setShowInfoDialog(true);
+  const openFeedbackDialog = () => setShowFeedbackDialog(true);
+  const openApprovalDialog = () => setShowApprovalDialog(true);
   
+  // Pending approval -> open approval dialog
+  if (isPendingApproval) {
+    return (
+      <>
+        <Button 
+          size={compact ? "sm" : "default"}
+          className={`bg-indigo-600 hover:bg-indigo-700 text-white ${isUpdating ? 'opacity-70' : ''}`}
+          onClick={openApprovalDialog}
+        >
+          <CheckSquare2 className={`h-4 w-4 ${compact ? '' : 'mr-1'}`} /> 
+          {!compact && "Review Photos"}
+        </Button>
+        
+        <CakePhotoApprovalDialog 
+          open={showApprovalDialog} 
+          onClose={() => setShowApprovalDialog(false)} 
+          order={order}
+          onSuccess={onStatusChange}
+        />
+      </>
+    );
+  }
+  
+  // Needs revision -> handle differently (will be handled by CakePhotoUploadDialog in OrderCard)
+  if (isNeedsRevision) {
+    return (
+      <>
+        <Button 
+          size={compact ? "sm" : "default"}
+          className={`bg-amber-600 hover:bg-amber-700 text-white ${isUpdating ? 'opacity-70' : ''}`}
+          disabled={true} // This button is disabled since the action happens elsewhere
+        >
+          <XCircle className={`h-4 w-4 ${compact ? '' : 'mr-1'}`} /> 
+          {!compact && "Needs Revision"}
+        </Button>
+      </>
+    );
+  }
+
   // Ready to deliver -> Start delivery button
   if (isReady) {
     return (

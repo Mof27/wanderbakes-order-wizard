@@ -64,3 +64,18 @@ export const getWorkflowStatus = (orderStatus: OrderStatus): string => {
   // For other statuses, return as is
   return orderStatus;
 };
+
+/**
+ * New helper function to check if an order is in the approval flow
+ */
+export const isInApprovalFlow = (orderStatus: OrderStatus): boolean => {
+  return orderStatus === "pending-approval" || orderStatus === "needs-revision";
+};
+
+/**
+ * Helper function to check if order can proceed to delivery
+ * Ensures orders cannot enter delivery flow without approval
+ */
+export const canProceedToDelivery = (orderStatus: OrderStatus): boolean => {
+  return orderStatus === "ready-to-deliver";
+};

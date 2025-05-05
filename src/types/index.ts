@@ -87,6 +87,14 @@ export interface OrderLogEvent {
 // New type for order metadata/tags
 export type OrderTag = 'for-kids' | 'for-man' | 'for-woman' | 'anniversary' | 'birthday' | 'wedding' | 'other';
 
+export type CakeRevision = {
+  id: string;
+  timestamp: Date;
+  photos: string[];
+  notes?: string;
+  requestedBy?: string;
+};
+
 export type Order = {
   id: string;
   customer: Customer;
@@ -128,6 +136,13 @@ export type Order = {
   orderTags?: OrderTag[];
   archivedDate?: Date; // Add field to track when the order was archived
   orderLogs?: OrderLogEvent[]; // Add new field for order logs
+  
+  // New fields for the approval and revision process
+  revisionCount?: number;
+  revisionHistory?: CakeRevision[];
+  revisionNotes?: string;
+  approvedBy?: string;
+  approvalDate?: Date;
 };
 
 export type Ingredient = {
@@ -142,6 +157,8 @@ export type OrderStatus =
   'in-queue' | 
   'in-kitchen' | 
   'waiting-photo' | 
+  'pending-approval' |  // New status: photos uploaded but not yet approved
+  'needs-revision' |    // New status: photos rejected, needs new photos
   'ready-to-deliver' | 
   'in-delivery' | 
   // 'delivery-confirmed' is now removed as it's redundant

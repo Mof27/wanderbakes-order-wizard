@@ -40,6 +40,13 @@ const WorkflowPage = () => {
       nextAction: "Complete Production / Upload Photos"
     },
     {
+      stage: "Photo Approval",
+      statuses: ["pending-approval", "needs-revision"],
+      page: "Delivery / Orders",
+      components: ["CakePhotoApprovalDialog", "CakePhotoUploadDialog"],
+      nextAction: "Approve Photos / Request Revision"
+    },
+    {
       stage: "Delivery Management",
       statuses: ["ready-to-deliver", "in-delivery"],
       page: "Delivery / Edit Order",
@@ -113,6 +120,8 @@ const WorkflowPage = () => {
                               ${status === "in-queue" ? "bg-blue-100 text-blue-800" : ""}
                               ${status === "in-kitchen" ? "bg-yellow-100 text-yellow-800" : ""}
                               ${status === "waiting-photo" ? "bg-purple-100 text-purple-800" : ""}
+                              ${status === "pending-approval" ? "bg-indigo-100 text-indigo-800" : ""}
+                              ${status === "needs-revision" ? "bg-amber-100 text-amber-800" : ""}
                               ${status === "ready-to-deliver" ? "bg-green-100 text-green-800" : ""}
                               ${status === "in-delivery" ? "bg-orange-100 text-orange-800" : ""}
                               ${status === "waiting-feedback" ? "bg-indigo-100 text-indigo-800" : ""}
@@ -149,27 +158,51 @@ const WorkflowPage = () => {
       
       <Card>
         <CardHeader>
-          <CardTitle>Current Issues</CardTitle>
+          <CardTitle>Photo Approval Process</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="border-l-4 border-red-500 pl-4">
-              <h3 className="font-semibold">Data Duplication</h3>
-              <p className="text-sm text-muted-foreground">
-                Delivery information (photos, time, feedback) is collected in both DeliveryInfoDialog 
-                and DeliveryRecapSection, creating inconsistent workflows.
-              </p>
+            <p className="text-sm text-muted-foreground">
+              The new photo approval process ensures that cake photos are reviewed before an order can proceed to delivery. 
+              This helps maintain quality control and ensures the final product meets expectations.
+            </p>
+            
+            <div className="border rounded-md overflow-hidden">
+              <div className="grid grid-cols-1 md:grid-cols-4 border-b">
+                <div className="bg-muted p-3 font-medium border-r md:col-span-1">Kitchen</div>
+                <div className="p-3 md:col-span-3">
+                  Uploads cake photos, triggering status change to <Badge className="bg-indigo-100 text-indigo-800">Pending Approval</Badge>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-4 border-b">
+                <div className="bg-muted p-3 font-medium border-r md:col-span-1">Manager</div>
+                <div className="p-3 md:col-span-3">
+                  Reviews photos and either approves them (status changes to <Badge className="bg-green-100 text-green-800">Ready to Deliver</Badge>) 
+                  or requests revision with feedback (status changes to <Badge className="bg-amber-100 text-amber-800">Needs Revision</Badge>)
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-4">
+                <div className="bg-muted p-3 font-medium border-r md:col-span-1">Kitchen</div>
+                <div className="p-3 md:col-span-3">
+                  If revision requested, makes changes and re-uploads photos (status returns to <Badge className="bg-indigo-100 text-indigo-800">Pending Approval</Badge>)
+                </div>
+              </div>
             </div>
+            
+            <p className="text-sm italic">
+              This process repeats until photos are approved, after which the cake can proceed to delivery.
+            </p>
             
             <Separator />
             
-            <div className="border-l-4 border-green-500 pl-4">
-              <h3 className="font-semibold">Solution</h3>
-              <p className="text-sm text-muted-foreground">
-                Make DeliveryInfoDialog the single source of truth for all delivery information.
-                DeliveryRecapSection should only display information, with an "Edit" button 
-                to trigger the dialog for editing.
-              </p>
+            <div className="border-l-4 border-indigo-500 pl-4">
+              <h3 className="font-semibold">Benefits</h3>
+              <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1 mt-2">
+                <li>Ensures quality control before customer delivery</li>
+                <li>Provides clear feedback for improvements when needed</li>
+                <li>Tracks revision history for accountability and learning</li>
+                <li>Prevents delivery of cakes that don't meet standards</li>
+              </ul>
             </div>
           </div>
         </CardContent>

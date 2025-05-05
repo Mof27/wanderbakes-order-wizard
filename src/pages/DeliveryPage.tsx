@@ -7,16 +7,17 @@ import DeliveryDateFilter from "@/components/delivery/DeliveryDateFilter";
 import DeliveryStatusFilter from "@/components/delivery/DeliveryStatusFilter";
 import DeliveryTimeSlotFilter from "@/components/delivery/DeliveryTimeSlotFilter";
 import { Order } from "@/types";
-import { matchesStatus, isInDeliveryStatus, shouldShowInAllStatusesDelivery } from "@/lib/statusHelpers";
+import { matchesStatus, isInDeliveryStatus, shouldShowInAllStatusesDelivery, isInApprovalFlow } from "@/lib/statusHelpers";
 import { startOfDay, endOfDay, addDays, format, isBefore, isAfter, parseISO, addHours, differenceInHours } from "date-fns";
 import { Link } from "react-router-dom";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { CalendarClock, Upload } from "lucide-react";
+import { CalendarClock, Upload, CheckSquare2, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import DeliveryStatusManager from "@/components/delivery/DeliveryStatusManager";
 import StatusBadge from "@/components/orders/StatusBadge";
 import CakePhotoUploadDialog from "@/components/orders/CakePhotoUploadDialog";
+import CakePhotoApprovalDialog from "@/components/orders/CakePhotoApprovalDialog";
 
 // Helper function to determine the time slot background color
 const getTimeSlotColor = (timeSlot?: string): string => {
@@ -111,12 +112,13 @@ const getOrderTimeStatus = (order: Order): 'late' | 'within-2-hours' | null => {
 const DeliveryPage = () => {
   const { orders } = useApp();
   const [dateFilter, setDateFilter] = useState<'today' | 'tomorrow' | 'd-plus-2' | 'all'>('today');
-  const [statusFilter, setStatusFilter] = useState<'ready' | 'in-transit' | 'delivery-statuses' | 'all-statuses'>('all-statuses');
+  const [statusFilter, setStatusFilter] = useState<'ready' | 'in-transit' | 'pending-approval' | 'needs-revision' | 'delivery-statuses' | 'all-statuses'>('all-statuses');
   const [timeSlotFilter, setTimeSlotFilter] = useState<'all' | 'late' | 'within-2-hours' | 'slot1' | 'slot2' | 'slot3'>('all');
   const [refreshKey, setRefreshKey] = useState(0);
   
-  // Add state for photo upload dialog
-  const [photoDialogOpen, setPhotoDialogOpen] = useState(false);
+  // Add state for photo dialogs
+  const [photoUploadDialogOpen, setPhotoUploadDialogOpen] = useState(false);
+  const [photoApprovalDialogOpen, setPhotoApprovalDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   // Force a refresh of the component when an order status changes
@@ -127,12 +129,19 @@ const DeliveryPage = () => {
   // Handle opening the photo upload dialog
   const handleOpenPhotoDialog = (order: Order) => {
     setSelectedOrder(order);
-    setPhotoDialogOpen(true);
+    setPhotoUploadDialogOpen(true);
+  };
+  
+  // Handle opening the photo approval dialog
+  const handleOpenApprovalDialog = (order: Order) => {
+    setSelectedOrder(order);
+    setPhotoApprovalDialogOpen(true);
   };
   
   // Handle when photo upload is successful
   const handlePhotoSuccess = () => {
-    setPhotoDialogOpen(false);
+    setPhotoUploadDialogOpen(false);
+    setPhotoApprovalDialogOpen(false);
     handleStatusChange();
   };
 
@@ -166,12 +175,16 @@ const DeliveryPage = () => {
           return matchesStatus(order.status, 'ready-to-deliver');
         case 'in-transit':
           return matchesStatus(order.status, 'in-delivery');
+        case 'pending-approval':
+          return matchesStatus(order.status, 'pending-approval');
+        case 'needs-revision':
+          return matchesStatus(order.status, 'needs-revision');
         case 'delivery-statuses':
-          return isInDeliveryStatus(order.status);
+          return isInDeliveryStatus(order.status) || isInApprovalFlow(order.status);
         case 'all-statuses':
           return shouldShowInAllStatusesDelivery(order.status);
         default:
-          return isInDeliveryStatus(order.status);
+          return isInDeliveryStatus(order.status) || isInApprovalFlow(order.status);
       }
     });
   };
@@ -206,12 +219,14 @@ const DeliveryPage = () => {
       // Define status priority (lower number = higher priority)
       const getStatusPriority = (status: string): number => {
         switch(status) {
-          case 'ready-to-deliver': return 1;
-          case 'in-delivery': return 2;
-          case 'waiting-photo': return 3;
-          case 'in-kitchen': return 4;
-          case 'in-queue': return 5;
-          case 'incomplete': return 6;
+          case 'pending-approval': return 1; // New highest priority
+          case 'needs-revision': return 2;   // New high priority
+          case 'ready-to-deliver': return 3;
+          case 'in-delivery': return 4;
+          case 'waiting-photo': return 5;
+          case 'in-kitchen': return 6;
+          case 'in-queue': return 7;
+          case 'incomplete': return 8;
           default: return 10;
         }
       };
@@ -259,12 +274,23 @@ const DeliveryPage = () => {
   
   // Helper function to determine if the status is actionable directly in the delivery page
   const isStatusActionableInDelivery = (status: string): boolean => {
-    return status === 'ready-to-deliver' || status === 'in-delivery';
+    return status === 'ready-to-deliver' || status === 'in-delivery' || 
+           status === 'pending-approval' || status === 'needs-revision';
   };
   
   // Helper to determine if an order is in waiting-photo status
   const isWaitingPhoto = (status: string): boolean => {
     return status === 'waiting-photo';
+  };
+  
+  // Helper to determine if an order is pending approval
+  const isPendingApproval = (status: string): boolean => {
+    return status === 'pending-approval';
+  };
+  
+  // Helper to determine if an order needs revision
+  const isNeedsRevision = (status: string): boolean => {
+    return status === 'needs-revision';
   };
   
   // Helper to determine if an order is late or within 2 hours based on time slot
@@ -287,6 +313,18 @@ const DeliveryPage = () => {
       );
     }
     
+    return null;
+  };
+
+  // Get revision badge if applicable
+  const getRevisionBadge = (order: Order) => {
+    if (order.revisionCount && order.revisionCount > 0) {
+      return (
+        <Badge variant="outline" className="bg-amber-50 text-amber-800 border-amber-200 ml-1">
+          Rev #{order.revisionCount}
+        </Badge>
+      );
+    }
     return null;
   };
 
@@ -354,6 +392,8 @@ const DeliveryPage = () => {
                 {filteredOrders.map((order) => {
                   const timeSlotClass = getTimeSlotColor(order.deliveryTimeSlot);
                   const isWaitingForPhoto = isWaitingPhoto(order.status);
+                  const isPendingForApproval = isPendingApproval(order.status);
+                  const isNeedingRevision = isNeedsRevision(order.status);
                   
                   return (
                     <TableRow 
@@ -361,7 +401,10 @@ const DeliveryPage = () => {
                       className={cn(timeSlotClass)}
                     >
                       <TableCell className="font-medium">
-                        {order.id}
+                        <div className="flex items-center">
+                          {order.id}
+                          {getRevisionBadge(order)}
+                        </div>
                       </TableCell>
                       <TableCell>
                         <StatusBadge status={order.status} />
@@ -473,12 +516,21 @@ const DeliveryPage = () => {
       
       {/* Cake Photo Upload Dialog */}
       {selectedOrder && (
-        <CakePhotoUploadDialog 
-          order={selectedOrder}
-          open={photoDialogOpen}
-          onClose={() => setPhotoDialogOpen(false)}
-          onSuccess={handlePhotoSuccess}
-        />
+        <>
+          <CakePhotoUploadDialog 
+            order={selectedOrder}
+            open={photoUploadDialogOpen}
+            onClose={() => setPhotoUploadDialogOpen(false)}
+            onSuccess={handlePhotoSuccess}
+          />
+          
+          <CakePhotoApprovalDialog
+            order={selectedOrder}
+            open={photoApprovalDialogOpen}
+            onClose={() => setPhotoApprovalDialogOpen(false)}
+            onSuccess={handlePhotoSuccess}
+          />
+        </>
       )}
     </div>
   );
