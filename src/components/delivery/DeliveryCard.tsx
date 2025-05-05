@@ -54,7 +54,7 @@ const DeliveryCard = ({ order }: DeliveryCardProps) => {
   const getRevisionBadge = () => {
     if (order.revisionCount && order.revisionCount > 0) {
       return (
-        <Badge variant="outline" className="ml-2">
+        <Badge variant="outline" className="ml-2 bg-amber-50 text-amber-800 border-amber-200">
           Rev #{order.revisionCount}
         </Badge>
       );
@@ -63,7 +63,10 @@ const DeliveryCard = ({ order }: DeliveryCardProps) => {
   };
 
   return (
-    <Card className="overflow-hidden border-l-4 hover:shadow-md transition-shadow">
+    <Card className={cn(
+      "overflow-hidden border-l-4 hover:shadow-md transition-shadow",
+      isNeedsRevision ? "border-l-amber-500" : ""
+    )}>
       <CardHeader className="bg-muted py-3 px-4 flex flex-row items-center justify-between">
         <div className="flex items-center space-x-2">
           <span className="font-medium">{order.id}</span>
@@ -154,7 +157,7 @@ const DeliveryCard = ({ order }: DeliveryCardProps) => {
               asChild
             >
               <Link to={`/orders/${order.id}?tab=delivery-recap`}>
-                <XCircle className="h-4 w-4 mr-1" /> Revision Needed
+                <XCircle className="h-4 w-4 mr-1" /> Upload Revision
               </Link>
             </Button>
           )}

@@ -66,7 +66,7 @@ export const getWorkflowStatus = (orderStatus: OrderStatus): string => {
 };
 
 /**
- * New helper function to check if an order is in the approval flow
+ * Helper function to check if an order is in the approval flow
  */
 export const isInApprovalFlow = (orderStatus: OrderStatus): boolean => {
   return orderStatus === "pending-approval" || orderStatus === "needs-revision";
@@ -78,4 +78,33 @@ export const isInApprovalFlow = (orderStatus: OrderStatus): boolean => {
  */
 export const canProceedToDelivery = (orderStatus: OrderStatus): boolean => {
   return orderStatus === "ready-to-deliver";
+};
+
+/**
+ * Helper function to determine if an order needs to have photos reuploaded
+ */
+export const needsPhotoReupload = (orderStatus: OrderStatus): boolean => {
+  return orderStatus === "needs-revision";
+};
+
+/**
+ * Helper function to determine if an order is in an active revision process
+ */
+export const isInRevisionProcess = (order: { status: OrderStatus; revisionCount?: number }): boolean => {
+  return (order.status === "needs-revision" || order.status === "pending-approval") && 
+         !!order.revisionCount && 
+         order.revisionCount > 0;
+};
+
+/**
+ * Get appropriate label for revision status based on order data
+ */
+export const getRevisionStatusText = (order: { status: OrderStatus; revisionCount?: number }): string => {
+  if (order.status === "needs-revision") {
+    return `Revision #${order.revisionCount || 1} Needed`;
+  }
+  if (order.status === "pending-approval" && order.revisionCount && order.revisionCount > 0) {
+    return `Revision #${order.revisionCount} Pending Approval`;
+  }
+  return "Pending Approval";
 };

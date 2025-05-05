@@ -65,10 +65,10 @@ const CakePhotoUploadDialog = ({ order, open, onClose, onSuccess }: CakePhotoUpl
         revisionHistory.push(newRevision);
       }
 
-      // Calculate the new revision count
+      // Calculate the new revision count - only increment if we're submitting a revision
       const newRevisionCount = isRevisionMode ? revisionCount + 1 : revisionCount;
       
-      // Always change to "pending-approval" when submitting new photos, regardless of previous status
+      // Update order with new photos and change status to pending-approval
       await updateOrder({
         ...order,
         finishedCakePhotos: photos,
@@ -79,7 +79,9 @@ const CakePhotoUploadDialog = ({ order, open, onClose, onSuccess }: CakePhotoUpl
         revisionNotes: isRevisionMode ? "" : order.revisionNotes
       });
       
-      toast.success(`Cake photos ${isRevisionMode ? 're-' : ''}uploaded successfully. Awaiting approval.`);
+      const revisionText = isRevisionMode ? `Revision #${newRevisionCount} ` : '';
+      toast.success(`${revisionText}Cake photos uploaded successfully. Awaiting approval.`);
+      
       if (onSuccess) onSuccess();
       onClose();
     } catch (error) {
