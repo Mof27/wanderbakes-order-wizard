@@ -1,16 +1,18 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
 import OrderForm from "@/components/orders/OrderForm";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Archive, RefreshCw } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { dataService } from "@/services";
 import { OrderStatus, SettingsData } from "@/types";
 import OrderPrintButton from "@/components/orders/OrderPrintButton";
 import DeliveryLabelPrintButton from "@/components/orders/DeliveryLabelPrintButton";
 import { matchesStatus } from "@/lib/statusHelpers";
+import { toast } from "sonner";
 
 const EditOrderPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -47,6 +49,15 @@ const EditOrderPage = () => {
   
   const referrer = getReferrer();
 
+  // Check if order is archived
+  const isArchived = order?.status === "archived";
+
+  // Check if coming from CRM (customers page)
+  const isFromCRM = referrer === "customers";
+
+  // If order is archived and accessed from CRM, it should be read-only
+  const isReadOnly = isArchived && isFromCRM;
+
   useEffect(() => {
     const loadSettings = async () => {
       try {
@@ -71,7 +82,7 @@ const EditOrderPage = () => {
   }, [id, orders]);
 
   const handleStatusUpdate = async (newStatus: OrderStatus) => {
-    if (order) {
+    if (order && !isReadOnly) {
       try {
         await updateOrder({
           ...order,
@@ -79,6 +90,31 @@ const EditOrderPage = () => {
         });
       } catch (error) {
         console.error("Failed to update order status", error);
+      }
+    } else if (isReadOnly) {
+      toast.error("Cannot modify archived orders accessed from Customer Records");
+    }
+  };
+
+  // Handle restoring from archive
+  const handleRestoreFromArchive = async () => {
+    if (order && order.status === "archived") {
+      try {
+        // Restore to the previous status or default to 'finished'
+        const previousStatus = order.orderLogs?.find(log => 
+          log.type === 'status-change' && log.newStatus === 'archived'
+        )?.previousStatus || 'finished';
+        
+        await updateOrder({
+          ...order,
+          status: previousStatus as OrderStatus,
+          archivedDate: undefined
+        });
+        
+        toast.success(`Order restored to '${previousStatus}' status`);
+      } catch (error) {
+        console.error("Failed to restore order from archive", error);
+        toast.error("Failed to restore order");
       }
     }
   };
@@ -133,8 +169,26 @@ const EditOrderPage = () => {
         <title>Edit Order | Cake Shop</title>
       </Helmet>
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Edit Order #{order.id}</h1>
+        <div>
+          <h1 className="text-2xl font-bold">Edit Order #{order.id}</h1>
+          {isReadOnly && (
+            <div className="mt-1 text-amber-600 flex items-center gap-1">
+              <Archive className="h-4 w-4" />
+              <span>Archived Order (Read-only Mode)</span>
+            </div>
+          )}
+        </div>
         <div className="flex gap-2">
+          {isArchived && (
+            <Button 
+              variant="outline" 
+              onClick={handleRestoreFromArchive}
+              className="gap-2"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Restore from Archive
+            </Button>
+          )}
           <OrderPrintButton order={order} />
           <DeliveryLabelPrintButton order={order} />
           <Button variant="outline" onClick={handleGoBack}>
@@ -163,6 +217,7 @@ const EditOrderPage = () => {
         defaultTab={activeTab}
         onStatusChange={handleStatusUpdate}
         referrer={referrer} // Pass referrer to OrderForm
+        readOnly={isReadOnly} // Pass readOnly prop to OrderForm
       />
     </div>
   );

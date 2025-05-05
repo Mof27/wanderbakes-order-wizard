@@ -7,6 +7,8 @@ import { toast } from "@/components/ui/sonner";
 import { mockIngredients, areaOptions, cakeTiers, defaultPackingItems } from "@/data/mockData";
 import { Button } from "@/components/ui/button";
 import { baseColors } from "@/data/colorData";
+import { Alert, AlertTitle } from "@/components/ui/alert";
+import { Archive } from "lucide-react";
 
 // Import component sections
 import CustomerSection from "./OrderFormComponents/CustomerSection";
@@ -31,9 +33,10 @@ interface OrderFormProps {
   defaultTab?: string;
   onStatusChange?: (newStatus: OrderStatus) => Promise<void>;
   referrer?: string;
+  readOnly?: boolean; // Add readOnly prop
 }
 
-const OrderForm = ({ order, settings, defaultTab = "required", onStatusChange, referrer }: OrderFormProps) => {
+const OrderForm = ({ order, settings, defaultTab = "required", onStatusChange, referrer, readOnly = false }: OrderFormProps) => {
   const navigate = useNavigate();
   const { addOrder, updateOrder, updateCustomer } = useApp();
   const [customer, setCustomer] = useState<Customer | null>(order?.customer || null);
@@ -186,11 +189,15 @@ const OrderForm = ({ order, settings, defaultTab = "required", onStatusChange, r
   }, [formData.coverType, formData.coverColor, useSameCover]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    if (readOnly) return; // Prevent changes in read-only mode
+    
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSelectChange = (name: string, value: string | number) => {
+    if (readOnly) return; // Prevent changes in read-only mode
+    
     setFormData((prevData) => ({ ...prevData, [name]: value }));
 
     // Special handling for cake tier changes
@@ -282,11 +289,15 @@ const OrderForm = ({ order, settings, defaultTab = "required", onStatusChange, r
 
   // Handler for cake price changes
   const handleCakePriceChange = (price: number) => {
+    if (readOnly) return; // Prevent changes in read-only mode
+    
     setFormData(prev => ({ ...prev, cakePrice: price }));
   };
 
   // Handler for delivery method changes
   const handleDeliveryMethodChange = (method: DeliveryMethod) => {
+    if (readOnly) return; // Prevent changes in read-only mode
+    
     setDeliveryMethod(method);
     // Reset time slot when switching to/from flat rate
     if (method === "flat-rate") {
@@ -298,11 +309,15 @@ const OrderForm = ({ order, settings, defaultTab = "required", onStatusChange, r
 
   // Handler for cover color changes
   const handleCoverColorChange = (value: CakeColor) => {
+    if (readOnly) return; // Prevent changes in read-only mode
+    
     setFormData(prev => ({ ...prev, coverColor: value }));
   };
 
   // Handler for cover type changes
   const handleCoverTypeChange = (value: CoverType) => {
+    if (readOnly) return; // Prevent changes in read-only mode
+    
     setFormData(prev => ({ ...prev, coverType: value }));
 
     // If switching to fondant and using gradient, switch to solid
@@ -380,46 +395,45 @@ const OrderForm = ({ order, settings, defaultTab = "required", onStatusChange, r
 
   // Handle tier detail changes
   const handleTierDetailChange = (tierIndex: number, field: keyof TierDetail, value: string | CakeColor | CoverType) => {
-    setTierDetails(prev => {
-      const newDetails = [...prev];
+    if (readOnly) return; // Prevent changes in read-only mode
+    
+    // Special handling for coverType
+    if (field === "coverType") {
+      const newType = value as CoverType;
+      const currentColor = tierDetails[tierIndex].coverColor;
       
-      // Special handling for coverType
-      if (field === "coverType") {
-        const newType = value as CoverType;
-        const currentColor = newDetails[tierIndex].coverColor;
-        
-        // If switching to fondant and using gradient, switch to solid
-        if (newType === "fondant" && currentColor.type === "gradient") {
-          const color = (currentColor as any).colors?.[0] || baseColors[0].value;
-          newDetails[tierIndex] = {
-            ...newDetails[tierIndex],
-            coverType: newType,
-            coverColor: { type: 'solid', color }
-          };
-          return newDetails;
-        }
-      }
-
-      // Special handling for shape - clear custom shape if changing to non-custom
-      if (field === "shape" && value !== "Custom") {
-        newDetails[tierIndex] = {
-          ...newDetails[tierIndex],
-          shape: value as string,
-          customShape: "" // Clear custom shape when changing to non-custom
+      // If switching to fondant and using gradient, switch to solid
+      if (newType === "fondant" && currentColor.type === "gradient") {
+        const color = (currentColor as any).colors?.[0] || baseColors[0].value;
+        tierDetails[tierIndex] = {
+          ...tierDetails[tierIndex],
+          coverType: newType,
+          coverColor: { type: 'solid', color }
         };
-        return newDetails;
+        return;
       }
-      
-      newDetails[tierIndex] = {
-        ...newDetails[tierIndex],
-        [field]: value
+    }
+
+    // Special handling for shape - clear custom shape if changing to non-custom
+    if (field === "shape" && value !== "Custom") {
+      tierDetails[tierIndex] = {
+        ...tierDetails[tierIndex],
+        shape: value as string,
+        customShape: "" // Clear custom shape when changing to non-custom
       };
-      return newDetails;
-    });
+      return;
+    }
+    
+    tierDetails[tierIndex] = {
+      ...tierDetails[tierIndex],
+      [field]: value
+    };
   };
 
   // Toggle same flavor for all tiers
   const handleToggleSameFlavor = (checked: boolean) => {
+    if (readOnly) return; // Prevent changes in read-only mode
+    
     setUseSameFlavor(checked);
     if (checked && cakeFlavor) {
       // Set all tiers to the main cake flavor
@@ -431,6 +445,8 @@ const OrderForm = ({ order, settings, defaultTab = "required", onStatusChange, r
 
   // Toggle same cover for all tiers
   const handleToggleSameCover = (checked: boolean) => {
+    if (readOnly) return; // Prevent changes in read-only mode
+    
     setUseSameCover(checked);
     if (checked) {
       // Set all tiers to the main cover type and color
@@ -446,6 +462,8 @@ const OrderForm = ({ order, settings, defaultTab = "required", onStatusChange, r
 
   // Handle packing item checkbox changes
   const handlePackingItemChange = (itemId: string, checked: boolean) => {
+    if (readOnly) return; // Prevent changes in read-only mode
+    
     setPackingItems(prev => 
       prev.map(item => 
         item.id === itemId ? { ...item, checked } : item
@@ -454,6 +472,8 @@ const OrderForm = ({ order, settings, defaultTab = "required", onStatusChange, r
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (readOnly) return; // Prevent changes in read-only mode
+    
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
       setFile(selectedFile);
@@ -468,6 +488,11 @@ const OrderForm = ({ order, settings, defaultTab = "required", onStatusChange, r
   };
 
   const handleSaveDraft = () => {
+    if (readOnly) {
+      toast.error("Cannot modify archived orders accessed from Customer Records");
+      return;
+    }
+    
     if (!customer || !deliveryDate) {
       return;
     }
@@ -508,6 +533,11 @@ const OrderForm = ({ order, settings, defaultTab = "required", onStatusChange, r
   };
 
   const handleSubmitOrder = () => {
+    if (readOnly) {
+      toast.error("Cannot modify archived orders accessed from Customer Records");
+      return;
+    }
+    
     if (!customer || !deliveryDate || !formData.deliveryAddress || !cakeFlavor || !formData.cakeSize) {
       return;
     }
@@ -654,6 +684,15 @@ const OrderForm = ({ order, settings, defaultTab = "required", onStatusChange, r
 
   return (
     <div className="space-y-6">
+      {readOnly && (
+        <Alert variant="warning" className="bg-amber-50 border-amber-200">
+          <Archive className="h-4 w-4" />
+          <AlertTitle>Read-Only Mode</AlertTitle>
+          <p>This archived order cannot be modified when accessed from Customer Records. 
+             Use the "Restore from Archive" button to make changes.</p>
+        </Alert>
+      )}
+      
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-4 mb-4">
           <TabsTrigger value="required">Required Information</TabsTrigger>
@@ -667,7 +706,8 @@ const OrderForm = ({ order, settings, defaultTab = "required", onStatusChange, r
             <div className="space-y-6">
               <CustomerSection 
                 customer={customer} 
-                setCustomer={setCustomer} 
+                setCustomer={setCustomer}
+                readOnly={readOnly}
               />
 
               <DateSelectionSection 
@@ -675,6 +715,7 @@ const OrderForm = ({ order, settings, defaultTab = "required", onStatusChange, r
                 setOrderDate={setOrderDate}
                 deliveryDate={deliveryDate}
                 setDeliveryDate={setDeliveryDate}
+                readOnly={readOnly}
               />
 
               <DeliveryOptionsSection
@@ -684,11 +725,13 @@ const OrderForm = ({ order, settings, defaultTab = "required", onStatusChange, r
                 onMethodChange={handleDeliveryMethodChange}
                 onTimeSlotChange={setDeliveryTimeSlot}
                 onPriceChange={setDeliveryPrice}
+                readOnly={readOnly}
               />
 
               <CakePriceSection 
                 cakePrice={formData.cakePrice} 
-                onPriceChange={handleCakePriceChange} 
+                onPriceChange={handleCakePriceChange}
+                readOnly={readOnly}
               />
 
               <AddressSection 
@@ -705,6 +748,7 @@ const OrderForm = ({ order, settings, defaultTab = "required", onStatusChange, r
                 handleSelectChange={handleSelectChange}
                 areaOptions={areaOptions}
                 openNewAddressDialog={openNewAddressDialog}
+                readOnly={readOnly}
               />
               
               {/* Add print button for new orders */}
@@ -742,6 +786,7 @@ const OrderForm = ({ order, settings, defaultTab = "required", onStatusChange, r
               handleToggleSameCover={handleToggleSameCover}
               handleTierDetailChange={handleTierDetailChange}
               setActiveTab={setActiveTab}
+              readOnly={readOnly}
             />
           </div>
         </TabsContent>
@@ -756,17 +801,20 @@ const OrderForm = ({ order, settings, defaultTab = "required", onStatusChange, r
               handleInputChange={handleInputChange}
               imagePreview={imagePreview}
               handleFileChange={handleFileChange}
+              readOnly={readOnly}
             />
             
             <div className="space-y-6">
               <PackingSection 
                 packingItems={packingItems}
                 handlePackingItemChange={handlePackingItemChange}
+                readOnly={readOnly}
               />
               
               <NotesSection 
                 notes={formData.notes}
                 handleInputChange={handleInputChange}
+                readOnly={readOnly}
               />
 
               {ingredients.length > 0 && (
@@ -801,6 +849,7 @@ const OrderForm = ({ order, settings, defaultTab = "required", onStatusChange, r
             onFeedbackChange={setCustomerFeedback}
             onTagsChange={setOrderTags}
             onStatusChange={onStatusChange}
+            readOnly={readOnly}
           />
         </TabsContent>
         
@@ -811,7 +860,7 @@ const OrderForm = ({ order, settings, defaultTab = "required", onStatusChange, r
             orderCompletedAt={findOrderStageTimestamp('completed')}
             orderInKitchenAt={findOrderStageTimestamp('in-kitchen')}
             orderDeliveredAt={findOrderStageTimestamp('delivered')}
-            revisionHistory={order?.revisionHistory || []} // Pass the revision history to the component
+            revisionHistory={order?.revisionHistory || []}
           />
         </TabsContent>
       </Tabs>
@@ -833,6 +882,7 @@ const OrderForm = ({ order, settings, defaultTab = "required", onStatusChange, r
         formData={getCompleteOrderData()}
         referrer={referrer}
         onGoBack={handleGoBack}
+        readOnly={readOnly}
       />
     </div>
   );

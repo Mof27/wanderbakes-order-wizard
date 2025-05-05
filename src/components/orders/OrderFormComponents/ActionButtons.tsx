@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Order } from "@/types";
 import OrderPrintButton from "../OrderPrintButton";
+import { Archive } from "lucide-react";
 
 interface ActionButtonsProps {
   isEditMode: boolean;
@@ -9,8 +10,9 @@ interface ActionButtonsProps {
   handleSaveDraft: () => void;
   handleSubmitOrder: () => void;
   formData?: Partial<Order>;
-  referrer?: string; // Add referrer prop
-  onGoBack?: () => void; // Add onGoBack handler
+  referrer?: string;
+  onGoBack?: () => void;
+  readOnly?: boolean; // Add readOnly prop
 }
 
 const ActionButtons = ({ 
@@ -20,7 +22,8 @@ const ActionButtons = ({
   handleSubmitOrder,
   formData,
   referrer,
-  onGoBack
+  onGoBack,
+  readOnly = false
 }: ActionButtonsProps) => {
   // Get the back button text based on referrer
   const getBackButtonText = () => {
@@ -29,6 +32,8 @@ const ActionButtons = ({
         return 'Back to Kitchen';
       case 'delivery':
         return 'Back to Delivery';
+      case 'customers':
+        return 'Back to Customer Records';
       default:
         return 'Back to Orders';
     }
@@ -37,22 +42,32 @@ const ActionButtons = ({
   return (
     <div className="flex flex-wrap gap-2 justify-between items-center pt-6 border-t">
       <div className="space-x-2">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={handleSaveDraft}
-          className="min-w-[100px]"
-        >
-          Save Draft
-        </Button>
-        <Button
-          type="button"
-          disabled={!isFormValid}
-          onClick={handleSubmitOrder}
-          className="min-w-[150px]"
-        >
-          {isEditMode ? "Update Order" : "Create Order"}
-        </Button>
+        {readOnly ? (
+          <div className="flex items-center text-amber-600 gap-2">
+            <Archive className="h-4 w-4" />
+            <span>Archived order (read-only)</span>
+          </div>
+        ) : (
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleSaveDraft}
+              className="min-w-[100px]"
+              disabled={readOnly}
+            >
+              Save Draft
+            </Button>
+            <Button
+              type="button"
+              disabled={!isFormValid || readOnly}
+              onClick={handleSubmitOrder}
+              className="min-w-[150px]"
+            >
+              {isEditMode ? "Update Order" : "Create Order"}
+            </Button>
+          </>
+        )}
       </div>
       
       <div className="flex gap-2">
