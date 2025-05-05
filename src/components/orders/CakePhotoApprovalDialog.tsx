@@ -33,10 +33,10 @@ const CakePhotoApprovalDialog = ({ order, open, onClose, onSuccess }: CakePhotoA
   const handleApprove = async () => {
     setLoading(true);
     try {
-      // Create a complete Order object with updated values
-      const updatedOrder = {
-        ...order, // Keep all existing properties
-        status: "ready-to-deliver" as const, // Type assertion to be specific
+      // Create the updated order with the approved status
+      const updatedOrder: Order = {
+        ...order,
+        status: "ready-to-deliver",
         approvedBy: "Manager", // In a real app, this would come from the logged-in user
         approvalDate: new Date()
       };
@@ -47,7 +47,7 @@ const CakePhotoApprovalDialog = ({ order, open, onClose, onSuccess }: CakePhotoA
       const newLogEvent: OrderLogEvent = {
         id: `log_${Date.now()}`,
         timestamp: new Date(),
-        type: "status-change", // Use the specific literal type
+        type: "status-change", 
         previousStatus: "pending-approval",
         newStatus: "ready-to-deliver",
         note: 'Cake photos approved',
@@ -55,9 +55,9 @@ const CakePhotoApprovalDialog = ({ order, open, onClose, onSuccess }: CakePhotoA
       };
       
       // Update order logs in a separate update
-      const orderWithLogs = {
-        ...order,
-        orderLogs: [...(order.orderLogs || []), newLogEvent]
+      const orderWithLogs: Order = {
+        ...updatedOrder,
+        orderLogs: [...(updatedOrder.orderLogs || []), newLogEvent]
       };
       
       await updateOrder(orderWithLogs);
@@ -81,10 +81,10 @@ const CakePhotoApprovalDialog = ({ order, open, onClose, onSuccess }: CakePhotoA
 
     setLoading(true);
     try {
-      // Create a complete Order object with updated values
-      const updatedOrder = {
-        ...order, // Keep all existing properties
-        status: "needs-revision" as const, // Type assertion to be specific
+      // Create the updated order with needs-revision status
+      const updatedOrder: Order = {
+        ...order,
+        status: "needs-revision",
         revisionNotes: revisionNotes
       };
       
@@ -94,7 +94,7 @@ const CakePhotoApprovalDialog = ({ order, open, onClose, onSuccess }: CakePhotoA
       const newLogEvent: OrderLogEvent = {
         id: `log_${Date.now()}`,
         timestamp: new Date(),
-        type: "status-change", // Use the specific literal type
+        type: "status-change",
         previousStatus: "pending-approval",
         newStatus: "needs-revision",
         note: `Revision requested: ${revisionNotes}`,
@@ -102,9 +102,9 @@ const CakePhotoApprovalDialog = ({ order, open, onClose, onSuccess }: CakePhotoA
       };
       
       // Update order logs in a separate update
-      const orderWithLogs = {
-        ...order,
-        orderLogs: [...(order.orderLogs || []), newLogEvent]
+      const orderWithLogs: Order = {
+        ...updatedOrder,
+        orderLogs: [...(updatedOrder.orderLogs || []), newLogEvent]
       };
       
       await updateOrder(orderWithLogs);

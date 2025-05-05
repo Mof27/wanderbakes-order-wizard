@@ -4,7 +4,7 @@ import { useApp } from "@/context/AppContext";
 import { CakeRevision, Order } from "@/types";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Upload, X, Plus, Camera, AlertTriangle } from "lucide-react";
+import { Upload, X, Plus, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 
 interface CakePhotoUploadDialogProps {
@@ -68,10 +68,11 @@ const CakePhotoUploadDialog = ({ order, open, onClose, onSuccess }: CakePhotoUpl
       // Calculate the new revision count
       const newRevisionCount = isRevisionMode ? revisionCount + 1 : revisionCount;
       
-      const updatedOrder = await updateOrder({
+      // Always change to "pending-approval" when submitting new photos, regardless of previous status
+      await updateOrder({
         ...order,
         finishedCakePhotos: photos,
-        status: "pending-approval", // Changed from ready-to-deliver to pending-approval
+        status: "pending-approval",
         revisionCount: newRevisionCount,
         revisionHistory: revisionHistory,
         // Clear revision notes if we're uploading a new version
