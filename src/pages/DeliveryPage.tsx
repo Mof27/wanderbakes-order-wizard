@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from "react";
 import { useApp } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
@@ -8,7 +7,7 @@ import DeliveryDateFilter from "@/components/delivery/DeliveryDateFilter";
 import DeliveryStatusFilter from "@/components/delivery/DeliveryStatusFilter";
 import DeliveryTimeSlotFilter from "@/components/delivery/DeliveryTimeSlotFilter";
 import { Order } from "@/types";
-import { matchesStatus, isInDeliveryStatus, shouldShowInAllStatusesDelivery, isInApprovalFlow } from "@/lib/statusHelpers";
+import { matchesStatus, isInDeliveryStatus, shouldShowInAllStatusesDelivery, isInApprovalFlow, canPreAssignDriver } from "@/lib/statusHelpers";
 import { startOfDay, endOfDay, addDays, format, isBefore, isAfter, parseISO, addHours, differenceInHours } from "date-fns";
 import { Link } from "react-router-dom";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
@@ -20,6 +19,7 @@ import StatusBadge from "@/components/orders/StatusBadge";
 import CakePhotoUploadDialog from "@/components/orders/CakePhotoUploadDialog";
 import CakePhotoApprovalDialog from "@/components/orders/CakePhotoApprovalDialog";
 import DriverAssignmentDialog from "@/components/delivery/DriverAssignmentDialog";
+import QuickDriverAssignDropdown from "@/components/delivery/QuickDriverAssignDropdown";
 
 // Helper function to determine the time slot background color
 const getTimeSlotColor = (timeSlot?: string): string => {
@@ -462,7 +462,7 @@ const DeliveryPage = () => {
                   const isReadyToDeliver = matchesStatus(order.status, 'ready-to-deliver');
                   const hasDriverAssignment = !!order.deliveryAssignment;
                   const hasPreliminaryAssignment = hasDriverAssignment && order.deliveryAssignment?.isPreliminary;
-                  const canPreAssign = !isReadyToDeliver && !matchesStatus(order.status, 'in-delivery');
+                  const canShowPreAssignDropdown = canPreAssignDriver(order.status);
                   
                   return (
                     <TableRow 
@@ -489,7 +489,24 @@ const DeliveryPage = () => {
                         )}
                       </TableCell>
                       <TableCell>
-                        {getDriverBadge(order) || (
+                        {getDriverBadge(order) ? (
+                          <div className="flex items-center justify-between">
+                            {getDriverBadge(order)}
+                            {!isReadyToDeliver && (
+                              <QuickDriverAssignDropdown 
+                                order={order} 
+                                onSuccess={handleStatusChange}
+                                isPreliminaryOnly={!isReadyToDeliver}
+                              />
+                            )}
+                          </div>
+                        ) : canShowPreAssignDropdown ? (
+                          <QuickDriverAssignDropdown 
+                            order={order} 
+                            onSuccess={handleStatusChange}
+                            isPreliminaryOnly={!isReadyToDeliver}
+                          />
+                        ) : (
                           <span className="text-muted-foreground">Not assigned</span>
                         )}
                       </TableCell>
@@ -574,14 +591,6 @@ const DeliveryPage = () => {
                             >
                               <Upload className="h-4 w-4 mr-1" /> Upload Photos
                             </Button>
-                          ) : canPreAssign ? (
-                            // Pre-assign driver option for orders not ready yet
-                            <DeliveryStatusManager 
-                              order={order} 
-                              onStatusChange={handleStatusChange}
-                              compact={true}
-                              showPreAssign={true}
-                            />
                           ) : (
                             <Button 
                               variant="outline"

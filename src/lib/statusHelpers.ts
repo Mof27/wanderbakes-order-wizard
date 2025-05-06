@@ -1,3 +1,4 @@
+
 import { OrderStatus } from "@/types";
 
 /**
@@ -120,5 +121,5 @@ export const hasPreliminaryAssignment = (order: { deliveryAssignment?: { isPreli
  */
 export const canPreAssignDriver = (status: OrderStatus): boolean => {
   // Orders in these statuses can have a driver pre-assigned
-  return ['in-queue', 'in-kitchen', 'waiting-photo', 'pending-approval'].includes(status);
+  return ['in-queue', 'in-kitchen', 'waiting-photo', 'pending-approval', 'needs-revision'].includes(status);
 };
