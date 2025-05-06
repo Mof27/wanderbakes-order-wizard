@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from "react";
 import { useApp } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
@@ -10,10 +9,11 @@ import { startOfDay, endOfDay, addDays, format, isBefore, isAfter, parseISO, add
 import { Link } from "react-router-dom";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { CalendarClock, Upload, CheckSquare2, XCircle, User, Car, ExternalLink, Truck, AlertCircle, Filter, Eye, MessageSquare, List, Route } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DeliveryStatusManager from "@/components/delivery/DeliveryStatusManager";
 import StatusBadge from "@/components/orders/StatusBadge";
@@ -28,6 +28,8 @@ import CompactDeliveryStatusFilter from "@/components/delivery/CompactDeliverySt
 import CompactDeliveryTimeSlotFilter from "@/components/delivery/CompactDeliveryTimeSlotFilter";
 import MobileFilterDrawer from "@/components/delivery/MobileFilterDrawer";
 import TripPlannerView from "@/components/delivery/trip-planner/TripPlannerView";
+import BulkActionsBar from "@/components/delivery/BulkActionsBar";
+import QuickTripCreationDialog from "@/components/delivery/QuickTripCreationDialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 // Helper function to determine the time slot background color
@@ -173,7 +175,11 @@ const DeliveryPage = () => {
   const [photoApprovalDialogOpen, setPhotoApprovalDialogOpen] = useState(false);
   const [driverAssignmentDialogOpen, setDriverAssignmentDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-
+  
+  // Add state for order selection and trip creation
+  const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
+  const [tripCreationDialogOpen, setTripCreationDialogOpen] = useState(false);
+  
   // Calculate selected date based on dateFilter
   const selectedDate = useMemo(() => {
     const today = new Date();
@@ -420,6 +426,54 @@ const DeliveryPage = () => {
     return null;
   };
 
+  // Add handlers for order selection
+  const handleOrderSelect = (orderId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedOrderIds(prev => [...prev, orderId]);
+    } else {
+      setSelectedOrderIds(prev => prev.filter(id => id !== orderId));
+    }
+  };
+  
+  const handleClearSelection = () => {
+    setSelectedOrderIds([]);
+  };
+  
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      // Select all orders that are assignable to trips
+      const assignableOrderIds = filteredOrders
+        .filter(order => order.status === 'ready-to-deliver' && !order.tripId)
+        .map(order => order.id);
+      setSelectedOrderIds(assignableOrderIds);
+    } else {
+      setSelectedOrderIds([]);
+    }
+  };
+  
+  // Handler for creating a new trip
+  const handleCreateTrip = () => {
+    if (selectedOrderIds.length === 0) {
+      toast.error("No orders selected for trip creation");
+      return;
+    }
+    setTripCreationDialogOpen(true);
+  };
+  
+  // Handler for trip creation success
+  const handleTripCreationSuccess = (tripId: string) => {
+    setTripCreationDialogOpen(false);
+    setSelectedOrderIds([]);
+    handleStatusChange(); // Refresh the list
+  };
+  
+  // Calculate how many orders are assignable to trips
+  const assignableOrdersCount = useMemo(() => {
+    return filteredOrders.filter(order => 
+      order.status === 'ready-to-deliver' && !order.tripId
+    ).length;
+  }, [filteredOrders]);
+
   return (
     <div className="space-y-4">
       <Helmet>
@@ -517,6 +571,16 @@ const DeliveryPage = () => {
                   <Table>
                     <TableHeader className="bg-muted">
                       <TableRow>
+                        {/* Add select all checkbox */}
+                        <TableHead className="w-[40px] text-center">
+                          {assignableOrdersCount > 0 ? (
+                            <Checkbox 
+                              checked={selectedOrderIds.length > 0 && selectedOrderIds.length === assignableOrdersCount}
+                              onCheckedChange={handleSelectAll}
+                              aria-label="Select all orders"
+                            />
+                          ) : null}
+                        </TableHead>
                         <TableHead className="w-[60px]">Order ID</TableHead>
                         <TableHead className="w-[100px]">Status</TableHead>
                         <TableHead className="w-[100px]">Delivery</TableHead>
@@ -547,16 +611,36 @@ const DeliveryPage = () => {
                         const hasDriverAssignment = !!order.deliveryAssignment;
                         const hasPreliminaryAssignment = hasDriverAssignment && order.deliveryAssignment?.isPreliminary;
                         const canShowPreAssignDropdown = canPreAssignDriver(order.status);
+                        const isInTrip = !!order.tripId;
+                        const isSelectable = isReadyToDeliver && !isInTrip;
                         
                         return (
                           <TableRow 
                             key={order.id}
-                            className={cn(timeSlotClass)}
+                            className={cn(
+                              timeSlotClass,
+                              selectedOrderIds.includes(order.id) && "bg-muted"
+                            )}
                           >
+                            {/* Add selection checkbox */}
+                            <TableCell className="text-center py-1">
+                              {isSelectable ? (
+                                <Checkbox 
+                                  checked={selectedOrderIds.includes(order.id)}
+                                  onCheckedChange={(checked) => handleOrderSelect(order.id, !!checked)}
+                                  aria-label={`Select order ${order.id}`}
+                                />
+                              ) : null}
+                            </TableCell>
                             <TableCell className="font-medium py-1">
                               <div className="flex items-center">
                                 {order.id}
                                 {getRevisionBadge(order)}
+                                {isInTrip && (
+                                  <Badge size="xs" variant="outline" className="ml-1 bg-blue-50 text-blue-700 border-blue-200">
+                                    <Truck className="h-3 w-3 mr-1" /> Trip
+                                  </Badge>
+                                )}
                               </div>
                             </TableCell>
                             <TableCell className="py-1">
@@ -743,6 +827,13 @@ const DeliveryPage = () => {
         </TabsContent>
       </Tabs>
       
+      {/* Bulk Actions Bar */}
+      <BulkActionsBar 
+        selectedCount={selectedOrderIds.length} 
+        onClearSelection={handleClearSelection}
+        onCreateTrip={handleCreateTrip}
+      />
+      
       {/* Dialogs */}
       {selectedOrder && (
         <>
@@ -769,6 +860,15 @@ const DeliveryPage = () => {
           />
         </>
       )}
+      
+      {/* Trip Creation Dialog */}
+      <QuickTripCreationDialog
+        open={tripCreationDialogOpen}
+        onOpenChange={setTripCreationDialogOpen}
+        selectedOrderIds={selectedOrderIds}
+        onSuccess={handleTripCreationSuccess}
+        date={selectedDate}
+      />
     </div>
   );
 };
