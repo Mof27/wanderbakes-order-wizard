@@ -4,6 +4,8 @@ import { Toaster } from "@/components/ui/sonner";
 import { Home, CakeIcon, Users, Settings, ChefHat, Truck } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import OnlineStatusIndicator from "./OnlineStatusIndicator";
+import Clock from "./Clock";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -90,6 +92,10 @@ const MainLayout: React.FC<MainLayoutProps> = ({
             <div className="flex items-center gap-2">
               <SidebarTrigger />
               <h1 className="text-lg font-medium sm:block hidden">WanderBakes</h1>
+            </div>
+            <div className="flex items-center gap-3">
+              <OnlineStatusIndicator />
+              <Clock />
             </div>
           </div>
           <div className="p-4">{children}</div>
