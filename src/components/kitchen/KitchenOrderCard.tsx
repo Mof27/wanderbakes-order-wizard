@@ -7,6 +7,7 @@ import { formatDate, cn } from '@/lib/utils';
 import NextStatusButton from './NextStatusButton';
 import StartProductionButton from './StartProductionButton';
 import { getColorStyle } from '@/utils/colorUtils';
+import KitchenInfoDrawer from './KitchenInfoDrawer';
 
 interface KitchenOrderCardProps {
   order: Order;
@@ -111,7 +112,10 @@ const KitchenOrderCard: React.FC<KitchenOrderCardProps> = ({
   // Render the header section for all card types
   const renderHeader = () => (
     <div className="flex justify-between items-start">
-      <div className="font-medium text-sm">{order.id}</div>
+      <div className="font-medium text-sm flex items-center gap-1">
+        {order.id}
+        <KitchenInfoDrawer order={order} />
+      </div>
       
       {!isInQueue && (
         <Badge 
@@ -156,16 +160,6 @@ const KitchenOrderCard: React.FC<KitchenOrderCardProps> = ({
         <span className="text-muted-foreground">Size:</span>
         <span>{layerInfo}</span>
       </div>
-      
-      {!isCompact && (
-        <div className="bg-orange-50 rounded-md p-2 text-xs border border-orange-200 mt-2">
-          <div className="font-medium mb-1 text-orange-800">Baking Notes:</div>
-          <ul className="list-disc list-inside space-y-1">
-            <li>Check ingredient availability</li>
-            <li>Prepare {order.cakeTier > 1 ? 'multiple tiers' : 'single tier'}</li>
-          </ul>
-        </div>
-      )}
     </div>
   );
 
@@ -188,16 +182,6 @@ const KitchenOrderCard: React.FC<KitchenOrderCardProps> = ({
         <span className="text-muted-foreground">Size:</span>
         <span>{layerInfo}</span>
       </div>
-      
-      {!isCompact && (
-        <div className="bg-yellow-50 rounded-md p-2 text-xs border border-yellow-200 mt-2">
-          <div className="font-medium mb-1 text-yellow-800">Crumbcoating Instructions:</div>
-          <div>Apply thin layer of buttercream to seal in crumbs.</div>
-          {order.cakeTier > 1 && (
-            <div className="mt-1">Multi-tier cake: Crumbcoat each tier separately.</div>
-          )}
-        </div>
-      )}
     </div>
   );
 
@@ -229,20 +213,6 @@ const KitchenOrderCard: React.FC<KitchenOrderCardProps> = ({
           )}
         </div>
       </div>
-      
-      {!isCompact && (
-        <div className="bg-blue-50 rounded-md p-2 text-xs border border-blue-200 mt-2">
-          <div className="font-medium mb-1 text-blue-800">Covering Instructions:</div>
-          {order.coverType === 'buttercream' ? (
-            <div>Apply smooth buttercream finish. Keep edges clean and sharp.</div>
-          ) : (
-            <div>Roll fondant evenly. Cover carefully to avoid air bubbles.</div>
-          )}
-          {order.cakeTier > 1 && (
-            <div className="mt-1 text-blue-900">Multi-tier cake: Cover each tier separately before assembly.</div>
-          )}
-        </div>
-      )}
     </div>
   );
   
@@ -263,13 +233,6 @@ const KitchenOrderCard: React.FC<KitchenOrderCardProps> = ({
           <span className="italic">"{order.cakeText}"</span>
         </div>
       )}
-      
-      {!isCompact && order.notes && (
-        <div className="mt-2 bg-purple-50 rounded-md p-2 text-xs border border-purple-200">
-          <div className="font-medium mb-1 text-purple-900">Special Instructions:</div>
-          <div>{order.notes}</div>
-        </div>
-      )}
     </div>
   );
   
@@ -287,18 +250,6 @@ const KitchenOrderCard: React.FC<KitchenOrderCardProps> = ({
         <span className="text-muted-foreground">Flavor:</span>
         <span>{order.cakeFlavor}</span>
       </div>
-      
-      {!isCompact && (
-        <div className="bg-green-50 rounded-md p-2 text-xs border border-green-200 mt-2">
-          <div className="font-medium mb-1 text-green-800">Quality Check:</div>
-          <ul className="list-disc list-inside space-y-1">
-            <li>Check design matches specifications</li>
-            <li>Verify text spelling is correct</li>
-            <li>Ensure decorations are secure</li>
-            <li>Take clear photos for approval</li>
-          </ul>
-        </div>
-      )}
     </div>
   );
   
