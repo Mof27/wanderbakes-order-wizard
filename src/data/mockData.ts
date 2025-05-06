@@ -29,6 +29,15 @@ const createCustomColor = (notes: string, imageUrl?: string): CakeColor => ({
   imageUrl
 });
 
+// Get today's date for mock data
+const today = new Date();
+const tomorrow = new Date(today);
+tomorrow.setDate(today.getDate() + 1);
+const nextWeek = new Date(today);
+nextWeek.setDate(today.getDate() + 7);
+const yesterday = new Date(today);
+yesterday.setDate(today.getDate() - 1);
+
 // Mock Customers
 export const mockCustomers: Customer[] = [
   {
@@ -121,14 +130,14 @@ export const defaultPackingItems: PackingItem[] = [
   { id: "p4", name: "Cake Topper", checked: false },
 ];
 
-// Updated Mock Orders - only 3 detailed examples with in-queue status
+// Updated Mock Orders - with current dates
 export const mockOrders: Order[] = [
   // Order 1: Single-tier cake with solid color
   {
     id: "o1",
     customer: mockCustomers[0],
     status: "in-queue", // All orders set to "in-queue"
-    deliveryDate: new Date('2025-05-05'), // Tomorrow
+    deliveryDate: today, // Set to today
     deliveryAddress: mockCustomers[0].addresses[0].text,
     deliveryAddressNotes: mockCustomers[0].addresses[0].deliveryNotes,
     deliveryArea: mockCustomers[0].addresses[0].area,
@@ -150,8 +159,8 @@ export const mockOrders: Order[] = [
       { id: "p4", name: "Cake Topper", checked: false },
     ],
     attachments: ["floral-cake-inspiration.jpg"],
-    createdAt: new Date('2025-05-01'), // Created a few days ago
-    updatedAt: new Date('2025-05-02'), 
+    createdAt: yesterday, // Created yesterday
+    updatedAt: yesterday, 
     ingredients: mockIngredients["Vanilla"],
     cakePrice: 450000,
     deliveryTimeSlot: "13:00 - 17:00", // Afternoon delivery
@@ -165,7 +174,7 @@ export const mockOrders: Order[] = [
     id: "o2",
     customer: mockCustomers[1],
     status: "in-queue",
-    deliveryDate: new Date('2025-05-10'), // Next week
+    deliveryDate: tomorrow, // Set to tomorrow
     deliveryAddress: mockCustomers[1].addresses[0].text,
     deliveryAddressNotes: mockCustomers[1].addresses[0].deliveryNotes,
     deliveryArea: mockCustomers[1].addresses[0].area,
@@ -208,8 +217,8 @@ export const mockOrders: Order[] = [
       { id: "p4", name: "Cake Topper", checked: true },
     ],
     attachments: ["geometric-design.jpg", "anniversary-topper.jpg"],
-    createdAt: new Date('2025-04-25'),
-    updatedAt: new Date('2025-04-28'),
+    createdAt: new Date(yesterday.setDate(yesterday.getDate() - 2)), // Created 3 days ago
+    updatedAt: yesterday,
     ingredients: [...mockIngredients["Double Chocolate"], ...mockIngredients["Vanilla"]],
     cakePrice: 750000,
     deliveryTimeSlot: "09:00 - 12:00", // Morning delivery
@@ -223,7 +232,7 @@ export const mockOrders: Order[] = [
     id: "o3",
     customer: mockCustomers[2],
     status: "in-queue",
-    deliveryDate: new Date('2025-05-04'), // Today
+    deliveryDate: nextWeek, // Set to next week
     deliveryAddress: mockCustomers[2].addresses[0].text,
     deliveryAddressNotes: mockCustomers[2].addresses[0].deliveryNotes,
     deliveryArea: mockCustomers[2].addresses[0].area,
@@ -274,8 +283,8 @@ export const mockOrders: Order[] = [
       { id: "p4", name: "Cake Topper", checked: true },
     ],
     attachments: ["galaxy-cake-reference.jpg", "star-decoration-example.jpg", "graduation-topper.jpg"],
-    createdAt: new Date('2025-04-20'),
-    updatedAt: new Date('2025-05-01'),
+    createdAt: new Date(yesterday.setDate(yesterday.getDate() - 7)), // Created 10 days ago
+    updatedAt: new Date(yesterday.setDate(yesterday.getDate() + 5)), // Updated 5 days ago
     ingredients: mockIngredients["Red Velvet"],
     cakePrice: 1200000,
     deliveryTimeSlot: "13:00 - 17:00", 
