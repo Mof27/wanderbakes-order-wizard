@@ -36,12 +36,13 @@ const QuickDriverAssignDropdown: React.FC<QuickDriverAssignDropdownProps> = ({
     try {
       setIsLoading(true);
       
-      // Create assignment details
+      // Create assignment details with required assignedAt property
       const assignment = {
         driverType,
         // Initial 3rd-party assignment doesn't need a name yet
         driverName: driverType === "3rd-party" ? undefined : undefined,
         isPreliminary: isPreliminaryOnly,
+        assignedAt: new Date(), // Add the required assignedAt property
       };
 
       // Create a new order object with the updated assignment
