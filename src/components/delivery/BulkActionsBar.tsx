@@ -1,18 +1,21 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { X, Truck } from "lucide-react";
+import { X, Truck, AlertCircle } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface BulkActionsBarProps {
   selectedCount: number;
   onClearSelection: () => void;
   onCreateTrip: () => void;
+  hasNonReadyOrders: boolean;
 }
 
 const BulkActionsBar = ({ 
   selectedCount, 
   onClearSelection, 
-  onCreateTrip 
+  onCreateTrip,
+  hasNonReadyOrders = false
 }: BulkActionsBarProps) => {
   if (selectedCount === 0) {
     return null;
@@ -33,7 +36,22 @@ const BulkActionsBar = ({
           <X className="h-4 w-4 mr-1" /> Clear
         </Button>
       </div>
-      <div>
+      <div className="flex items-center gap-2">
+        {hasNonReadyOrders && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center text-amber-600">
+                  <AlertCircle className="h-4 w-4 mr-1" />
+                  <span className="text-xs">Pre-planning</span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="max-w-xs text-xs">Some selected orders are not yet ready for delivery. They will be pre-assigned to this trip and will join when ready.</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
         <Button 
           variant="default" 
           className="h-9"

@@ -426,7 +426,32 @@ const DeliveryPage = () => {
     return null;
   };
 
-  // Add handlers for order selection
+  // Calculate how many selected orders are not in ready-to-deliver status
+  const hasNonReadyOrders = useMemo(() => {
+    if (selectedOrderIds.length === 0) return false;
+    
+    const nonReadyOrders = filteredOrders.filter(order => 
+      selectedOrderIds.includes(order.id) && 
+      order.status !== 'ready-to-deliver'
+    );
+    
+    return nonReadyOrders.length > 0;
+  }, [selectedOrderIds, filteredOrders]);
+  
+  // Update the select all handler to include all orders
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      // Select all orders without a trip regardless of status
+      const selectableOrderIds = filteredOrders
+        .filter(order => !order.tripId)
+        .map(order => order.id);
+      setSelectedOrderIds(selectableOrderIds);
+    } else {
+      setSelectedOrderIds([]);
+    }
+  };
+  
+  // Update the order selection handler to work with any order
   const handleOrderSelect = (orderId: string, checked: boolean) => {
     if (checked) {
       setSelectedOrderIds(prev => [...prev, orderId]);
@@ -435,45 +460,11 @@ const DeliveryPage = () => {
     }
   };
   
-  const handleClearSelection = () => {
-    setSelectedOrderIds([]);
-  };
-  
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      // Select all orders that are assignable to trips
-      const assignableOrderIds = filteredOrders
-        .filter(order => order.status === 'ready-to-deliver' && !order.tripId)
-        .map(order => order.id);
-      setSelectedOrderIds(assignableOrderIds);
-    } else {
-      setSelectedOrderIds([]);
-    }
-  };
-  
-  // Handler for creating a new trip
-  const handleCreateTrip = () => {
-    if (selectedOrderIds.length === 0) {
-      toast.error("No orders selected for trip creation");
-      return;
-    }
-    setTripCreationDialogOpen(true);
-  };
-  
-  // Handler for trip creation success
-  const handleTripCreationSuccess = (tripId: string) => {
-    setTripCreationDialogOpen(false);
-    setSelectedOrderIds([]);
-    handleStatusChange(); // Refresh the list
-  };
-  
-  // Calculate how many orders are assignable to trips
-  const assignableOrdersCount = useMemo(() => {
-    return filteredOrders.filter(order => 
-      order.status === 'ready-to-deliver' && !order.tripId
-    ).length;
+  // Update calculation for selectable orders
+  const selectableOrdersCount = useMemo(() => {
+    return filteredOrders.filter(order => !order.tripId).length;
   }, [filteredOrders]);
-
+  
   return (
     <div className="space-y-4">
       <Helmet>
@@ -571,11 +562,11 @@ const DeliveryPage = () => {
                   <Table>
                     <TableHeader className="bg-muted">
                       <TableRow>
-                        {/* Add select all checkbox */}
+                        {/* Updated checkbox to show for all selectable orders */}
                         <TableHead className="w-[40px] text-center">
-                          {assignableOrdersCount > 0 ? (
+                          {selectableOrdersCount > 0 ? (
                             <Checkbox 
-                              checked={selectedOrderIds.length > 0 && selectedOrderIds.length === assignableOrdersCount}
+                              checked={selectedOrderIds.length > 0 && selectedOrderIds.length === selectableOrdersCount}
                               onCheckedChange={handleSelectAll}
                               aria-label="Select all orders"
                             />
@@ -612,7 +603,8 @@ const DeliveryPage = () => {
                         const hasPreliminaryAssignment = hasDriverAssignment && order.deliveryAssignment?.isPreliminary;
                         const canShowPreAssignDropdown = canPreAssignDriver(order.status);
                         const isInTrip = !!order.tripId;
-                        const isSelectable = isReadyToDeliver && !isInTrip;
+                        // Updated to make all orders without a trip selectable
+                        const isSelectable = !isInTrip;
                         
                         return (
                           <TableRow 
@@ -622,7 +614,7 @@ const DeliveryPage = () => {
                               selectedOrderIds.includes(order.id) && "bg-muted"
                             )}
                           >
-                            {/* Add selection checkbox */}
+                            {/* Updated selection checkbox to show for all orders without a trip */}
                             <TableCell className="text-center py-1">
                               {isSelectable ? (
                                 <Checkbox 
@@ -707,6 +699,7 @@ const DeliveryPage = () => {
                               </div>
                             </TableCell>
                             <TableCell className="text-right py-1">
+                              {/* ... keep existing code for actions */}
                               <div className="flex justify-end gap-0.5">
                                 {/* View Order button */}
                                 <Tooltip>
@@ -827,11 +820,12 @@ const DeliveryPage = () => {
         </TabsContent>
       </Tabs>
       
-      {/* Bulk Actions Bar */}
+      {/* Updated Bulk Actions Bar with hasNonReadyOrders prop */}
       <BulkActionsBar 
         selectedCount={selectedOrderIds.length} 
         onClearSelection={handleClearSelection}
         onCreateTrip={handleCreateTrip}
+        hasNonReadyOrders={hasNonReadyOrders}
       />
       
       {/* Dialogs */}

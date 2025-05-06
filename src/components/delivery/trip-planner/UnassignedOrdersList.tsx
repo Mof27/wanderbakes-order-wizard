@@ -3,9 +3,10 @@ import { Order } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CheckCircle, Inbox, Plus } from "lucide-react";
+import { CheckCircle, Inbox, Plus, AlertCircle } from "lucide-react";
 import OrderList from "@/components/orders/OrderList";
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import StatusBadge from "@/components/orders/StatusBadge";
 
 interface UnassignedOrdersListProps {
   orders: Order[];
@@ -22,13 +23,43 @@ const UnassignedOrdersList = ({
 }: UnassignedOrdersListProps) => {
   const [isAdding, setIsAdding] = useState<Record<string, boolean>>({});
   
-  // Filter orders that are ready to be assigned to trips
-  // We only want orders in delivery-related statuses
-  const filteredOrders = orders.filter(order => 
-    order.status === 'ready-to-deliver' || 
-    order.status === 'in-delivery' || 
-    order.status === 'waiting-feedback'
-  );
+  // Remove the filtering by status - show all orders
+  const unassignedOrders = orders;
+  
+  // Group orders by status for better organization
+  const groupedOrders = useMemo(() => {
+    const groups: Record<string, Order[]> = {};
+    
+    unassignedOrders.forEach(order => {
+      if (!groups[order.status]) {
+        groups[order.status] = [];
+      }
+      groups[order.status].push(order);
+    });
+    
+    return groups;
+  }, [unassignedOrders]);
+  
+  // Sort priority for statuses
+  const getStatusPriority = (status: string): number => {
+    switch(status) {
+      case 'ready-to-deliver': return 1;
+      case 'in-delivery': return 2;
+      case 'pending-approval': return 3;
+      case 'needs-revision': return 4;
+      case 'waiting-photo': return 5;
+      case 'in-kitchen': return 6;
+      case 'in-queue': return 7;
+      default: return 10;
+    }
+  };
+  
+  // Get sorted status keys
+  const sortedStatusKeys = useMemo(() => {
+    return Object.keys(groupedOrders).sort((a, b) => {
+      return getStatusPriority(a) - getStatusPriority(b);
+    });
+  }, [groupedOrders]);
   
   const handleAddToTrip = async (orderId: string) => {
     if (!selectedTripId) return;
@@ -51,6 +82,9 @@ const UnassignedOrdersList = ({
       );
     }
     
+    // Add visual indicator for orders not in ready-to-deliver status
+    const isNotReady = order.status !== 'ready-to-deliver';
+    
     return (
       <Button 
         variant="default" 
@@ -59,8 +93,12 @@ const UnassignedOrdersList = ({
         disabled={isAdding[order.id]}
         className="flex items-center gap-1"
       >
-        {isAdding[order.id] ? <Skeleton className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-        Add to Trip
+        {isAdding[order.id] ? <Skeleton className="h-4 w-4" /> : isNotReady ? (
+          <AlertCircle className="h-4 w-4" />
+        ) : (
+          <Plus className="h-4 w-4" />
+        )}
+        {isNotReady ? "Pre-assign" : "Add to Trip"}
       </Button>
     );
   };
@@ -85,16 +123,28 @@ const UnassignedOrdersList = ({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Inbox className="h-5 w-5" />
-          Unassigned Orders ({filteredOrders.length})
+          Unassigned Orders ({unassignedOrders.length})
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {filteredOrders.length > 0 ? (
-          <OrderList 
-            orders={filteredOrders}
-            renderActions={renderOrderActions}
-            useWorkflowStatus={false}
-          />
+        {unassignedOrders.length > 0 ? (
+          <div className="space-y-6">
+            {sortedStatusKeys.map(statusKey => (
+              <div key={statusKey}>
+                <div className="flex items-center gap-2 mb-2">
+                  <StatusBadge status={statusKey as any} />
+                  <span className="text-sm text-muted-foreground">
+                    ({groupedOrders[statusKey].length})
+                  </span>
+                </div>
+                <OrderList 
+                  orders={groupedOrders[statusKey]}
+                  renderActions={renderOrderActions}
+                  useWorkflowStatus={false}
+                />
+              </div>
+            ))}
+          </div>
         ) : (
           <div className="text-center py-4">
             <CheckCircle className="h-10 w-10 text-muted-foreground mx-auto" />
