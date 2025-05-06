@@ -9,6 +9,7 @@ import { matchesStatus, isInApprovalFlow } from "@/lib/statusHelpers";
 import { useState } from "react";
 import { toast } from "@/components/ui/sonner";
 import DriverAssignmentDialog from "./DriverAssignmentDialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface DeliveryCardProps {
   order: Order;
@@ -198,116 +199,188 @@ const DeliveryCard = ({ order, onStatusChange }: DeliveryCardProps) => {
       </CardContent>
       
       <CardFooter className="bg-muted px-4 py-3 flex justify-between">
-        <div className="flex gap-2">
-          <Button
-            variant="outline" 
-            size="sm"
-            asChild
-          >
-            <Link to={`/orders/${order.id}`}>
-              <Eye className="h-4 w-4 mr-1" /> View
-            </Link>
-          </Button>
-          
-          <Button
-            variant="outline" 
-            size="sm"
-            onClick={handleChatClick}
-          >
-            <MessageSquare className="h-4 w-4 mr-1" /> Chat
-          </Button>
-        </div>
+        <TooltipProvider>
+          <div className="flex gap-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline" 
+                  size="icon"
+                  asChild
+                >
+                  <Link to={`/orders/${order.id}`}>
+                    <Eye className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>View Order</p>
+              </TooltipContent>
+            </Tooltip>
+            
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline" 
+                  size="icon"
+                  onClick={handleChatClick}
+                >
+                  <MessageSquare className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Chat</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
         
-        <div className="space-x-2">
-          {isPendingApproval && (
-            <Button 
-              size="sm"
-              className="bg-indigo-600 hover:bg-indigo-700 text-white"
-              asChild
-            >
-              <Link to={`/orders/${order.id}?tab=delivery-recap`}>
-                <CheckSquare2 className="h-4 w-4 mr-1" /> Review
-              </Link>
-            </Button>
-          )}
+          <div className="space-x-2">
+            {isPendingApproval && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    size="icon"
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                    asChild
+                  >
+                    <Link to={`/orders/${order.id}?tab=delivery-recap`}>
+                      <CheckSquare2 className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Review</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
 
-          {isNeedsRevision && (
-            <Button 
-              size="sm"
-              className="bg-amber-600 hover:bg-amber-700 text-white"
-              asChild
-            >
-              <Link to={`/orders/${order.id}?tab=delivery-recap`}>
-                <XCircle className="h-4 w-4 mr-1" /> Upload
-              </Link>
-            </Button>
-          )}
-          
-          {isReady && !hasDriverAssignment && (
-            <Button 
-              size="sm"
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-              onClick={() => openDriverDialog(false)}
-            >
-              <User className="h-4 w-4 mr-1" /> Assign
-            </Button>
-          )}
-          
-          {isReady && hasDriverAssignment && (
-            <>
-              <Button 
-                size="sm"
-                variant="outline"
-                onClick={() => openDriverDialog(false)}
-              >
-                <User className="h-4 w-4 mr-1" /> Change
-              </Button>
-              
-              <Button 
-                size="sm"
-                className="bg-orange-600 hover:bg-orange-700 text-white"
-                asChild
-              >
-                <Link to={`/orders/${order.id}?tab=delivery-recap&action=start-delivery`}>
-                  <Truck className="h-4 w-4 mr-1" /> Start
-                </Link>
-              </Button>
-            </>
-          )}
-          
-          {canPreAssign && !hasDriverAssignment && (
-            <Button 
-              size="sm"
-              variant="outline"
-              className="border-blue-200 text-blue-700 hover:bg-blue-50"
-              onClick={() => openDriverDialog(true)}
-            >
-              <User className="h-4 w-4 mr-1" /> Pre-Assign
-            </Button>
-          )}
-          
-          {canPreAssign && hasPreliminaryAssignment && (
-            <Button 
-              size="sm"
-              variant="outline"
-              onClick={() => openDriverDialog(true)}
-            >
-              <User className="h-4 w-4 mr-1" /> Change
-            </Button>
-          )}
-          
-          {isInTransit && (
-            <Button 
-              size="sm"
-              className="bg-green-600 hover:bg-green-700 text-white"
-              asChild
-            >
-              <Link to={`/orders/${order.id}?tab=delivery-recap`}>
-                <CheckCircle2 className="h-4 w-4 mr-1" /> Complete
-              </Link>
-            </Button>
-          )}
-        </div>
+            {isNeedsRevision && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    size="icon"
+                    className="bg-amber-600 hover:bg-amber-700 text-white"
+                    asChild
+                  >
+                    <Link to={`/orders/${order.id}?tab=delivery-recap`}>
+                      <XCircle className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Upload</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+            
+            {isReady && !hasDriverAssignment && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    size="icon"
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                    onClick={() => openDriverDialog(false)}
+                  >
+                    <User className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Assign Driver</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+            
+            {isReady && hasDriverAssignment && (
+              <>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      size="icon"
+                      variant="outline"
+                      onClick={() => openDriverDialog(false)}
+                    >
+                      <User className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Change Driver</p>
+                  </TooltipContent>
+                </Tooltip>
+                
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      size="icon"
+                      className="bg-orange-600 hover:bg-orange-700 text-white"
+                      asChild
+                    >
+                      <Link to={`/orders/${order.id}?tab=delivery-recap&action=start-delivery`}>
+                        <Truck className="h-4 w-4" />
+                      </Link>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Start Delivery</p>
+                  </TooltipContent>
+                </Tooltip>
+              </>
+            )}
+            
+            {canPreAssign && !hasDriverAssignment && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    size="icon"
+                    variant="outline"
+                    className="border-blue-200 text-blue-700 hover:bg-blue-50"
+                    onClick={() => openDriverDialog(true)}
+                  >
+                    <User className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Pre-Assign Driver</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+            
+            {canPreAssign && hasPreliminaryAssignment && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    size="icon"
+                    variant="outline"
+                    onClick={() => openDriverDialog(true)}
+                  >
+                    <User className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Change Driver Assignment</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+            
+            {isInTransit && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    size="icon"
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                    asChild
+                  >
+                    <Link to={`/orders/${order.id}?tab=delivery-recap`}>
+                      <CheckCircle2 className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Complete Delivery</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
+        </TooltipProvider>
       </CardFooter>
       
       <DriverAssignmentDialog 

@@ -11,6 +11,7 @@ import FeedbackDialog from "@/components/orders/FeedbackDialog";
 import CakePhotoApprovalDialog from "@/components/orders/CakePhotoApprovalDialog";
 import DriverAssignmentDialog from "./DriverAssignmentDialog";
 import NotesSection from "../orders/OrderFormComponents/NotesSection";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface DeliveryStatusManagerProps {
   order: Order;
@@ -96,15 +97,21 @@ const DeliveryStatusManager = ({
   // Pending approval -> open approval dialog
   if (isPendingApproval) {
     return (
-      <>
-        <Button 
-          size={compact ? "sm" : "default"}
-          className={`bg-indigo-600 hover:bg-indigo-700 text-white ${isUpdating ? 'opacity-70' : ''}`}
-          onClick={openApprovalDialog}
-        >
-          <CheckSquare2 className="h-4 w-4 mr-1" /> 
-          {!compact && "Review"}
-        </Button>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button 
+              size="icon"
+              className={`bg-indigo-600 hover:bg-indigo-700 text-white ${isUpdating ? 'opacity-70' : ''}`}
+              onClick={openApprovalDialog}
+            >
+              <CheckSquare2 className="h-4 w-4" /> 
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Review</p>
+          </TooltipContent>
+        </Tooltip>
         
         <CakePhotoApprovalDialog 
           open={showApprovalDialog} 
@@ -112,23 +119,29 @@ const DeliveryStatusManager = ({
           order={order}
           onSuccess={onStatusChange}
         />
-      </>
+      </TooltipProvider>
     );
   }
   
   // Needs revision -> handle differently
   if (isNeedsRevision) {
     return (
-      <>
-        <Button 
-          size={compact ? "sm" : "default"}
-          className={`bg-amber-600 hover:bg-amber-700 text-white ${isUpdating ? 'opacity-70' : ''}`}
-          disabled={true} // This button is disabled since the action happens elsewhere
-        >
-          <XCircle className="h-4 w-4 mr-1" /> 
-          {!compact && "Upload"}
-        </Button>
-      </>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button 
+              size="icon"
+              className={`bg-amber-600 hover:bg-amber-700 text-white ${isUpdating ? 'opacity-70' : ''}`}
+              disabled={true} // This button is disabled since the action happens elsewhere
+            >
+              <XCircle className="h-4 w-4" /> 
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Upload</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     );
   }
 
@@ -139,26 +152,38 @@ const DeliveryStatusManager = ({
       // If it's a preliminary assignment, convert it to final
       if (hasPreliminaryAssignment) {
         return (
-          <>
+          <TooltipProvider>
             <div className="flex items-center gap-2">
-              <Button 
-                size={compact ? "sm" : "default"}
-                variant="outline"
-                onClick={() => openDriverDialog(false)}
-              >
-                <User className="h-4 w-4 mr-1" />
-                {!compact && "Change"}
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    size="icon"
+                    variant="outline"
+                    onClick={() => openDriverDialog(false)}
+                  >
+                    <User className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Change Driver</p>
+                </TooltipContent>
+              </Tooltip>
               
-              <Button 
-                size={compact ? "sm" : "default"}
-                className={`bg-orange-600 hover:bg-orange-700 text-white ${isUpdating ? 'opacity-70' : ''}`}
-                disabled={isUpdating}
-                onClick={() => updateStatus('in-delivery')}
-              >
-                <Truck className="h-4 w-4 mr-1" /> 
-                {!compact && "Start"}
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    size="icon"
+                    className={`bg-orange-600 hover:bg-orange-700 text-white ${isUpdating ? 'opacity-70' : ''}`}
+                    disabled={isUpdating}
+                    onClick={() => updateStatus('in-delivery')}
+                  >
+                    <Truck className="h-4 w-4" /> 
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Start Delivery</p>
+                </TooltipContent>
+              </Tooltip>
             </div>
             
             <DriverAssignmentDialog 
@@ -168,30 +193,42 @@ const DeliveryStatusManager = ({
               onSuccess={onStatusChange}
               isPreliminary={isPreliminary}
             />
-          </>
+          </TooltipProvider>
         );
       } else {
         return (
-          <>
+          <TooltipProvider>
             <div className="flex items-center gap-2">
-              <Button 
-                size={compact ? "sm" : "default"}
-                variant="outline"
-                onClick={() => openDriverDialog(false)}
-              >
-                <User className="h-4 w-4 mr-1" />
-                {!compact && "Change"}
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    size="icon"
+                    variant="outline"
+                    onClick={() => openDriverDialog(false)}
+                  >
+                    <User className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Change Driver</p>
+                </TooltipContent>
+              </Tooltip>
               
-              <Button 
-                size={compact ? "sm" : "default"}
-                className={`bg-orange-600 hover:bg-orange-700 text-white ${isUpdating ? 'opacity-70' : ''}`}
-                disabled={isUpdating}
-                onClick={() => updateStatus('in-delivery')}
-              >
-                <Truck className="h-4 w-4 mr-1" /> 
-                {!compact && "Start"}
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    size="icon"
+                    className={`bg-orange-600 hover:bg-orange-700 text-white ${isUpdating ? 'opacity-70' : ''}`}
+                    disabled={isUpdating}
+                    onClick={() => updateStatus('in-delivery')}
+                  >
+                    <Truck className="h-4 w-4" /> 
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Start Delivery</p>
+                </TooltipContent>
+              </Tooltip>
             </div>
             
             <DriverAssignmentDialog 
@@ -201,22 +238,28 @@ const DeliveryStatusManager = ({
               onSuccess={onStatusChange}
               isPreliminary={isPreliminary}
             />
-          </>
+          </TooltipProvider>
         );
       }
     }
     
     // No driver assignment yet, show assign driver button
     return (
-      <>
-        <Button 
-          size={compact ? "sm" : "default"}
-          className={`bg-blue-600 hover:bg-blue-700 text-white ${isUpdating ? 'opacity-70' : ''}`}
-          onClick={() => openDriverDialog(false)}
-        >
-          <User className="h-4 w-4 mr-1" /> 
-          {!compact && "Assign"}
-        </Button>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button 
+              size="icon"
+              className={`bg-blue-600 hover:bg-blue-700 text-white ${isUpdating ? 'opacity-70' : ''}`}
+              onClick={() => openDriverDialog(false)}
+            >
+              <User className="h-4 w-4" /> 
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Assign Driver</p>
+          </TooltipContent>
+        </Tooltip>
         
         <DriverAssignmentDialog 
           open={showDriverDialog}
@@ -225,23 +268,29 @@ const DeliveryStatusManager = ({
           onSuccess={onStatusChange}
           isPreliminary={isPreliminary}
         />
-      </>
+      </TooltipProvider>
     );
   }
   
   // In delivery -> Complete delivery button
   if (isInTransit) {
     return (
-      <>
-        <Button 
-          size={compact ? "sm" : "default"}
-          className={`bg-green-600 hover:bg-green-700 text-white ${isUpdating ? 'opacity-70' : ''}`}
-          disabled={isUpdating}
-          onClick={openDeliveryInfoDialog}
-        >
-          <CheckCircle2 className="h-4 w-4 mr-1" />
-          {!compact && "Complete"}
-        </Button>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button 
+              size="icon"
+              className={`bg-green-600 hover:bg-green-700 text-white ${isUpdating ? 'opacity-70' : ''}`}
+              disabled={isUpdating}
+              onClick={openDeliveryInfoDialog}
+            >
+              <CheckCircle2 className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Complete Delivery</p>
+          </TooltipContent>
+        </Tooltip>
         
         <DeliveryInfoDialog 
           open={showInfoDialog} 
@@ -249,22 +298,28 @@ const DeliveryStatusManager = ({
           order={order}
           onSaved={onStatusChange}
         />
-      </>
+      </TooltipProvider>
     );
   }
   
   // Waiting feedback -> Add feedback button 
   if (isWaitingFeedback) {
     return (
-      <>
-        <Button 
-          size={compact ? "sm" : "default"}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white"
-          onClick={openFeedbackDialog}
-        >
-          <MessageSquare className="h-4 w-4 mr-1" />
-          {!compact && "Feedback"}
-        </Button>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button 
+              size="icon"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white"
+              onClick={openFeedbackDialog}
+            >
+              <MessageSquare className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Add Feedback</p>
+          </TooltipContent>
+        </Tooltip>
         
         <FeedbackDialog 
           open={showFeedbackDialog} 
@@ -272,7 +327,7 @@ const DeliveryStatusManager = ({
           order={order}
           onSaved={onStatusChange}
         />
-      </>
+      </TooltipProvider>
     );
   }
   
@@ -281,16 +336,21 @@ const DeliveryStatusManager = ({
     // Show different UI based on whether there's already a pre-assignment
     if (hasPreliminaryAssignment) {
       return (
-        <>
-          <Button 
-            size={compact ? "sm" : "default"}
-            variant="outline"
-            onClick={() => openDriverDialog(true)}
-            className="gap-2"
-          >
-            <User className="h-4 w-4" />
-            {!compact ? "Change" : "Change"}
-          </Button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                size="icon"
+                variant="outline"
+                onClick={() => openDriverDialog(true)}
+              >
+                <User className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Change Pre-Assignment</p>
+            </TooltipContent>
+          </Tooltip>
           
           <DriverAssignmentDialog 
             open={showDriverDialog}
@@ -299,20 +359,26 @@ const DeliveryStatusManager = ({
             onSuccess={onStatusChange}
             isPreliminary={isPreliminary}
           />
-        </>
+        </TooltipProvider>
       );
     } else {
       return (
-        <>
-          <Button 
-            size={compact ? "sm" : "default"}
-            variant="outline"
-            onClick={() => openDriverDialog(true)}
-            className="gap-2 border-blue-200 text-blue-700 hover:bg-blue-50"
-          >
-            <User className="h-4 w-4" />
-            {!compact ? "Pre-Assign" : "Pre-Assign"}
-          </Button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                size="icon"
+                variant="outline"
+                onClick={() => openDriverDialog(true)}
+                className="border-blue-200 text-blue-700 hover:bg-blue-50"
+              >
+                <User className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Pre-Assign Driver</p>
+            </TooltipContent>
+          </Tooltip>
           
           <DriverAssignmentDialog 
             open={showDriverDialog}
@@ -321,22 +387,28 @@ const DeliveryStatusManager = ({
             onSuccess={onStatusChange}
             isPreliminary={isPreliminary}
           />
-        </>
+        </TooltipProvider>
       );
     }
   }
   
   // For any other status, show a button to open the info dialog
   return (
-    <>
-      <Button 
-        size={compact ? "sm" : "default"}
-        variant="outline"
-        onClick={openDeliveryInfoDialog}
-      >
-        <Clock className="h-4 w-4 mr-1" />
-        {!compact && "Details"}
-      </Button>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button 
+            size="icon"
+            variant="outline"
+            onClick={openDeliveryInfoDialog}
+          >
+            <Clock className="h-4 w-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Delivery Details</p>
+        </TooltipContent>
+      </Tooltip>
       
       <DeliveryInfoDialog 
         open={showInfoDialog} 
@@ -344,7 +416,7 @@ const DeliveryStatusManager = ({
         order={order}
         onSaved={onStatusChange}
       />
-    </>
+    </TooltipProvider>
   );
 };
 
