@@ -3,12 +3,14 @@ import { useNavigate, Link } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
-import { Plus, Grid, List, Info, Archive, Upload, Eye, MessageSquare } from "lucide-react";
+import { Plus, Grid, List, Info, Archive, Upload, Eye, MessageSquare, Check, X, Car } from "lucide-react";
 import OrderList from "@/components/orders/OrderList";
+import SelectableOrderList from "@/components/orders/SelectableOrderList";
 import OrderCard from "@/components/orders/OrderCard";
 import DateRangePicker from "@/components/orders/DateRangePicker";
 import StatusFilterChips from "@/components/orders/StatusFilterChips";
 import { ViewMode, FilterOption, Order } from "@/types";
+import { DeliveryTrip } from "@/types/trip";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,9 +25,10 @@ import { toast } from "@/components/ui/sonner";
 import CakePhotoUploadDialog from "@/components/orders/CakePhotoUploadDialog";
 import FeedbackDialog from "@/components/orders/FeedbackDialog";
 import { getWorkflowStatus } from "@/lib/statusHelpers";
+import CreateTripDialog from "@/components/delivery/CreateTripDialog";
 
 const OrdersPage = () => {
-  const { orders, setDateRange, dateRange, updateOrder } = useApp();
+  const { orders, trips, orderSelection, setDateRange, dateRange, updateOrder, toggleSelectionMode, clearOrderSelection } = useApp();
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [filterStatus, setFilterStatus] = useState<string[]>([]);
@@ -36,6 +39,8 @@ const OrdersPage = () => {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
   const [selectedOrderForFeedback, setSelectedOrderForFeedback] = useState<Order | null>(null);
+  const [createTripDialogOpen, setCreateTripDialogOpen] = useState(false);
+  const [orderTripsMap, setOrderTripsMap] = useState<Map<string, DeliveryTrip>>(new Map());
   
   // Create status filter options - updated to match workflow statuses
   const statusOptions: FilterOption[] = [
@@ -52,6 +57,19 @@ const OrdersPage = () => {
 
   // Selected status option
   const [selectedStatusOption, setSelectedStatusOption] = useState<FilterOption>(statusOptions[0]);
+  
+  // Calculate order trips map
+  useEffect(() => {
+    const newMap = new Map<string, DeliveryTrip>();
+    
+    trips.forEach(trip => {
+      trip.orderIds.forEach(orderId => {
+        newMap.set(orderId, trip);
+      });
+    });
+    
+    setOrderTripsMap(newMap);
+  }, [trips]);
   
   // Filter orders based on date range and status
   useEffect(() => {
@@ -146,6 +164,21 @@ const OrdersPage = () => {
     toast.success("Feedback saved successfully");
     setFeedbackDialogOpen(false);
     setSelectedOrderForFeedback(null);
+  };
+
+  // Toggle selection mode
+  const handleToggleSelectionMode = () => {
+    toggleSelectionMode();
+  };
+
+  // Create delivery trip
+  const handleCreateTrip = () => {
+    if (orderSelection.selectedOrderIds.length === 0) {
+      toast.error("Please select at least one order for the trip");
+      return;
+    }
+    
+    setCreateTripDialogOpen(true);
   };
 
   // Render actions for order list
@@ -256,6 +289,43 @@ const OrdersPage = () => {
         </div>
         
         <div className="flex gap-2">
+          {/* Selection mode toggle */}
+          <Button
+            variant={orderSelection.isSelectionMode ? "default" : "outline"}
+            size="sm"
+            onClick={handleToggleSelectionMode}
+            className={orderSelection.isSelectionMode ? "bg-blue-600" : ""}
+          >
+            <Check className="h-4 w-4" />
+            {orderSelection.isSelectionMode ? "Exit Selection" : "Select"}
+          </Button>
+          
+          {/* Create trip button - only shown in selection mode with selected orders */}
+          {orderSelection.isSelectionMode && orderSelection.selectedOrderIds.length > 0 && (
+            <Button
+              variant="default"
+              size="sm"
+              onClick={handleCreateTrip}
+              className="bg-green-600"
+            >
+              <Car className="h-4 w-4 mr-1" />
+              Create Trip ({orderSelection.selectedOrderIds.length})
+            </Button>
+          )}
+          
+          {/* Clear selection button - only shown in selection mode with selected orders */}
+          {orderSelection.isSelectionMode && orderSelection.selectedOrderIds.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={clearOrderSelection}
+            >
+              <X className="h-4 w-4 mr-1" />
+              Clear
+            </Button>
+          )}
+          
+          {/* View mode toggle */}
           <Button 
             variant={viewMode === 'list' ? "default" : "outline"}
             size="sm"
@@ -282,11 +352,20 @@ const OrdersPage = () => {
       
       {/* Order list/grid view */}
       {viewMode === 'list' ? (
-        <OrderList 
-          orders={filteredOrders} 
-          onOrderClick={(orderId) => navigate(`/orders/${orderId}`)}
-          renderActions={renderOrderActions}
-        />
+        orderSelection.isSelectionMode ? (
+          <SelectableOrderList 
+            orders={filteredOrders} 
+            onOrderClick={(orderId) => navigate(`/orders/${orderId}`)}
+            renderActions={renderOrderActions}
+            tripsMap={orderTripsMap}
+          />
+        ) : (
+          <OrderList 
+            orders={filteredOrders} 
+            onOrderClick={(orderId) => navigate(`/orders/${orderId}`)}
+            renderActions={renderOrderActions}
+          />
+        )
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredOrders.map(order => (
@@ -329,7 +408,7 @@ const OrdersPage = () => {
         />
       )}
 
-      {/* Feedback Dialog - Now using our new dedicated FeedbackDialog component */}
+      {/* Feedback Dialog */}
       {selectedOrderForFeedback && (
         <FeedbackDialog 
           order={selectedOrderForFeedback}
@@ -338,6 +417,16 @@ const OrdersPage = () => {
           onSaved={handleFeedbackSuccess}
         />
       )}
+      
+      {/* Create Trip Dialog */}
+      <CreateTripDialog
+        open={createTripDialogOpen}
+        onOpenChange={setCreateTripDialogOpen}
+        selectedOrderIds={orderSelection.selectedOrderIds}
+        onSuccess={() => {
+          toast.success("Trip created successfully");
+        }}
+      />
     </div>
   );
 };

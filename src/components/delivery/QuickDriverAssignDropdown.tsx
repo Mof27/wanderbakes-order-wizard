@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Order, DriverType } from "@/types";
 import { useApp } from "@/context/AppContext";
 import { Car, ExternalLink, ChevronDown, AlertCircle } from "lucide-react";
@@ -9,15 +9,19 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { DeliveryTrip } from "@/types/trip";
+import TripBadge from "./TripBadge";
 
 interface QuickDriverAssignDropdownProps {
   order: Order;
   onSuccess?: () => void;
   isPreliminaryOnly?: boolean;
-  compact?: boolean; // New prop for compact mode
+  compact?: boolean;
 }
 
 const QuickDriverAssignDropdown: React.FC<QuickDriverAssignDropdownProps> = ({
@@ -26,13 +30,24 @@ const QuickDriverAssignDropdown: React.FC<QuickDriverAssignDropdownProps> = ({
   isPreliminaryOnly = true,
   compact = false
 }) => {
-  const { updateOrder } = useApp();
-  const [isLoading, setIsLoading] = React.useState(false);
+  const { updateOrder, trips, getTripForOrder } = useApp();
+  const [isLoading, setIsLoading] = useState(false);
+  const [orderTrip, setOrderTrip] = useState<DeliveryTrip | undefined>(undefined);
 
   // Check if there's already an assignment
   const hasAssignment = !!order.deliveryAssignment;
   const currentDriverType = order.deliveryAssignment?.driverType;
   const isPreliminary = order.deliveryAssignment?.isPreliminary || false;
+
+  // Fetch trip information for this order
+  useEffect(() => {
+    const loadTripData = async () => {
+      const trip = await getTripForOrder(order.id);
+      setOrderTrip(trip);
+    };
+    
+    loadTripData();
+  }, [order.id, trips, getTripForOrder]);
 
   const assignDriver = async (driverType: DriverType) => {
     try {
@@ -80,6 +95,11 @@ const QuickDriverAssignDropdown: React.FC<QuickDriverAssignDropdownProps> = ({
 
   // Render button text based on current assignment status and compact mode
   const getButtonText = () => {
+    // If the order is in a trip, show that instead
+    if (orderTrip) {
+      return <TripBadge trip={orderTrip} compact={compact} />;
+    }
+    
     if (compact) {
       return hasAssignment ? (isPreliminary ? "Pre" : "Asgn") : "Assign";
     }
@@ -104,51 +124,66 @@ const QuickDriverAssignDropdown: React.FC<QuickDriverAssignDropdownProps> = ({
           className={cn(
             compact ? "text-xs h-6 px-1.5 min-w-0" : "text-sm h-7",
             "gap-0.5",
-            hasAssignment && "text-blue-600 font-medium"
+            hasAssignment && !orderTrip && "text-blue-600 font-medium",
+            orderTrip && "p-0 h-auto bg-transparent hover:bg-transparent"
           )}
           disabled={isLoading}
         >
           {getButtonText()}
-          <ChevronDown className="h-3 w-3 opacity-70" />
+          {!orderTrip && <ChevronDown className="h-3 w-3 opacity-70" />}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-44 bg-background">
-        <DropdownMenuItem 
-          onClick={() => assignDriver("driver-1")}
-          className={cn(
-            currentDriverType === "driver-1" && "bg-blue-50 text-blue-700"
-          )}
-        >
-          <Car className="h-3.5 w-3.5 mr-1.5" />
-          <span>Driver 1</span>
-          {currentDriverType === "driver-1" && isPreliminary && (
-            <AlertCircle className="h-3 w-3 ml-1 text-blue-500" />
-          )}
-        </DropdownMenuItem>
-        <DropdownMenuItem 
-          onClick={() => assignDriver("driver-2")}
-          className={cn(
-            currentDriverType === "driver-2" && "bg-indigo-50 text-indigo-700"
-          )}
-        >
-          <Car className="h-3.5 w-3.5 mr-1.5" />
-          <span>Driver 2</span>
-          {currentDriverType === "driver-2" && isPreliminary && (
-            <AlertCircle className="h-3 w-3 ml-1 text-indigo-500" />
-          )}
-        </DropdownMenuItem>
-        <DropdownMenuItem 
-          onClick={() => assignDriver("3rd-party")}
-          className={cn(
-            currentDriverType === "3rd-party" && "bg-purple-50 text-purple-700"
-          )}
-        >
-          <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
-          <span>Lalamove</span>
-          {currentDriverType === "3rd-party" && isPreliminary && (
-            <AlertCircle className="h-3 w-3 ml-1 text-purple-500" />
-          )}
-        </DropdownMenuItem>
+        {orderTrip ? (
+          <>
+            <DropdownMenuLabel>
+              Order in Trip
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem disabled className="text-sm opacity-60">
+              Part of a delivery trip
+            </DropdownMenuItem>
+          </>
+        ) : (
+          <>
+            <DropdownMenuItem 
+              onClick={() => assignDriver("driver-1")}
+              className={cn(
+                currentDriverType === "driver-1" && "bg-blue-50 text-blue-700"
+              )}
+            >
+              <Car className="h-3.5 w-3.5 mr-1.5" />
+              <span>Driver 1</span>
+              {currentDriverType === "driver-1" && isPreliminary && (
+                <AlertCircle className="h-3 w-3 ml-1 text-blue-500" />
+              )}
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              onClick={() => assignDriver("driver-2")}
+              className={cn(
+                currentDriverType === "driver-2" && "bg-indigo-50 text-indigo-700"
+              )}
+            >
+              <Car className="h-3.5 w-3.5 mr-1.5" />
+              <span>Driver 2</span>
+              {currentDriverType === "driver-2" && isPreliminary && (
+                <AlertCircle className="h-3 w-3 ml-1 text-indigo-500" />
+              )}
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              onClick={() => assignDriver("3rd-party")}
+              className={cn(
+                currentDriverType === "3rd-party" && "bg-purple-50 text-purple-700"
+              )}
+            >
+              <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+              <span>Lalamove</span>
+              {currentDriverType === "3rd-party" && isPreliminary && (
+                <AlertCircle className="h-3 w-3 ml-1 text-purple-500" />
+              )}
+            </DropdownMenuItem>
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
