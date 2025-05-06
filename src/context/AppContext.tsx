@@ -1,6 +1,5 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from "react";
-import { Customer, FilterOption, Order, ViewMode, DriverType } from "../types";
-import { DeliveryTrip, OrderSelectionState } from "../types/trip";
+import { Customer, FilterOption, Order, ViewMode } from "../types";
 import { statusFilterOptions, timeFilterOptions } from "../data/mockData";
 import { toast } from "@/components/ui/sonner";
 import { dataService } from "@/services";
@@ -8,24 +7,18 @@ import { dataService } from "@/services";
 interface AppContextProps {
   customers: Customer[];
   orders: Order[];
-  trips: DeliveryTrip[];
   activeStatusFilter: FilterOption;
   activeTimeFilter: FilterOption;
   viewMode: ViewMode;
   searchQuery: string;
   dateRange: [Date | null, Date | null];
   activeStatusFilters: FilterOption[];
-  orderSelection: OrderSelectionState;
   addCustomer: (customer: Omit<Customer, 'id' | 'createdAt'>) => Promise<Customer>;
   updateCustomer: (customer: Customer) => Promise<Customer>;
   findCustomerByWhatsApp: (whatsappNumber: string) => Promise<Customer | undefined>;
   addOrder: (order: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Order>;
   updateOrder: (order: Order) => Promise<void>;
   deleteOrder: (orderId: string) => Promise<void>;
-  createTrip: (trip: Omit<DeliveryTrip, 'id' | 'createdAt' | 'updatedAt'>) => Promise<DeliveryTrip>;
-  updateTrip: (trip: DeliveryTrip) => Promise<void>;
-  deleteTrip: (tripId: string) => Promise<void>;
-  getTripForOrder: (orderId: string) => Promise<DeliveryTrip | undefined>;
   setActiveStatusFilter: (filter: FilterOption) => void;
   setActiveTimeFilter: (filter: FilterOption) => void;
   setViewMode: (mode: ViewMode) => void;
@@ -33,9 +26,6 @@ interface AppContextProps {
   setDateRange: (range: [Date | null, Date | null]) => void;
   setActiveStatusFilters: (filters: FilterOption[]) => void;
   resetFilters: () => void;
-  toggleOrderSelection: (orderId: string) => void;
-  toggleSelectionMode: () => void;
-  clearOrderSelection: () => void;
   filteredOrders: Order[];
   isLoading: boolean;
   getOrderById: (id: string) => Order | undefined;
@@ -46,7 +36,6 @@ const AppContext = createContext<AppContextProps | undefined>(undefined);
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
-  const [trips, setTrips] = useState<DeliveryTrip[]>([]);
   const [activeStatusFilter, setActiveStatusFilter] = useState<FilterOption>(statusFilterOptions[0]);
   const [activeTimeFilter, setActiveTimeFilter] = useState<FilterOption>(timeFilterOptions[0]);
   const [activeStatusFilters, setActiveStatusFilters] = useState<FilterOption[]>([statusFilterOptions[0]]);
@@ -54,10 +43,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([null, null]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [orderSelection, setOrderSelection] = useState<OrderSelectionState>({
-    selectedOrderIds: [],
-    isSelectionMode: false
-  });
 
   // Load initial data
   useEffect(() => {
@@ -65,11 +50,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       try {
         const customersData = await dataService.customers.getAll();
         const ordersData = await dataService.orders.getAll();
-        const tripsData = await dataService.trips.getAll();
         
         setCustomers(customersData);
         setOrders(ordersData);
-        setTrips(tripsData);
       } catch (error) {
         console.error("Failed to load initial data:", error);
         toast.error("Failed to load data");
@@ -88,35 +71,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setActiveStatusFilters([statusFilterOptions[0]]);
     setDateRange([null, null]);
     setSearchQuery('');
-  };
-
-  // Order selection functions
-  const toggleOrderSelection = (orderId: string) => {
-    setOrderSelection(prev => {
-      const selectedOrderIds = prev.selectedOrderIds.includes(orderId)
-        ? prev.selectedOrderIds.filter(id => id !== orderId)
-        : [...prev.selectedOrderIds, orderId];
-      
-      return {
-        ...prev,
-        selectedOrderIds
-      };
-    });
-  };
-
-  const toggleSelectionMode = () => {
-    setOrderSelection(prev => ({
-      ...prev,
-      isSelectionMode: !prev.isSelectionMode,
-      selectedOrderIds: prev.isSelectionMode ? [] : prev.selectedOrderIds
-    }));
-  };
-
-  const clearOrderSelection = () => {
-    setOrderSelection(prev => ({
-      ...prev,
-      selectedOrderIds: []
-    }));
   };
 
   // Customer functions
@@ -204,60 +158,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return orders.find(order => order.id === id);
   };
 
-  // Trip functions
-  const createTrip = async (tripData: Omit<DeliveryTrip, 'id' | 'createdAt' | 'updatedAt'>) => {
-    try {
-      const newTrip = await dataService.trips.create(tripData);
-      setTrips(prevTrips => [...prevTrips, newTrip]);
-      toast.success("Trip created successfully");
-      return newTrip;
-    } catch (error) {
-      console.error("Failed to create trip:", error);
-      toast.error("Failed to create trip");
-      throw error;
-    }
-  };
-
-  const updateTrip = async (updatedTrip: DeliveryTrip) => {
-    try {
-      await dataService.trips.update(updatedTrip.id, updatedTrip);
-      setTrips(prevTrips =>
-        prevTrips.map(trip => {
-          if (trip.id === updatedTrip.id) {
-            return { ...updatedTrip, updatedAt: new Date() };
-          }
-          return trip;
-        })
-      );
-      toast.success("Trip updated successfully");
-    } catch (error) {
-      console.error("Failed to update trip:", error);
-      toast.error("Failed to update trip");
-      throw error;
-    }
-  };
-
-  const deleteTrip = async (tripId: string) => {
-    try {
-      await dataService.trips.delete(tripId);
-      setTrips(prevTrips => prevTrips.filter(trip => trip.id !== tripId));
-      toast.success("Trip deleted successfully");
-    } catch (error) {
-      console.error("Failed to delete trip:", error);
-      toast.error("Failed to delete trip");
-      throw error;
-    }
-  };
-
-  const getTripForOrder = async (orderId: string): Promise<DeliveryTrip | undefined> => {
-    try {
-      return await dataService.trips.getByOrderId(orderId);
-    } catch (error) {
-      console.error("Failed to get trip for order:", error);
-      return undefined;
-    }
-  };
-
   // Filter orders
   const filteredOrders = orders.filter((order) => {
     // Search query filtering
@@ -292,24 +192,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const value = {
     customers,
     orders,
-    trips,
     activeStatusFilter,
     activeTimeFilter,
     viewMode,
     searchQuery,
     dateRange,
     activeStatusFilters,
-    orderSelection,
     addCustomer,
     updateCustomer,
     findCustomerByWhatsApp,
     addOrder,
     updateOrder,
     deleteOrder,
-    createTrip,
-    updateTrip,
-    deleteTrip,
-    getTripForOrder,
     setActiveStatusFilter,
     setActiveTimeFilter,
     setViewMode,
@@ -317,9 +211,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setDateRange,
     setActiveStatusFilters,
     resetFilters,
-    toggleOrderSelection,
-    toggleSelectionMode,
-    clearOrderSelection,
     filteredOrders,
     isLoading,
     getOrderById,

@@ -1,15 +1,14 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
-import { Plus, Grid, List, Info, Archive, Upload, Eye, MessageSquare, Check, X } from "lucide-react";
+import { Plus, Grid, List, Info, Archive, Upload, Eye, MessageSquare } from "lucide-react";
 import OrderList from "@/components/orders/OrderList";
+import OrderCard from "@/components/orders/OrderCard";
 import DateRangePicker from "@/components/orders/DateRangePicker";
 import StatusFilterChips from "@/components/orders/StatusFilterChips";
 import { ViewMode, FilterOption, Order } from "@/types";
-import { DeliveryTrip } from "@/types/trip";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,7 +25,7 @@ import FeedbackDialog from "@/components/orders/FeedbackDialog";
 import { getWorkflowStatus } from "@/lib/statusHelpers";
 
 const OrdersPage = () => {
-  const { orders, trips, dateRange, setDateRange, updateOrder, getTripForOrder } = useApp();
+  const { orders, setDateRange, dateRange, updateOrder } = useApp();
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [filterStatus, setFilterStatus] = useState<string[]>([]);
@@ -37,8 +36,6 @@ const OrdersPage = () => {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
   const [selectedOrderForFeedback, setSelectedOrderForFeedback] = useState<Order | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
-  const [orderTripsMap, setOrderTripsMap] = useState<Map<string, DeliveryTrip>>(new Map());
   
   // Create status filter options - updated to match workflow statuses
   const statusOptions: FilterOption[] = [
@@ -55,24 +52,6 @@ const OrdersPage = () => {
 
   // Selected status option
   const [selectedStatusOption, setSelectedStatusOption] = useState<FilterOption>(statusOptions[0]);
-  
-  // Calculate order trips map
-  useEffect(() => {
-    const loadTripsForOrders = async () => {
-      const newTripsMap = new Map<string, DeliveryTrip>();
-      
-      for (const order of filteredOrders) {
-        const trip = await getTripForOrder(order.id);
-        if (trip) {
-          newTripsMap.set(order.id, trip);
-        }
-      }
-      
-      setOrderTripsMap(newTripsMap);
-    };
-    
-    loadTripsForOrders();
-  }, [orders, trips, refreshKey, filteredOrders, getTripForOrder]);
   
   // Filter orders based on date range and status
   useEffect(() => {
@@ -277,7 +256,6 @@ const OrdersPage = () => {
         </div>
         
         <div className="flex gap-2">
-          {/* View mode toggle */}
           <Button 
             variant={viewMode === 'list' ? "default" : "outline"}
             size="sm"
@@ -351,7 +329,7 @@ const OrdersPage = () => {
         />
       )}
 
-      {/* Feedback Dialog */}
+      {/* Feedback Dialog - Now using our new dedicated FeedbackDialog component */}
       {selectedOrderForFeedback && (
         <FeedbackDialog 
           order={selectedOrderForFeedback}
