@@ -663,7 +663,7 @@ const DeliveryPage = () => {
                         <TableCell className="py-1">
                           <div className="flex items-center gap-0.5">
                             {trip ? (
-                              <TripBadge trip={trip} compact={true} />
+                              <TripBadge trip={trip} size="medium" />
                             ) : (
                               <>
                                 {getDriverBadge(order)}
