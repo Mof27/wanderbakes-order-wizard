@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useApp } from "@/context/AppContext";
 import { Order, OrderStatus } from "@/types";
@@ -94,6 +93,16 @@ const DeliveryStatusManager = ({
     toast.info(`Chat for order ${order.id} - to be implemented`);
   };
 
+  // Get button size class based on compact mode
+  const getButtonSizeClass = () => {
+    return compact ? "h-7 w-7" : "h-8 w-8"; 
+  };
+
+  // Get icon size class based on compact mode
+  const getIconSizeClass = () => {
+    return compact ? "h-3.5 w-3.5" : "h-4 w-4";
+  };
+
   // Pending approval -> open approval dialog
   if (isPendingApproval) {
     return (
@@ -102,10 +111,10 @@ const DeliveryStatusManager = ({
           <TooltipTrigger asChild>
             <Button 
               size="icon"
-              className={`bg-indigo-600 hover:bg-indigo-700 text-white ${isUpdating ? 'opacity-70' : ''}`}
+              className={`bg-indigo-600 hover:bg-indigo-700 text-white ${isUpdating ? 'opacity-70' : ''} ${getButtonSizeClass()}`}
               onClick={openApprovalDialog}
             >
-              <CheckSquare2 className="h-3.5 w-3.5" /> 
+              <CheckSquare2 className={getIconSizeClass()} /> 
             </Button>
           </TooltipTrigger>
           <TooltipContent>
@@ -131,10 +140,10 @@ const DeliveryStatusManager = ({
           <TooltipTrigger asChild>
             <Button 
               size="icon"
-              className={`bg-amber-600 hover:bg-amber-700 text-white ${isUpdating ? 'opacity-70' : ''}`}
+              className={`bg-amber-600 hover:bg-amber-700 text-white ${isUpdating ? 'opacity-70' : ''} ${getButtonSizeClass()}`}
               disabled={true} // This button is disabled since the action happens elsewhere
             >
-              <XCircle className="h-3.5 w-3.5" /> 
+              <XCircle className={getIconSizeClass()} /> 
             </Button>
           </TooltipTrigger>
           <TooltipContent>
@@ -159,9 +168,10 @@ const DeliveryStatusManager = ({
                   <Button 
                     size="icon"
                     variant="outline"
+                    className={getButtonSizeClass()}
                     onClick={() => openDriverDialog(false)}
                   >
-                    <User className="h-3.5 w-3.5" />
+                    <User className={getIconSizeClass()} />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -173,11 +183,11 @@ const DeliveryStatusManager = ({
                 <TooltipTrigger asChild>
                   <Button 
                     size="icon"
-                    className={`bg-orange-600 hover:bg-orange-700 text-white ${isUpdating ? 'opacity-70' : ''}`}
+                    className={`bg-orange-600 hover:bg-orange-700 text-white ${isUpdating ? 'opacity-70' : ''} ${getButtonSizeClass()}`}
                     disabled={isUpdating}
                     onClick={() => updateStatus('in-delivery')}
                   >
-                    <Truck className="h-3.5 w-3.5" /> 
+                    <Truck className={getIconSizeClass()} /> 
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -204,9 +214,10 @@ const DeliveryStatusManager = ({
                   <Button 
                     size="icon"
                     variant="outline"
+                    className={getButtonSizeClass()}
                     onClick={() => openDriverDialog(false)}
                   >
-                    <User className="h-3.5 w-3.5" />
+                    <User className={getIconSizeClass()} />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -218,11 +229,11 @@ const DeliveryStatusManager = ({
                 <TooltipTrigger asChild>
                   <Button 
                     size="icon"
-                    className={`bg-orange-600 hover:bg-orange-700 text-white ${isUpdating ? 'opacity-70' : ''}`}
+                    className={`bg-orange-600 hover:bg-orange-700 text-white ${isUpdating ? 'opacity-70' : ''} ${getButtonSizeClass()}`}
                     disabled={isUpdating}
                     onClick={() => updateStatus('in-delivery')}
                   >
-                    <Truck className="h-3.5 w-3.5" /> 
+                    <Truck className={getIconSizeClass()} /> 
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -250,10 +261,10 @@ const DeliveryStatusManager = ({
           <TooltipTrigger asChild>
             <Button 
               size="icon"
-              className={`bg-blue-600 hover:bg-blue-700 text-white ${isUpdating ? 'opacity-70' : ''}`}
+              className={`bg-blue-600 hover:bg-blue-700 text-white ${isUpdating ? 'opacity-70' : ''} ${getButtonSizeClass()}`}
               onClick={() => openDriverDialog(false)}
             >
-              <User className="h-3.5 w-3.5" /> 
+              <User className={getIconSizeClass()} /> 
             </Button>
           </TooltipTrigger>
           <TooltipContent>
@@ -280,11 +291,11 @@ const DeliveryStatusManager = ({
           <TooltipTrigger asChild>
             <Button 
               size="icon"
-              className={`bg-green-600 hover:bg-green-700 text-white ${isUpdating ? 'opacity-70' : ''}`}
+              className={`bg-green-600 hover:bg-green-700 text-white ${isUpdating ? 'opacity-70' : ''} ${getButtonSizeClass()}`}
               disabled={isUpdating}
               onClick={openDeliveryInfoDialog}
             >
-              <CheckCircle2 className="h-3.5 w-3.5" />
+              <CheckCircle2 className={getIconSizeClass()} />
             </Button>
           </TooltipTrigger>
           <TooltipContent>
@@ -400,9 +411,10 @@ const DeliveryStatusManager = ({
           <Button 
             size="icon"
             variant="outline"
+            className={getButtonSizeClass()}
             onClick={openDeliveryInfoDialog}
           >
-            <Clock className="h-3.5 w-3.5" />
+            <Clock className={getIconSizeClass()} />
           </Button>
         </TooltipTrigger>
         <TooltipContent>

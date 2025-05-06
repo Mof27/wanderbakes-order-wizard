@@ -124,36 +124,30 @@ const getDriverBadge = (order: Order) => {
   const { driverType, driverName, isPreliminary } = order.deliveryAssignment;
   let icon;
   let label;
-  let className = "";
-  
-  // For preliminary assignments, use a different style
-  if (isPreliminary) {
-    className = "bg-blue-50 text-blue-700 border-blue-200 border border-dashed";
-  }
   
   switch (driverType) {
     case "driver-1":
-      icon = <Car className="h-4 w-4 mr-1" />;
-      label = "Driver 1";
+      icon = <Car className="h-3.5 w-3.5 mr-0.5" />;
+      label = "D1";
       return (
-        <Badge variant="outline" className={cn("bg-blue-50 text-blue-700 border-blue-200", isPreliminary && "border-dashed")}>
-          {icon} {label} {isPreliminary && <AlertCircle className="h-3 w-3 ml-1 text-blue-500" />}
+        <Badge size="xs" variant="outline" className={cn("bg-blue-50 text-blue-700 border-blue-200", isPreliminary && "border-dashed")}>
+          {icon} {label} {isPreliminary && <AlertCircle className="h-2.5 w-2.5 ml-0.5 text-blue-500" />}
         </Badge>
       );
     case "driver-2":
-      icon = <Car className="h-4 w-4 mr-1" />;
-      label = "Driver 2";
+      icon = <Car className="h-3.5 w-3.5 mr-0.5" />;
+      label = "D2";
       return (
-        <Badge variant="outline" className={cn("bg-indigo-50 text-indigo-700 border-indigo-200", isPreliminary && "border-dashed")}>
-          {icon} {label} {isPreliminary && <AlertCircle className="h-3 w-3 ml-1 text-indigo-500" />}
+        <Badge size="xs" variant="outline" className={cn("bg-indigo-50 text-indigo-700 border-indigo-200", isPreliminary && "border-dashed")}>
+          {icon} {label} {isPreliminary && <AlertCircle className="h-2.5 w-2.5 ml-0.5 text-indigo-500" />}
         </Badge>
       );
     case "3rd-party":
-      icon = <ExternalLink className="h-4 w-4 mr-1" />;
-      label = driverName || "3rd Party";
+      icon = <ExternalLink className="h-3.5 w-3.5 mr-0.5" />;
+      label = "3P";
       return (
-        <Badge variant="outline" className={cn("bg-purple-50 text-purple-700 border-purple-200", isPreliminary && "border-dashed")}>
-          {icon} {label} {isPreliminary && <AlertCircle className="h-3 w-3 ml-1 text-purple-500" />}
+        <Badge size="xs" variant="outline" className={cn("bg-purple-50 text-purple-700 border-purple-200", isPreliminary && "border-dashed")}>
+          {icon} {label} {isPreliminary && <AlertCircle className="h-2.5 w-2.5 ml-0.5 text-purple-500" />}
         </Badge>
       );
     default:
@@ -488,24 +482,24 @@ const DeliveryPage = () => {
               <Table>
                 <TableHeader className="bg-muted">
                   <TableRow>
-                    <TableHead className="w-[80px]">Order ID</TableHead>
-                    <TableHead className="w-[120px]">Status</TableHead>
-                    <TableHead className="w-[120px]">Delivery Method</TableHead>
-                    <TableHead className="w-[130px]">
+                    <TableHead className="w-[60px]">Order ID</TableHead>
+                    <TableHead className="w-[100px]">Status</TableHead>
+                    <TableHead className="w-[100px]">Delivery</TableHead>
+                    <TableHead className="w-[110px]">
                       <div className="flex items-center">
-                        <User className="h-4 w-4 mr-2" />
+                        <User className="h-3.5 w-3.5 mr-1" />
                         Driver
                       </div>
                     </TableHead>
-                    <TableHead className="w-[150px]">
+                    <TableHead className="w-[130px]">
                       <div className="flex items-center">
-                        <CalendarClock className="h-4 w-4 mr-2" />
+                        <CalendarClock className="h-3.5 w-3.5 mr-1" />
                         Delivery Time
                       </div>
                     </TableHead>
-                    <TableHead className="hidden md:table-cell md:w-[250px]">Customer</TableHead>
-                    <TableHead className="hidden md:table-cell">Address</TableHead>
-                    <TableHead className="text-right w-[130px]">Actions</TableHead>
+                    <TableHead className="hidden md:table-cell w-[180px]">Customer</TableHead>
+                    <TableHead className="hidden md:table-cell w-full">Address</TableHead>
+                    <TableHead className="text-right w-[100px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -524,83 +518,77 @@ const DeliveryPage = () => {
                         key={order.id}
                         className={cn(timeSlotClass)}
                       >
-                        <TableCell className="font-medium">
+                        <TableCell className="font-medium py-1">
                           <div className="flex items-center">
                             {order.id}
                             {getRevisionBadge(order)}
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="py-1">
                           <StatusBadge status={order.status} />
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="py-1">
                           {order.deliveryMethod ? (
-                            <Badge variant="outline" className="capitalize">
-                              {order.deliveryMethod === 'flat-rate' ? 'Flat Rate' : 
-                              order.deliveryMethod === 'lalamove' ? 'Lalamove' : 'Self-Pickup'}
+                            <Badge size="sm" variant="outline" className="capitalize">
+                              {order.deliveryMethod === 'flat-rate' ? 'Flat' : 
+                              order.deliveryMethod === 'lalamove' ? 'Lala' : 'Pickup'}
                             </Badge>
                           ) : (
                             '-'
                           )}
                         </TableCell>
-                        <TableCell>
-                          {getDriverBadge(order) ? (
-                            <div className="flex items-center justify-between">
-                              {getDriverBadge(order)}
-                              {!isReadyToDeliver && (
-                                <QuickDriverAssignDropdown 
-                                  order={order} 
-                                  onSuccess={handleStatusChange}
-                                  isPreliminaryOnly={!isReadyToDeliver}
-                                />
-                              )}
-                            </div>
-                          ) : canShowPreAssignDropdown ? (
-                            <QuickDriverAssignDropdown 
-                              order={order} 
-                              onSuccess={handleStatusChange}
-                              isPreliminaryOnly={!isReadyToDeliver}
-                            />
-                          ) : (
-                            <span className="text-muted-foreground">Not assigned</span>
-                          )}
+                        <TableCell className="py-1">
+                          <div className="flex items-center gap-0.5">
+                            {getDriverBadge(order)}
+                            {((!isReadyToDeliver && hasDriverAssignment) || canShowPreAssignDropdown) && (
+                              <QuickDriverAssignDropdown 
+                                order={order} 
+                                onSuccess={handleStatusChange}
+                                isPreliminaryOnly={!isReadyToDeliver}
+                                compact={true}
+                              />
+                            )}
+                            {!hasDriverAssignment && !canShowPreAssignDropdown && (
+                              <span className="text-xs text-muted-foreground">Not assigned</span>
+                            )}
+                          </div>
                         </TableCell>
-                        <TableCell>
-                          <div className="flex flex-col space-y-1">
+                        <TableCell className="py-1">
+                          <div className="flex flex-col space-y-0.5">
                             <div className="flex items-center">
-                              <CalendarClock className="h-4 w-4 mr-2 text-muted-foreground" />
-                              <span className="font-medium">
+                              <CalendarClock className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
+                              <span className="font-medium text-sm">
                                 {formatTimeSlotDisplay(order.deliveryTimeSlot)}
                               </span>
                             </div>
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-0.5">
                               {getTimeStatusBadge(order)}
                               {order.deliveryArea && (
-                                <Badge variant="secondary" className="text-xs">
+                                <Badge size="xs" variant="secondary" className="text-xs">
                                   {order.deliveryArea}
                                 </Badge>
                               )}
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className="hidden md:table-cell">
+                        <TableCell className="hidden md:table-cell py-1">
                           <div>
-                            <div className="font-medium">{order.customer.name}</div>
-                            <div className="text-sm text-muted-foreground">{order.customer.whatsappNumber}</div>
+                            <div className="font-medium text-sm">{order.customer.name}</div>
+                            <div className="text-xs text-muted-foreground">{order.customer.whatsappNumber}</div>
                           </div>
                         </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          <div className="text-sm max-w-md truncate">
+                        <TableCell className="hidden md:table-cell py-1">
+                          <div className="text-xs max-w-full truncate">
                             {order.deliveryAddress}
                             {order.deliveryAddressNotes && (
-                              <span className="text-muted-foreground block">
+                              <span className="text-muted-foreground text-xs block">
                                 Note: {order.deliveryAddressNotes}
                               </span>
                             )}
                           </div>
                         </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-1">
+                        <TableCell className="text-right py-1">
+                          <div className="flex justify-end gap-0.5">
                             {/* View Order button */}
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -608,9 +596,10 @@ const DeliveryPage = () => {
                                   variant="outline" 
                                   size="icon"
                                   asChild
+                                  className="h-7 w-7"
                                 >
                                   <Link to={`/orders/${order.id}`} state={{ referrer: 'delivery' }}>
-                                    <Eye className="h-4 w-4" />
+                                    <Eye className="h-3.5 w-3.5" />
                                   </Link>
                                 </Button>
                               </TooltipTrigger>
@@ -625,11 +614,12 @@ const DeliveryPage = () => {
                                 <Button
                                   variant="outline" 
                                   size="icon"
+                                  className="h-7 w-7"
                                   onClick={() => {
                                     toast.info(`Chat for order ${order.id} - to be implemented`);
                                   }}
                                 >
-                                  <MessageSquare className="h-4 w-4" />
+                                  <MessageSquare className="h-3.5 w-3.5" />
                                 </Button>
                               </TooltipTrigger>
                               <TooltipContent>
@@ -644,10 +634,10 @@ const DeliveryPage = () => {
                                   <Button 
                                     variant="outline"
                                     size="icon"
+                                    className="h-7 w-7 bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200"
                                     onClick={() => handleOpenDriverDialog(order)}
-                                    className="bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200"
                                   >
-                                    <User className="h-4 w-4" />
+                                    <User className="h-3.5 w-3.5" />
                                   </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>
@@ -661,10 +651,10 @@ const DeliveryPage = () => {
                                     <Button 
                                       variant="outline"
                                       size="icon"
+                                      className="h-7 w-7 bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-200"
                                       onClick={() => handleOpenPhotoDialog(order)}
-                                      className="bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-200"
                                     >
-                                      <Upload className="h-4 w-4" />
+                                      <Upload className="h-3.5 w-3.5" />
                                     </Button>
                                   </TooltipTrigger>
                                   <TooltipContent>
@@ -684,10 +674,10 @@ const DeliveryPage = () => {
                                   <Button 
                                     variant="outline"
                                     size="icon"
+                                    className="h-7 w-7 bg-purple-100 text-purple-800 border-purple-200 hover:bg-purple-200"
                                     onClick={() => handleOpenPhotoDialog(order)}
-                                    className="bg-purple-100 text-purple-800 border-purple-200 hover:bg-purple-200"
                                   >
-                                    <Upload className="h-4 w-4" />
+                                    <Upload className="h-3.5 w-3.5" />
                                   </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>

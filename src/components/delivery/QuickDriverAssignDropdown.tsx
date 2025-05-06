@@ -17,12 +17,14 @@ interface QuickDriverAssignDropdownProps {
   order: Order;
   onSuccess?: () => void;
   isPreliminaryOnly?: boolean;
+  compact?: boolean; // New prop for compact mode
 }
 
 const QuickDriverAssignDropdown: React.FC<QuickDriverAssignDropdownProps> = ({
   order,
   onSuccess,
   isPreliminaryOnly = true,
+  compact = false
 }) => {
   const { updateOrder } = useApp();
   const [isLoading, setIsLoading] = React.useState(false);
@@ -76,8 +78,12 @@ const QuickDriverAssignDropdown: React.FC<QuickDriverAssignDropdownProps> = ({
     }
   };
 
-  // Render button text based on current assignment status
+  // Render button text based on current assignment status and compact mode
   const getButtonText = () => {
+    if (compact) {
+      return hasAssignment ? (isPreliminary ? "Pre" : "Asgn") : "Assign";
+    }
+    
     if (!hasAssignment) {
       return "Assign";
     }
@@ -96,7 +102,8 @@ const QuickDriverAssignDropdown: React.FC<QuickDriverAssignDropdownProps> = ({
           variant="ghost"
           size="sm"
           className={cn(
-            "text-sm h-7 gap-1",
+            compact ? "text-xs h-6 px-1.5 min-w-0" : "text-sm h-7",
+            "gap-0.5",
             hasAssignment && "text-blue-600 font-medium"
           )}
           disabled={isLoading}
@@ -112,10 +119,10 @@ const QuickDriverAssignDropdown: React.FC<QuickDriverAssignDropdownProps> = ({
             currentDriverType === "driver-1" && "bg-blue-50 text-blue-700"
           )}
         >
-          <Car className="h-4 w-4 mr-2" />
+          <Car className="h-3.5 w-3.5 mr-1.5" />
           <span>Driver 1</span>
           {currentDriverType === "driver-1" && isPreliminary && (
-            <AlertCircle className="h-3 w-3 ml-2 text-blue-500" />
+            <AlertCircle className="h-3 w-3 ml-1 text-blue-500" />
           )}
         </DropdownMenuItem>
         <DropdownMenuItem 
@@ -124,10 +131,10 @@ const QuickDriverAssignDropdown: React.FC<QuickDriverAssignDropdownProps> = ({
             currentDriverType === "driver-2" && "bg-indigo-50 text-indigo-700"
           )}
         >
-          <Car className="h-4 w-4 mr-2" />
+          <Car className="h-3.5 w-3.5 mr-1.5" />
           <span>Driver 2</span>
           {currentDriverType === "driver-2" && isPreliminary && (
-            <AlertCircle className="h-3 w-3 ml-2 text-indigo-500" />
+            <AlertCircle className="h-3 w-3 ml-1 text-indigo-500" />
           )}
         </DropdownMenuItem>
         <DropdownMenuItem 
@@ -136,10 +143,10 @@ const QuickDriverAssignDropdown: React.FC<QuickDriverAssignDropdownProps> = ({
             currentDriverType === "3rd-party" && "bg-purple-50 text-purple-700"
           )}
         >
-          <ExternalLink className="h-4 w-4 mr-2" />
+          <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
           <span>Lalamove</span>
           {currentDriverType === "3rd-party" && isPreliminary && (
-            <AlertCircle className="h-3 w-3 ml-2 text-purple-500" />
+            <AlertCircle className="h-3 w-3 ml-1 text-purple-500" />
           )}
         </DropdownMenuItem>
       </DropdownMenuContent>
