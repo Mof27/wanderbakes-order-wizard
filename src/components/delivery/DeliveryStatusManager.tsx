@@ -1,8 +1,9 @@
+
 import { useState } from "react";
 import { useApp } from "@/context/AppContext";
 import { Order, OrderStatus } from "@/types";
 import { Button } from "@/components/ui/button";
-import { Truck, CheckCircle2, MessageSquare, Clock, CheckSquare2, XCircle, User } from "lucide-react";
+import { Truck, CheckCircle2, MessageSquare, Clock, CheckSquare2, XCircle, User, Eye } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 import { matchesStatus } from "@/lib/statusHelpers";
 import DeliveryInfoDialog from "./DeliveryInfoDialog";
@@ -87,6 +88,11 @@ const DeliveryStatusManager = ({
     setShowDriverDialog(true);
   };
 
+  // Handle chat button click
+  const handleChatClick = () => {
+    toast.info(`Chat for order ${order.id} - to be implemented`);
+  };
+
   // Pending approval -> open approval dialog
   if (isPendingApproval) {
     return (
@@ -96,8 +102,8 @@ const DeliveryStatusManager = ({
           className={`bg-indigo-600 hover:bg-indigo-700 text-white ${isUpdating ? 'opacity-70' : ''}`}
           onClick={openApprovalDialog}
         >
-          <CheckSquare2 className={`h-4 w-4 ${compact ? '' : 'mr-1'}`} /> 
-          {!compact && "Review Photos"}
+          <CheckSquare2 className="h-4 w-4 mr-1" /> 
+          {!compact && "Review"}
         </Button>
         
         <CakePhotoApprovalDialog 
@@ -119,8 +125,8 @@ const DeliveryStatusManager = ({
           className={`bg-amber-600 hover:bg-amber-700 text-white ${isUpdating ? 'opacity-70' : ''}`}
           disabled={true} // This button is disabled since the action happens elsewhere
         >
-          <XCircle className={`h-4 w-4 ${compact ? '' : 'mr-1'}`} /> 
-          {!compact && "Needs Revision"}
+          <XCircle className="h-4 w-4 mr-1" /> 
+          {!compact && "Upload"}
         </Button>
       </>
     );
@@ -140,8 +146,8 @@ const DeliveryStatusManager = ({
                 variant="outline"
                 onClick={() => openDriverDialog(false)}
               >
-                <User className={`h-4 w-4 ${compact ? '' : 'mr-1'}`} />
-                {!compact && "Change Driver"}
+                <User className="h-4 w-4 mr-1" />
+                {!compact && "Change"}
               </Button>
               
               <Button 
@@ -150,8 +156,8 @@ const DeliveryStatusManager = ({
                 disabled={isUpdating}
                 onClick={() => updateStatus('in-delivery')}
               >
-                <Truck className={`h-4 w-4 ${compact ? '' : 'mr-1'}`} /> 
-                {!compact && "Start Delivery"}
+                <Truck className="h-4 w-4 mr-1" /> 
+                {!compact && "Start"}
               </Button>
             </div>
             
@@ -173,8 +179,8 @@ const DeliveryStatusManager = ({
                 variant="outline"
                 onClick={() => openDriverDialog(false)}
               >
-                <User className={`h-4 w-4 ${compact ? '' : 'mr-1'}`} />
-                {!compact && "Change Driver"}
+                <User className="h-4 w-4 mr-1" />
+                {!compact && "Change"}
               </Button>
               
               <Button 
@@ -183,8 +189,8 @@ const DeliveryStatusManager = ({
                 disabled={isUpdating}
                 onClick={() => updateStatus('in-delivery')}
               >
-                <Truck className={`h-4 w-4 ${compact ? '' : 'mr-1'}`} /> 
-                {!compact && "Start Delivery"}
+                <Truck className="h-4 w-4 mr-1" /> 
+                {!compact && "Start"}
               </Button>
             </div>
             
@@ -208,8 +214,8 @@ const DeliveryStatusManager = ({
           className={`bg-blue-600 hover:bg-blue-700 text-white ${isUpdating ? 'opacity-70' : ''}`}
           onClick={() => openDriverDialog(false)}
         >
-          <User className={`h-4 w-4 ${compact ? '' : 'mr-1'}`} /> 
-          {!compact && "Assign Driver"}
+          <User className="h-4 w-4 mr-1" /> 
+          {!compact && "Assign"}
         </Button>
         
         <DriverAssignmentDialog 
@@ -233,8 +239,8 @@ const DeliveryStatusManager = ({
           disabled={isUpdating}
           onClick={openDeliveryInfoDialog}
         >
-          <CheckCircle2 className={`h-4 w-4 ${compact ? '' : 'mr-1'}`} />
-          {!compact && "Complete Delivery"}
+          <CheckCircle2 className="h-4 w-4 mr-1" />
+          {!compact && "Complete"}
         </Button>
         
         <DeliveryInfoDialog 
@@ -256,8 +262,8 @@ const DeliveryStatusManager = ({
           className="bg-indigo-600 hover:bg-indigo-700 text-white"
           onClick={openFeedbackDialog}
         >
-          <MessageSquare className={`h-4 w-4 ${compact ? '' : 'mr-1'}`} />
-          {!compact && "Add Feedback"}
+          <MessageSquare className="h-4 w-4 mr-1" />
+          {!compact && "Feedback"}
         </Button>
         
         <FeedbackDialog 
@@ -282,8 +288,8 @@ const DeliveryStatusManager = ({
             onClick={() => openDriverDialog(true)}
             className="gap-2"
           >
-            <User className={`h-4 w-4`} />
-            {!compact ? "Change Pre-Assigned Driver" : "Change Pre-Assignment"}
+            <User className="h-4 w-4" />
+            {!compact ? "Change" : "Change"}
           </Button>
           
           <DriverAssignmentDialog 
@@ -304,8 +310,8 @@ const DeliveryStatusManager = ({
             onClick={() => openDriverDialog(true)}
             className="gap-2 border-blue-200 text-blue-700 hover:bg-blue-50"
           >
-            <User className={`h-4 w-4`} />
-            {!compact ? "Pre-Assign Driver" : "Pre-Assign"}
+            <User className="h-4 w-4" />
+            {!compact ? "Pre-Assign" : "Pre-Assign"}
           </Button>
           
           <DriverAssignmentDialog 
@@ -328,8 +334,8 @@ const DeliveryStatusManager = ({
         variant="outline"
         onClick={openDeliveryInfoDialog}
       >
-        <Clock className={`h-4 w-4 ${compact ? '' : 'mr-1'}`} />
-        {!compact && "Delivery Details"}
+        <Clock className="h-4 w-4 mr-1" />
+        {!compact && "Details"}
       </Button>
       
       <DeliveryInfoDialog 

@@ -9,7 +9,7 @@ import { startOfDay, endOfDay, addDays, format, isBefore, isAfter, parseISO, add
 import { Link } from "react-router-dom";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { CalendarClock, Upload, CheckSquare2, XCircle, User, Car, ExternalLink, Truck, AlertCircle, Filter } from "lucide-react";
+import { CalendarClock, Upload, CheckSquare2, XCircle, User, Car, ExternalLink, Truck, AlertCircle, Filter, Eye, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import DeliveryStatusManager from "@/components/delivery/DeliveryStatusManager";
@@ -500,9 +500,9 @@ const DeliveryPage = () => {
                       Delivery Time
                     </div>
                   </TableHead>
-                  <TableHead>Customer</TableHead>
+                  <TableHead className="hidden md:table-cell md:w-[250px]">Customer</TableHead>
                   <TableHead className="hidden md:table-cell">Address</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className="text-right w-[180px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -580,7 +580,7 @@ const DeliveryPage = () => {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden md:table-cell">
                         <div>
                           <div className="font-medium">{order.customer.name}</div>
                           <div className="text-sm text-muted-foreground">{order.customer.whatsappNumber}</div>
@@ -598,16 +598,30 @@ const DeliveryPage = () => {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
+                          {/* View Order button - consistent across all statuses */}
                           <Button
                             variant="outline" 
                             size="sm"
                             asChild
                           >
                             <Link to={`/orders/${order.id}`} state={{ referrer: 'delivery' }}>
-                              View Order
+                              <Eye className="h-4 w-4 mr-1" /> View
                             </Link>
                           </Button>
                           
+                          {/* Chat button - consistent across all statuses */}
+                          <Button
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => {
+                              // Chat functionality would go here
+                              toast.info(`Chat for order ${order.id} - to be implemented`);
+                            }}
+                          >
+                            <MessageSquare className="h-4 w-4 mr-1" /> Chat
+                          </Button>
+                          
+                          {/* Status-specific action buttons */}
                           {isReadyToDeliver && !hasDriverAssignment ? (
                             <Button 
                               variant="outline"
@@ -615,7 +629,7 @@ const DeliveryPage = () => {
                               onClick={() => handleOpenDriverDialog(order)}
                               className="bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200"
                             >
-                              <User className="h-4 w-4 mr-1" /> Assign Driver
+                              <User className="h-4 w-4 mr-1" /> Assign
                             </Button>
                           ) : isStatusActionableInDelivery(order.status) ? (
                             isNeedingRevision ? (
@@ -625,7 +639,7 @@ const DeliveryPage = () => {
                                 onClick={() => handleOpenPhotoDialog(order)}
                                 className="bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-200"
                               >
-                                <Upload className="h-4 w-4 mr-1" /> Upload Revision
+                                <Upload className="h-4 w-4 mr-1" /> Upload
                               </Button>
                             ) : (
                               <DeliveryStatusManager 
@@ -641,27 +655,9 @@ const DeliveryPage = () => {
                               onClick={() => handleOpenPhotoDialog(order)}
                               className="bg-purple-100 text-purple-800 border-purple-200 hover:bg-purple-200"
                             >
-                              <Upload className="h-4 w-4 mr-1" /> Upload Photos
+                              <Upload className="h-4 w-4 mr-1" /> Upload
                             </Button>
-                          ) : (
-                            <Button 
-                              variant="outline"
-                              size="sm"
-                              asChild
-                              className={order.status === 'in-kitchen' 
-                                ? "bg-yellow-50 text-yellow-800 border-yellow-200 hover:bg-yellow-100"
-                                : ""}
-                            >
-                              <Link to={order.status === 'in-kitchen' 
-                                ? "/kitchen" 
-                                : `/orders/${order.id}`}
-                                state={{ referrer: 'delivery' }}>
-                                {order.status === 'in-kitchen' 
-                                  ? "Go to Kitchen" 
-                                  : "Manage Order"}
-                              </Link>
-                            </Button>
-                          )}
+                          ) : null}
                         </div>
                       </TableCell>
                     </TableRow>

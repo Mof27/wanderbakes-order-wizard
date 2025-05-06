@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatDate, cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
-import { MapPin, Truck, Package, Calendar, CheckCircle2, Clock, CheckSquare2, XCircle, User, Car, ExternalLink, AlertCircle } from "lucide-react";
+import { MapPin, Truck, Package, Calendar, CheckCircle2, Clock, CheckSquare2, XCircle, User, Car, ExternalLink, AlertCircle, Eye, MessageSquare } from "lucide-react";
 import { matchesStatus, isInApprovalFlow } from "@/lib/statusHelpers";
 import { useState } from "react";
+import { toast } from "@/components/ui/sonner";
 import DriverAssignmentDialog from "./DriverAssignmentDialog";
 
 interface DeliveryCardProps {
@@ -118,6 +119,10 @@ const DeliveryCard = ({ order, onStatusChange }: DeliveryCardProps) => {
     if (onStatusChange) onStatusChange();
   };
 
+  const handleChatClick = () => {
+    toast.info(`Chat for order ${order.id} - to be implemented`);
+  };
+
   return (
     <Card className={cn(
       "overflow-hidden border-l-4 hover:shadow-md transition-shadow",
@@ -193,15 +198,25 @@ const DeliveryCard = ({ order, onStatusChange }: DeliveryCardProps) => {
       </CardContent>
       
       <CardFooter className="bg-muted px-4 py-3 flex justify-between">
-        <Button
-          variant="outline" 
-          size="sm"
-          asChild
-        >
-          <Link to={`/orders/${order.id}`}>
-            View Order
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline" 
+            size="sm"
+            asChild
+          >
+            <Link to={`/orders/${order.id}`}>
+              <Eye className="h-4 w-4 mr-1" /> View
+            </Link>
+          </Button>
+          
+          <Button
+            variant="outline" 
+            size="sm"
+            onClick={handleChatClick}
+          >
+            <MessageSquare className="h-4 w-4 mr-1" /> Chat
+          </Button>
+        </div>
         
         <div className="space-x-2">
           {isPendingApproval && (
@@ -211,7 +226,7 @@ const DeliveryCard = ({ order, onStatusChange }: DeliveryCardProps) => {
               asChild
             >
               <Link to={`/orders/${order.id}?tab=delivery-recap`}>
-                <CheckSquare2 className="h-4 w-4 mr-1" /> Review Photos
+                <CheckSquare2 className="h-4 w-4 mr-1" /> Review
               </Link>
             </Button>
           )}
@@ -223,7 +238,7 @@ const DeliveryCard = ({ order, onStatusChange }: DeliveryCardProps) => {
               asChild
             >
               <Link to={`/orders/${order.id}?tab=delivery-recap`}>
-                <XCircle className="h-4 w-4 mr-1" /> Upload Revision
+                <XCircle className="h-4 w-4 mr-1" /> Upload
               </Link>
             </Button>
           )}
@@ -234,7 +249,7 @@ const DeliveryCard = ({ order, onStatusChange }: DeliveryCardProps) => {
               className="bg-blue-600 hover:bg-blue-700 text-white"
               onClick={() => openDriverDialog(false)}
             >
-              <User className="h-4 w-4 mr-1" /> Assign Driver
+              <User className="h-4 w-4 mr-1" /> Assign
             </Button>
           )}
           
@@ -245,7 +260,7 @@ const DeliveryCard = ({ order, onStatusChange }: DeliveryCardProps) => {
                 variant="outline"
                 onClick={() => openDriverDialog(false)}
               >
-                <User className="h-4 w-4 mr-1" /> Change Driver
+                <User className="h-4 w-4 mr-1" /> Change
               </Button>
               
               <Button 
@@ -254,7 +269,7 @@ const DeliveryCard = ({ order, onStatusChange }: DeliveryCardProps) => {
                 asChild
               >
                 <Link to={`/orders/${order.id}?tab=delivery-recap&action=start-delivery`}>
-                  <Truck className="h-4 w-4 mr-1" /> Start Delivery
+                  <Truck className="h-4 w-4 mr-1" /> Start
                 </Link>
               </Button>
             </>
@@ -267,7 +282,7 @@ const DeliveryCard = ({ order, onStatusChange }: DeliveryCardProps) => {
               className="border-blue-200 text-blue-700 hover:bg-blue-50"
               onClick={() => openDriverDialog(true)}
             >
-              <User className="h-4 w-4 mr-1" /> Pre-Assign Driver
+              <User className="h-4 w-4 mr-1" /> Pre-Assign
             </Button>
           )}
           
@@ -277,7 +292,7 @@ const DeliveryCard = ({ order, onStatusChange }: DeliveryCardProps) => {
               variant="outline"
               onClick={() => openDriverDialog(true)}
             >
-              <User className="h-4 w-4 mr-1" /> Change Pre-Assignment
+              <User className="h-4 w-4 mr-1" /> Change
             </Button>
           )}
           
@@ -288,7 +303,7 @@ const DeliveryCard = ({ order, onStatusChange }: DeliveryCardProps) => {
               asChild
             >
               <Link to={`/orders/${order.id}?tab=delivery-recap`}>
-                <CheckCircle2 className="h-4 w-4 mr-1" /> Complete Delivery
+                <CheckCircle2 className="h-4 w-4 mr-1" /> Complete
               </Link>
             </Button>
           )}
