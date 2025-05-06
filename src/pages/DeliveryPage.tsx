@@ -444,29 +444,35 @@ const DeliveryPage = () => {
         />
       </div>
       
-      {/* Desktop Collapsible Filters */}
-      <div className="hidden md:block">
-        <CollapsibleFilters 
-          activeFiltersCount={activeFiltersCount}
-          title="Delivery Filters"
-        >
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <CompactDeliveryDateFilter
-              value={dateFilter}
-              onChange={setDateFilter}
-            />
-            
-            <CompactDeliveryStatusFilter
-              value={statusFilter}
-              onChange={setStatusFilter}
-            />
-            
-            <CompactDeliveryTimeSlotFilter
-              value={timeSlotFilter}
-              onChange={setTimeSlotFilter}
-            />
-          </div>
-        </CollapsibleFilters>
+      {/* Desktop Filters - Two Column Layout */}
+      <div className="hidden md:grid md:grid-cols-2 gap-4">
+        {/* Left Column - Always visible date filter */}
+        <div>
+          <CompactDeliveryDateFilter
+            value={dateFilter}
+            onChange={setDateFilter}
+          />
+        </div>
+        
+        {/* Right Column - Collapsible status and time filters */}
+        <div>
+          <CollapsibleFilters 
+            activeFiltersCount={activeFiltersCount - (dateFilter !== 'all' ? 1 : 0)}
+            title="Delivery Filters"
+          >
+            <div className="space-y-6">
+              <CompactDeliveryStatusFilter
+                value={statusFilter}
+                onChange={setStatusFilter}
+              />
+              
+              <CompactDeliveryTimeSlotFilter
+                value={timeSlotFilter}
+                onChange={setTimeSlotFilter}
+              />
+            </div>
+          </CollapsibleFilters>
+        </div>
       </div>
       
       <div>
