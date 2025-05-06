@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
@@ -5,7 +6,7 @@ import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { Plus, Grid, List, Info, Archive, Upload, Eye, MessageSquare } from "lucide-react";
 import OrderList from "@/components/orders/OrderList";
-import OrderCard from "@/components/orders/OrderCard";
+import OrderCard from "@/components/orders/OrderCard"; // Added the missing import
 import DateRangePicker from "@/components/orders/DateRangePicker";
 import StatusFilterChips from "@/components/orders/StatusFilterChips";
 import { ViewMode, FilterOption, Order } from "@/types";
