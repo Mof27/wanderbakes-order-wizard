@@ -3,23 +3,27 @@ import { useApp } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Helmet } from "react-helmet-async";
-import DeliveryDateFilter from "@/components/delivery/DeliveryDateFilter";
-import DeliveryStatusFilter from "@/components/delivery/DeliveryStatusFilter";
-import DeliveryTimeSlotFilter from "@/components/delivery/DeliveryTimeSlotFilter";
 import { Order } from "@/types";
 import { matchesStatus, isInDeliveryStatus, shouldShowInAllStatusesDelivery, isInApprovalFlow, canPreAssignDriver } from "@/lib/statusHelpers";
 import { startOfDay, endOfDay, addDays, format, isBefore, isAfter, parseISO, addHours, differenceInHours } from "date-fns";
 import { Link } from "react-router-dom";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { CalendarClock, Upload, CheckSquare2, XCircle, User, Car, ExternalLink, Truck, AlertCircle } from "lucide-react";
+import { CalendarClock, Upload, CheckSquare2, XCircle, User, Car, ExternalLink, Truck, AlertCircle, Filter } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 import DeliveryStatusManager from "@/components/delivery/DeliveryStatusManager";
 import StatusBadge from "@/components/orders/StatusBadge";
 import CakePhotoUploadDialog from "@/components/orders/CakePhotoUploadDialog";
 import CakePhotoApprovalDialog from "@/components/orders/CakePhotoApprovalDialog";
 import DriverAssignmentDialog from "@/components/delivery/DriverAssignmentDialog";
 import QuickDriverAssignDropdown from "@/components/delivery/QuickDriverAssignDropdown";
+import CollapsibleFilters from "@/components/delivery/CollapsibleFilters";
+import ActiveFiltersBar from "@/components/delivery/ActiveFiltersBar";
+import CompactDeliveryDateFilter from "@/components/delivery/CompactDeliveryDateFilter";
+import CompactDeliveryStatusFilter from "@/components/delivery/CompactDeliveryStatusFilter";
+import CompactDeliveryTimeSlotFilter from "@/components/delivery/CompactDeliveryTimeSlotFilter";
+import MobileFilterDrawer from "@/components/delivery/MobileFilterDrawer";
 
 // Helper function to determine the time slot background color
 const getTimeSlotColor = (timeSlot?: string): string => {
@@ -161,12 +165,25 @@ const DeliveryPage = () => {
   const [statusFilter, setStatusFilter] = useState<'ready' | 'in-transit' | 'pending-approval' | 'needs-revision' | 'delivery-statuses' | 'all-statuses'>('all-statuses');
   const [timeSlotFilter, setTimeSlotFilter] = useState<'all' | 'late' | 'within-2-hours' | 'slot1' | 'slot2' | 'slot3'>('all');
   const [refreshKey, setRefreshKey] = useState(0);
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const isMobile = useIsMobile();
   
   // Add state for dialogs
   const [photoUploadDialogOpen, setPhotoUploadDialogOpen] = useState(false);
   const [photoApprovalDialogOpen, setPhotoApprovalDialogOpen] = useState(false);
   const [driverAssignmentDialogOpen, setDriverAssignmentDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+
+  // Calculate how many active filters we have
+  const activeFiltersCount = 
+    (dateFilter !== 'all' ? 1 : 0) + 
+    (statusFilter !== 'all-statuses' ? 1 : 0) + 
+    (timeSlotFilter !== 'all' ? 1 : 0);
+
+  // Clear filter handlers
+  const handleClearDateFilter = () => setDateFilter('all');
+  const handleClearStatusFilter = () => setStatusFilter('all-statuses');
+  const handleClearTimeSlotFilter = () => setTimeSlotFilter('all');
 
   // Force a refresh of the component when an order status changes
   const handleStatusChange = () => {
@@ -388,7 +405,7 @@ const DeliveryPage = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <Helmet>
         <title>Delivery Management | Cake Shop</title>
       </Helmet>
@@ -404,23 +421,52 @@ const DeliveryPage = () => {
         </Button>
       </div>
       
-      <div className="flex flex-col gap-4">
-        <DeliveryDateFilter
-          value={dateFilter}
-          onChange={setDateFilter}
+      {/* Active Filters Summary */}
+      <ActiveFiltersBar 
+        dateFilter={dateFilter}
+        statusFilter={statusFilter}
+        timeSlotFilter={timeSlotFilter}
+        onClearDateFilter={handleClearDateFilter}
+        onClearStatusFilter={handleClearStatusFilter}
+        onClearTimeSlotFilter={handleClearTimeSlotFilter}
+      />
+      
+      {/* Mobile Filters Drawer */}
+      <div className="md:hidden mb-4">
+        <MobileFilterDrawer 
+          dateFilter={dateFilter}
+          statusFilter={statusFilter}
+          timeSlotFilter={timeSlotFilter}
+          onDateFilterChange={setDateFilter}
+          onStatusFilterChange={setStatusFilter}
+          onTimeSlotFilterChange={setTimeSlotFilter}
+          activeFiltersCount={activeFiltersCount}
         />
-        
-        <div className="flex flex-col md:flex-row gap-4 md:items-start">
-          <DeliveryStatusFilter
-            value={statusFilter}
-            onChange={setStatusFilter}
-          />
-          
-          <DeliveryTimeSlotFilter
-            value={timeSlotFilter}
-            onChange={setTimeSlotFilter}
-          />
-        </div>
+      </div>
+      
+      {/* Desktop Collapsible Filters */}
+      <div className="hidden md:block">
+        <CollapsibleFilters 
+          activeFiltersCount={activeFiltersCount}
+          title="Delivery Filters"
+        >
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <CompactDeliveryDateFilter
+              value={dateFilter}
+              onChange={setDateFilter}
+            />
+            
+            <CompactDeliveryStatusFilter
+              value={statusFilter}
+              onChange={setStatusFilter}
+            />
+            
+            <CompactDeliveryTimeSlotFilter
+              value={timeSlotFilter}
+              onChange={setTimeSlotFilter}
+            />
+          </div>
+        </CollapsibleFilters>
       </div>
       
       <div>
