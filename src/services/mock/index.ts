@@ -1,20 +1,23 @@
 
-import { mockCustomers, mockIngredients, mockOrders } from "@/data/mockData";
-import { MockCustomerRepository } from "../repositories/customer.repository";
 import { MockOrderRepository } from "../repositories/order.repository";
+import { MockTripRepository } from "../repositories/trip.repository";
+import { MockCustomerRepository } from "../repositories/customer.repository";
 import { MockProductRepository } from "../repositories/product.repository";
+import { MockSettingsRepository } from "../repositories/settings.repository";
 
-/**
- * Mock data provider that initializes repositories with mock data
- */
-export class MockDataProvider {
-  public readonly customerRepository: MockCustomerRepository;
-  public readonly orderRepository: MockOrderRepository;
-  public readonly productRepository: MockProductRepository;
+// load sample data
+import { orders, customers, settings } from "@/data/mockData";
 
-  constructor() {
-    this.customerRepository = new MockCustomerRepository(mockCustomers);
-    this.orderRepository = new MockOrderRepository(mockOrders);
-    this.productRepository = new MockProductRepository(mockIngredients);
-  }
-}
+const orderRepository = new MockOrderRepository(orders);
+const tripRepository = new MockTripRepository([]);
+const customerRepository = new MockCustomerRepository(customers);
+const productRepository = new MockProductRepository();
+const settingsRepository = new MockSettingsRepository(settings);
+
+export const mockDataService = {
+  orders: orderRepository,
+  trips: tripRepository,
+  customers: customerRepository,
+  products: productRepository,
+  settings: settingsRepository,
+};

@@ -1,3 +1,4 @@
+
 import { useState, useMemo } from "react";
 import { useApp } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
@@ -9,10 +10,11 @@ import { startOfDay, endOfDay, addDays, format, isBefore, isAfter, parseISO, add
 import { Link } from "react-router-dom";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { CalendarClock, Upload, CheckSquare2, XCircle, User, Car, ExternalLink, Truck, AlertCircle, Filter, Eye, MessageSquare } from "lucide-react";
+import { CalendarClock, Upload, CheckSquare2, XCircle, User, Car, ExternalLink, Truck, AlertCircle, Filter, Eye, MessageSquare, List, Route } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "@/components/ui/sonner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DeliveryStatusManager from "@/components/delivery/DeliveryStatusManager";
 import StatusBadge from "@/components/orders/StatusBadge";
 import CakePhotoUploadDialog from "@/components/orders/CakePhotoUploadDialog";
@@ -25,6 +27,7 @@ import CompactDeliveryDateFilter from "@/components/delivery/CompactDeliveryDate
 import CompactDeliveryStatusFilter from "@/components/delivery/CompactDeliveryStatusFilter";
 import CompactDeliveryTimeSlotFilter from "@/components/delivery/CompactDeliveryTimeSlotFilter";
 import MobileFilterDrawer from "@/components/delivery/MobileFilterDrawer";
+import TripPlannerView from "@/components/delivery/trip-planner/TripPlannerView";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 // Helper function to determine the time slot background color
@@ -162,6 +165,7 @@ const DeliveryPage = () => {
   const [timeSlotFilter, setTimeSlotFilter] = useState<'all' | 'late' | 'within-2-hours' | 'slot1' | 'slot2' | 'slot3'>('all');
   const [refreshKey, setRefreshKey] = useState(0);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'list-view' | 'trip-planner'>('list-view');
   const isMobile = useIsMobile();
   
   // Add state for dialogs
@@ -169,6 +173,22 @@ const DeliveryPage = () => {
   const [photoApprovalDialogOpen, setPhotoApprovalDialogOpen] = useState(false);
   const [driverAssignmentDialogOpen, setDriverAssignmentDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+
+  // Calculate selected date based on dateFilter
+  const selectedDate = useMemo(() => {
+    const today = new Date();
+    
+    switch (dateFilter) {
+      case 'today':
+        return today;
+      case 'tomorrow':
+        return addDays(today, 1);
+      case 'd-plus-2':
+        return addDays(today, 2);
+      default:
+        return today;
+    }
+  }, [dateFilter]);
 
   // Calculate how many active filters we have
   const activeFiltersCount = 
@@ -417,289 +437,311 @@ const DeliveryPage = () => {
         </Button>
       </div>
       
-      {/* Active Filters Summary */}
-      <ActiveFiltersBar 
-        dateFilter={dateFilter}
-        statusFilter={statusFilter}
-        timeSlotFilter={timeSlotFilter}
-        onClearDateFilter={handleClearDateFilter}
-        onClearStatusFilter={handleClearStatusFilter}
-        onClearTimeSlotFilter={handleClearTimeSlotFilter}
-      />
-      
-      {/* Mobile Filters Drawer */}
-      <div className="md:hidden mb-4">
-        <MobileFilterDrawer 
-          dateFilter={dateFilter}
-          statusFilter={statusFilter}
-          timeSlotFilter={timeSlotFilter}
-          onDateFilterChange={setDateFilter}
-          onStatusFilterChange={setStatusFilter}
-          onTimeSlotFilterChange={setTimeSlotFilter}
-          activeFiltersCount={activeFiltersCount}
-        />
-      </div>
-      
-      {/* Desktop Filters - Two Column Layout */}
-      <div className="hidden md:grid md:grid-cols-2 gap-4">
-        {/* Left Column - Always visible date filter */}
-        <div>
-          <CompactDeliveryDateFilter
-            value={dateFilter}
-            onChange={setDateFilter}
-          />
-        </div>
+      {/* Tab Switcher */}
+      <Tabs value={activeTab} onValueChange={(value: string) => setActiveTab(value as 'list-view' | 'trip-planner')}>
+        <TabsList className="grid grid-cols-2 w-[300px]">
+          <TabsTrigger value="list-view" className="flex items-center gap-1">
+            <List className="h-4 w-4" />
+            List View
+          </TabsTrigger>
+          <TabsTrigger value="trip-planner" className="flex items-center gap-1">
+            <Route className="h-4 w-4" />
+            Trip Planner
+          </TabsTrigger>
+        </TabsList>
         
-        {/* Right Column - Collapsible status and time filters */}
-        <div>
-          <CollapsibleFilters 
-            activeFiltersCount={activeFiltersCount - (dateFilter !== 'all' ? 1 : 0)}
-            title="Delivery Filters"
-          >
-            <div className="space-y-6">
-              <CompactDeliveryStatusFilter
-                value={statusFilter}
-                onChange={setStatusFilter}
-              />
-              
-              <CompactDeliveryTimeSlotFilter
-                value={timeSlotFilter}
-                onChange={setTimeSlotFilter}
+        <TabsContent value="list-view" className="mt-6">
+          {/* List View Content */}
+          {/* Active Filters Summary */}
+          <ActiveFiltersBar 
+            dateFilter={dateFilter}
+            statusFilter={statusFilter}
+            timeSlotFilter={timeSlotFilter}
+            onClearDateFilter={handleClearDateFilter}
+            onClearStatusFilter={handleClearStatusFilter}
+            onClearTimeSlotFilter={handleClearTimeSlotFilter}
+          />
+          
+          {/* Mobile Filters Drawer */}
+          <div className="md:hidden mb-4">
+            <MobileFilterDrawer 
+              dateFilter={dateFilter}
+              statusFilter={statusFilter}
+              timeSlotFilter={timeSlotFilter}
+              onDateFilterChange={setDateFilter}
+              onStatusFilterChange={setStatusFilter}
+              onTimeSlotFilterChange={setTimeSlotFilter}
+              activeFiltersCount={activeFiltersCount}
+            />
+          </div>
+          
+          {/* Desktop Filters - Two Column Layout */}
+          <div className="hidden md:grid md:grid-cols-2 gap-4">
+            {/* Left Column - Always visible date filter */}
+            <div>
+              <CompactDeliveryDateFilter
+                value={dateFilter}
+                onChange={setDateFilter}
               />
             </div>
-          </CollapsibleFilters>
-        </div>
-      </div>
-      
-      <div>
-        <h2 className="text-xl font-semibold mb-4">
-          {dateTitles[dateFilter]} • {filteredOrders.length} {statusFilter === 'all-statuses' ? 'orders' : 'deliveries'}
-        </h2>
-        
-        {filteredOrders.length > 0 ? (
-          <TooltipProvider>
-            <div className="rounded-md border overflow-hidden">
-              <Table>
-                <TableHeader className="bg-muted">
-                  <TableRow>
-                    <TableHead className="w-[60px]">Order ID</TableHead>
-                    <TableHead className="w-[100px]">Status</TableHead>
-                    <TableHead className="w-[100px]">Delivery</TableHead>
-                    <TableHead className="w-[110px]">
-                      <div className="flex items-center">
-                        <User className="h-3.5 w-3.5 mr-1" />
-                        Driver
-                      </div>
-                    </TableHead>
-                    <TableHead className="w-[130px]">
-                      <div className="flex items-center">
-                        <CalendarClock className="h-3.5 w-3.5 mr-1" />
-                        Delivery Time
-                      </div>
-                    </TableHead>
-                    <TableHead className="hidden md:table-cell w-[180px]">Customer</TableHead>
-                    <TableHead className="hidden md:table-cell w-full">Address</TableHead>
-                    <TableHead className="text-right w-[100px]">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredOrders.map((order) => {
-                    const timeSlotClass = getTimeSlotColor(order.deliveryTimeSlot);
-                    const isWaitingForPhoto = isWaitingPhoto(order.status);
-                    const isPendingForApproval = isPendingApproval(order.status);
-                    const isNeedingRevision = isNeedsRevision(order.status);
-                    const isReadyToDeliver = matchesStatus(order.status, 'ready-to-deliver');
-                    const hasDriverAssignment = !!order.deliveryAssignment;
-                    const hasPreliminaryAssignment = hasDriverAssignment && order.deliveryAssignment?.isPreliminary;
-                    const canShowPreAssignDropdown = canPreAssignDriver(order.status);
-                    
-                    return (
-                      <TableRow 
-                        key={order.id}
-                        className={cn(timeSlotClass)}
-                      >
-                        <TableCell className="font-medium py-1">
+            
+            {/* Right Column - Collapsible status and time filters */}
+            <div>
+              <CollapsibleFilters 
+                activeFiltersCount={activeFiltersCount - (dateFilter !== 'all' ? 1 : 0)}
+                title="Delivery Filters"
+              >
+                <div className="space-y-6">
+                  <CompactDeliveryStatusFilter
+                    value={statusFilter}
+                    onChange={setStatusFilter}
+                  />
+                  
+                  <CompactDeliveryTimeSlotFilter
+                    value={timeSlotFilter}
+                    onChange={setTimeSlotFilter}
+                  />
+                </div>
+              </CollapsibleFilters>
+            </div>
+          </div>
+          
+          <div>
+            <h2 className="text-xl font-semibold mb-4">
+              {dateTitles[dateFilter]} • {filteredOrders.length} {statusFilter === 'all-statuses' ? 'orders' : 'deliveries'}
+            </h2>
+            
+            {filteredOrders.length > 0 ? (
+              <TooltipProvider>
+                <div className="rounded-md border overflow-hidden">
+                  <Table>
+                    <TableHeader className="bg-muted">
+                      <TableRow>
+                        <TableHead className="w-[60px]">Order ID</TableHead>
+                        <TableHead className="w-[100px]">Status</TableHead>
+                        <TableHead className="w-[100px]">Delivery</TableHead>
+                        <TableHead className="w-[110px]">
                           <div className="flex items-center">
-                            {order.id}
-                            {getRevisionBadge(order)}
+                            <User className="h-3.5 w-3.5 mr-1" />
+                            Driver
                           </div>
-                        </TableCell>
-                        <TableCell className="py-1">
-                          <StatusBadge status={order.status} />
-                        </TableCell>
-                        <TableCell className="py-1">
-                          {order.deliveryMethod ? (
-                            <Badge size="sm" variant="outline" className="capitalize">
-                              {order.deliveryMethod === 'flat-rate' ? 'Flat' : 
-                              order.deliveryMethod === 'lalamove' ? 'Lala' : 'Pickup'}
-                            </Badge>
-                          ) : (
-                            '-'
-                          )}
-                        </TableCell>
-                        <TableCell className="py-1">
-                          <div className="flex items-center gap-0.5">
-                            {getDriverBadge(order)}
-                            {((!isReadyToDeliver && hasDriverAssignment) || canShowPreAssignDropdown) && (
-                              <QuickDriverAssignDropdown 
-                                order={order} 
-                                onSuccess={handleStatusChange}
-                                isPreliminaryOnly={!isReadyToDeliver}
-                                compact={true}
-                              />
-                            )}
-                            {!hasDriverAssignment && !canShowPreAssignDropdown && (
-                              <span className="text-xs text-muted-foreground">Not assigned</span>
-                            )}
+                        </TableHead>
+                        <TableHead className="w-[130px]">
+                          <div className="flex items-center">
+                            <CalendarClock className="h-3.5 w-3.5 mr-1" />
+                            Delivery Time
                           </div>
-                        </TableCell>
-                        <TableCell className="py-1">
-                          <div className="flex flex-col space-y-0.5">
-                            <div className="flex items-center">
-                              <CalendarClock className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
-                              <span className="font-medium text-sm">
-                                {formatTimeSlotDisplay(order.deliveryTimeSlot)}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-0.5">
-                              {getTimeStatusBadge(order)}
-                              {order.deliveryArea && (
-                                <Badge size="xs" variant="secondary" className="text-xs">
-                                  {order.deliveryArea}
+                        </TableHead>
+                        <TableHead className="hidden md:table-cell w-[180px]">Customer</TableHead>
+                        <TableHead className="hidden md:table-cell w-full">Address</TableHead>
+                        <TableHead className="text-right w-[100px]">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredOrders.map((order) => {
+                        const timeSlotClass = getTimeSlotColor(order.deliveryTimeSlot);
+                        const isWaitingForPhoto = isWaitingPhoto(order.status);
+                        const isPendingForApproval = isPendingApproval(order.status);
+                        const isNeedingRevision = isNeedsRevision(order.status);
+                        const isReadyToDeliver = matchesStatus(order.status, 'ready-to-deliver');
+                        const hasDriverAssignment = !!order.deliveryAssignment;
+                        const hasPreliminaryAssignment = hasDriverAssignment && order.deliveryAssignment?.isPreliminary;
+                        const canShowPreAssignDropdown = canPreAssignDriver(order.status);
+                        
+                        return (
+                          <TableRow 
+                            key={order.id}
+                            className={cn(timeSlotClass)}
+                          >
+                            <TableCell className="font-medium py-1">
+                              <div className="flex items-center">
+                                {order.id}
+                                {getRevisionBadge(order)}
+                              </div>
+                            </TableCell>
+                            <TableCell className="py-1">
+                              <StatusBadge status={order.status} />
+                            </TableCell>
+                            <TableCell className="py-1">
+                              {order.deliveryMethod ? (
+                                <Badge size="sm" variant="outline" className="capitalize">
+                                  {order.deliveryMethod === 'flat-rate' ? 'Flat' : 
+                                  order.deliveryMethod === 'lalamove' ? 'Lala' : 'Pickup'}
                                 </Badge>
+                              ) : (
+                                '-'
                               )}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell py-1">
-                          <div>
-                            <div className="font-medium text-sm">{order.customer.name}</div>
-                            <div className="text-xs text-muted-foreground">{order.customer.whatsappNumber}</div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell py-1">
-                          <div className="text-xs max-w-full truncate">
-                            {order.deliveryAddress}
-                            {order.deliveryAddressNotes && (
-                              <span className="text-muted-foreground text-xs block">
-                                Note: {order.deliveryAddressNotes}
-                              </span>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right py-1">
-                          <div className="flex justify-end gap-0.5">
-                            {/* View Order button */}
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="outline" 
-                                  size="icon"
-                                  asChild
-                                  className="h-7 w-7"
-                                >
-                                  <Link to={`/orders/${order.id}`} state={{ referrer: 'delivery' }}>
-                                    <Eye className="h-3.5 w-3.5" />
-                                  </Link>
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>View Order</p>
-                              </TooltipContent>
-                            </Tooltip>
-                            
-                            {/* Chat button */}
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="outline" 
-                                  size="icon"
-                                  className="h-7 w-7"
-                                  onClick={() => {
-                                    toast.info(`Chat for order ${order.id} - to be implemented`);
-                                  }}
-                                >
-                                  <MessageSquare className="h-3.5 w-3.5" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Chat</p>
-                              </TooltipContent>
-                            </Tooltip>
-                            
-                            {/* Status-specific action buttons */}
-                            {isReadyToDeliver && !hasDriverAssignment ? (
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button 
-                                    variant="outline"
-                                    size="icon"
-                                    className="h-7 w-7 bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200"
-                                    onClick={() => handleOpenDriverDialog(order)}
-                                  >
-                                    <User className="h-3.5 w-3.5" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Assign Driver</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            ) : isStatusActionableInDelivery(order.status) ? (
-                              isNeedingRevision ? (
+                            </TableCell>
+                            <TableCell className="py-1">
+                              <div className="flex items-center gap-0.5">
+                                {getDriverBadge(order)}
+                                {((!isReadyToDeliver && hasDriverAssignment) || canShowPreAssignDropdown) && (
+                                  <QuickDriverAssignDropdown 
+                                    order={order} 
+                                    onSuccess={handleStatusChange}
+                                    isPreliminaryOnly={!isReadyToDeliver}
+                                    compact={true}
+                                  />
+                                )}
+                                {!hasDriverAssignment && !canShowPreAssignDropdown && (
+                                  <span className="text-xs text-muted-foreground">Not assigned</span>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell className="py-1">
+                              <div className="flex flex-col space-y-0.5">
+                                <div className="flex items-center">
+                                  <CalendarClock className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
+                                  <span className="font-medium text-sm">
+                                    {formatTimeSlotDisplay(order.deliveryTimeSlot)}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-0.5">
+                                  {getTimeStatusBadge(order)}
+                                  {order.deliveryArea && (
+                                    <Badge size="xs" variant="secondary" className="text-xs">
+                                      {order.deliveryArea}
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell className="hidden md:table-cell py-1">
+                              <div>
+                                <div className="font-medium text-sm">{order.customer.name}</div>
+                                <div className="text-xs text-muted-foreground">{order.customer.whatsappNumber}</div>
+                              </div>
+                            </TableCell>
+                            <TableCell className="hidden md:table-cell py-1">
+                              <div className="text-xs max-w-full truncate">
+                                {order.deliveryAddress}
+                                {order.deliveryAddressNotes && (
+                                  <span className="text-muted-foreground text-xs block">
+                                    Note: {order.deliveryAddressNotes}
+                                  </span>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right py-1">
+                              <div className="flex justify-end gap-0.5">
+                                {/* View Order button */}
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <Button 
-                                      variant="outline"
+                                    <Button
+                                      variant="outline" 
                                       size="icon"
-                                      className="h-7 w-7 bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-200"
-                                      onClick={() => handleOpenPhotoDialog(order)}
+                                      asChild
+                                      className="h-7 w-7"
                                     >
-                                      <Upload className="h-3.5 w-3.5" />
+                                      <Link to={`/orders/${order.id}`} state={{ referrer: 'delivery' }}>
+                                        <Eye className="h-3.5 w-3.5" />
+                                      </Link>
                                     </Button>
                                   </TooltipTrigger>
                                   <TooltipContent>
-                                    <p>Upload</p>
+                                    <p>View Order</p>
                                   </TooltipContent>
                                 </Tooltip>
-                              ) : (
-                                <DeliveryStatusManager 
-                                  order={order} 
-                                  onStatusChange={handleStatusChange}
-                                  compact={true}
-                                />
-                              )
-                            ) : isWaitingForPhoto ? (
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button 
-                                    variant="outline"
-                                    size="icon"
-                                    className="h-7 w-7 bg-purple-100 text-purple-800 border-purple-200 hover:bg-purple-200"
-                                    onClick={() => handleOpenPhotoDialog(order)}
-                                  >
-                                    <Upload className="h-3.5 w-3.5" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Upload Photo</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            ) : null}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-          </TooltipProvider>
-        ) : (
-          <Card className="p-8 text-center text-muted-foreground">
-            <p>No deliveries found for the selected filters.</p>
-          </Card>
-        )}
-      </div>
+                                
+                                {/* Chat button */}
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="outline" 
+                                      size="icon"
+                                      className="h-7 w-7"
+                                      onClick={() => {
+                                        toast.info(`Chat for order ${order.id} - to be implemented`);
+                                      }}
+                                    >
+                                      <MessageSquare className="h-3.5 w-3.5" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Chat</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                                
+                                {/* Status-specific action buttons */}
+                                {isReadyToDeliver && !hasDriverAssignment ? (
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button 
+                                        variant="outline"
+                                        size="icon"
+                                        className="h-7 w-7 bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200"
+                                        onClick={() => handleOpenDriverDialog(order)}
+                                      >
+                                        <User className="h-3.5 w-3.5" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Assign Driver</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                ) : isStatusActionableInDelivery(order.status) ? (
+                                  isNeedingRevision ? (
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button 
+                                          variant="outline"
+                                          size="icon"
+                                          className="h-7 w-7 bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-200"
+                                          onClick={() => handleOpenPhotoDialog(order)}
+                                        >
+                                          <Upload className="h-3.5 w-3.5" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>Upload</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  ) : (
+                                    <DeliveryStatusManager 
+                                      order={order} 
+                                      onStatusChange={handleStatusChange}
+                                      compact={true}
+                                    />
+                                  )
+                                ) : isWaitingForPhoto ? (
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button 
+                                        variant="outline"
+                                        size="icon"
+                                        className="h-7 w-7 bg-purple-100 text-purple-800 border-purple-200 hover:bg-purple-200"
+                                        onClick={() => handleOpenPhotoDialog(order)}
+                                      >
+                                        <Upload className="h-3.5 w-3.5" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Upload Photo</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                ) : null}
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              </TooltipProvider>
+            ) : (
+              <Card className="p-8 text-center text-muted-foreground">
+                <p>No deliveries found for the selected filters.</p>
+              </Card>
+            )}
+          </div>
+        </TabsContent>
+        
+        {/* Trip Planner Tab */}
+        <TabsContent value="trip-planner" className="mt-6">
+          <TripPlannerView selectedDate={selectedDate} />
+        </TabsContent>
+      </Tabs>
       
       {/* Dialogs */}
       {selectedOrder && (
