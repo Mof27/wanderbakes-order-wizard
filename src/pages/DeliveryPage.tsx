@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useApp } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -9,7 +9,7 @@ import { startOfDay, endOfDay, addDays, format, isBefore, isAfter, parseISO, add
 import { Link } from "react-router-dom";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { CalendarClock, Upload, CheckSquare2, XCircle, User, Car, ExternalLink, Truck, AlertCircle, Filter, Eye, MessageSquare } from "lucide-react";
+import { CalendarClock, Upload, CheckSquare2, XCircle, User, Car, ExternalLink, Truck, AlertCircle, Filter, Eye, MessageSquare, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "@/components/ui/sonner";
@@ -26,6 +26,9 @@ import CompactDeliveryStatusFilter from "@/components/delivery/CompactDeliverySt
 import CompactDeliveryTimeSlotFilter from "@/components/delivery/CompactDeliveryTimeSlotFilter";
 import MobileFilterDrawer from "@/components/delivery/MobileFilterDrawer";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import CreateTripDialog from "@/components/delivery/CreateTripDialog";
+import TripBadge from "@/components/delivery/TripBadge";
+import { DeliveryTrip } from "@/types/trip";
 
 // Helper function to determine the time slot background color
 const getTimeSlotColor = (timeSlot?: string): string => {
@@ -156,7 +159,7 @@ const getDriverBadge = (order: Order) => {
 };
 
 const DeliveryPage = () => {
-  const { orders } = useApp();
+  const { orders, orderSelection, toggleOrderSelection, toggleSelectionMode, clearOrderSelection, trips, getTripForOrder } = useApp();
   const [dateFilter, setDateFilter] = useState<'today' | 'tomorrow' | 'd-plus-2' | 'all'>('today');
   const [statusFilter, setStatusFilter] = useState<'ready' | 'in-transit' | 'pending-approval' | 'needs-revision' | 'delivery-statuses' | 'all-statuses'>('all-statuses');
   const [timeSlotFilter, setTimeSlotFilter] = useState<'all' | 'late' | 'within-2-hours' | 'slot1' | 'slot2' | 'slot3'>('all');
@@ -168,7 +171,29 @@ const DeliveryPage = () => {
   const [photoUploadDialogOpen, setPhotoUploadDialogOpen] = useState(false);
   const [photoApprovalDialogOpen, setPhotoApprovalDialogOpen] = useState(false);
   const [driverAssignmentDialogOpen, setDriverAssignmentDialogOpen] = useState(false);
+  const [createTripDialogOpen, setCreateTripDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [tripsMap, setTripsMap] = useState<Map<string, DeliveryTrip>>(new Map());
+
+  const { selectedOrderIds, isSelectionMode } = orderSelection;
+
+  // Load trip information for orders
+  useEffect(() => {
+    const loadTripsForOrders = async () => {
+      const newTripsMap = new Map<string, DeliveryTrip>();
+      
+      for (const order of filteredOrders) {
+        const trip = await getTripForOrder(order.id);
+        if (trip) {
+          newTripsMap.set(order.id, trip);
+        }
+      }
+      
+      setTripsMap(newTripsMap);
+    };
+    
+    loadTripsForOrders();
+  }, [orders, trips, refreshKey]);
 
   // Calculate how many active filters we have
   const activeFiltersCount = 
@@ -215,6 +240,17 @@ const DeliveryPage = () => {
   const handleDriverAssignmentSuccess = () => {
     setDriverAssignmentDialogOpen(false);
     handleStatusChange();
+  };
+
+  // Handle successful trip creation
+  const handleTripSuccess = () => {
+    setCreateTripDialogOpen(false);
+    handleStatusChange();
+  };
+
+  // Toggle selection mode
+  const handleToggleSelectionMode = () => {
+    toggleSelectionMode();
   };
 
   // Filter orders based on selected date filter
@@ -408,13 +444,46 @@ const DeliveryPage = () => {
       
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Delivery Management</h1>
-        <Button 
-          variant="outline" 
-          onClick={() => window.print()}
-          className="hidden md:flex"
-        >
-          Print Delivery Schedule
-        </Button>
+        <div className="flex items-center gap-2">
+          {isSelectionMode ? (
+            <>
+              <Button 
+                variant="default" 
+                onClick={() => setCreateTripDialogOpen(true)}
+                disabled={selectedOrderIds.length === 0}
+                className="hidden md:flex"
+              >
+                <Truck className="mr-2 h-4 w-4" />
+                Create Trip ({selectedOrderIds.length})
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={handleToggleSelectionMode}
+                className="hidden md:flex"
+              >
+                Cancel Selection
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button 
+                variant="outline" 
+                onClick={handleToggleSelectionMode}
+                className="hidden md:flex"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Create Trip
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => window.print()}
+                className="hidden md:flex"
+              >
+                Print Delivery Schedule
+              </Button>
+            </>
+          )}
+        </div>
       </div>
       
       {/* Active Filters Summary */}
@@ -438,6 +507,42 @@ const DeliveryPage = () => {
           onTimeSlotFilterChange={setTimeSlotFilter}
           activeFiltersCount={activeFiltersCount}
         />
+        
+        {/* Mobile action buttons */}
+        <div className="flex items-center gap-2 mt-2">
+          {isSelectionMode ? (
+            <>
+              <Button 
+                variant="default" 
+                onClick={() => setCreateTripDialogOpen(true)}
+                disabled={selectedOrderIds.length === 0}
+                size="sm"
+                className="flex-1"
+              >
+                <Truck className="mr-1 h-3.5 w-3.5" />
+                Create Trip ({selectedOrderIds.length})
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={handleToggleSelectionMode}
+                size="sm"
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+            </>
+          ) : (
+            <Button 
+              variant="outline" 
+              onClick={handleToggleSelectionMode}
+              size="sm"
+              className="flex-1"
+            >
+              <Plus className="mr-1 h-3.5 w-3.5" />
+              Create Trip
+            </Button>
+          )}
+        </div>
       </div>
       
       {/* Desktop Filters - Two Column Layout */}
@@ -482,6 +587,9 @@ const DeliveryPage = () => {
               <Table>
                 <TableHeader className="bg-muted">
                   <TableRow>
+                    {isSelectionMode && (
+                      <TableHead className="w-[50px]">Select</TableHead>
+                    )}
                     <TableHead className="w-[60px]">Order ID</TableHead>
                     <TableHead className="w-[100px]">Status</TableHead>
                     <TableHead className="w-[100px]">Delivery</TableHead>
@@ -512,12 +620,26 @@ const DeliveryPage = () => {
                     const hasDriverAssignment = !!order.deliveryAssignment;
                     const hasPreliminaryAssignment = hasDriverAssignment && order.deliveryAssignment?.isPreliminary;
                     const canShowPreAssignDropdown = canPreAssignDriver(order.status);
+                    const trip = tripsMap.get(order.id);
                     
                     return (
                       <TableRow 
                         key={order.id}
-                        className={cn(timeSlotClass)}
+                        className={cn(
+                          timeSlotClass,
+                          isSelectionMode && selectedOrderIds.includes(order.id) && "bg-blue-50"
+                        )}
+                        onClick={isSelectionMode ? () => toggleOrderSelection(order.id) : undefined}
                       >
+                        {isSelectionMode && (
+                          <TableCell className="py-1">
+                            <Checkbox 
+                              checked={selectedOrderIds.includes(order.id)} 
+                              onCheckedChange={() => toggleOrderSelection(order.id)}
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          </TableCell>
+                        )}
                         <TableCell className="font-medium py-1">
                           <div className="flex items-center">
                             {order.id}
@@ -539,17 +661,23 @@ const DeliveryPage = () => {
                         </TableCell>
                         <TableCell className="py-1">
                           <div className="flex items-center gap-0.5">
-                            {getDriverBadge(order)}
-                            {((!isReadyToDeliver && hasDriverAssignment) || canShowPreAssignDropdown) && (
-                              <QuickDriverAssignDropdown 
-                                order={order} 
-                                onSuccess={handleStatusChange}
-                                isPreliminaryOnly={!isReadyToDeliver}
-                                compact={true}
-                              />
-                            )}
-                            {!hasDriverAssignment && !canShowPreAssignDropdown && (
-                              <span className="text-xs text-muted-foreground">Not assigned</span>
+                            {trip ? (
+                              <TripBadge trip={trip} compact={true} />
+                            ) : (
+                              <>
+                                {getDriverBadge(order)}
+                                {((!isReadyToDeliver && hasDriverAssignment) || canShowPreAssignDropdown) && (
+                                  <QuickDriverAssignDropdown 
+                                    order={order} 
+                                    onSuccess={handleStatusChange}
+                                    isPreliminaryOnly={!isReadyToDeliver}
+                                    compact={true}
+                                  />
+                                )}
+                                {!hasDriverAssignment && !canShowPreAssignDropdown && (
+                                  <span className="text-xs text-muted-foreground">Not assigned</span>
+                                )}
+                              </>
                             )}
                           </div>
                         </TableCell>
@@ -727,6 +855,14 @@ const DeliveryPage = () => {
           />
         </>
       )}
+      
+      {/* Create Trip Dialog */}
+      <CreateTripDialog
+        open={createTripDialogOpen}
+        onOpenChange={setCreateTripDialogOpen}
+        selectedOrderIds={selectedOrderIds}
+        onSuccess={handleTripSuccess}
+      />
     </div>
   );
 };
