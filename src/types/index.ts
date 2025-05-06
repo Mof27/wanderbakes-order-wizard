@@ -74,7 +74,8 @@ export interface DeliveryAssignment {
   assignedBy?: string;
   notes?: string; // Optional delivery instructions
   status?: 'pending' | 'in-progress' | 'completed';
-  isPreliminary?: boolean; // New field to indicate pre-assignment
+  isPreliminary?: boolean; // Field to indicate pre-assignment
+  vehicleInfo?: string; // New field to store vehicle information for data collection
 }
 
 // New type for print event tracking
@@ -289,6 +290,8 @@ export interface DeliveryLabelTemplate {
 export interface DriverSettings {
   driver1Name: string;
   driver2Name: string;
+  driver1Vehicle: string;  // New field for driver 1's vehicle
+  driver2Vehicle: string;  // New field for driver 2's vehicle
   defaultDriverType?: DriverType;
 }
 

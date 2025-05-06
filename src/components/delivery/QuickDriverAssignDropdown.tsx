@@ -37,9 +37,11 @@ const QuickDriverAssignDropdown: React.FC<QuickDriverAssignDropdownProps> = ({
     queryFn: () => dataService.settings.getAll()
   });
 
-  // Get driver names from settings or use defaults
+  // Get driver names and vehicles from settings or use defaults
   const driver1Name = settings?.driverSettings?.driver1Name || "Driver 1";
   const driver2Name = settings?.driverSettings?.driver2Name || "Driver 2";
+  const driver1Vehicle = settings?.driverSettings?.driver1Vehicle || "Car";
+  const driver2Vehicle = settings?.driverSettings?.driver2Vehicle || "Car";
 
   // Check if there's already an assignment
   const hasAssignment = !!order.deliveryAssignment;
@@ -50,6 +52,10 @@ const QuickDriverAssignDropdown: React.FC<QuickDriverAssignDropdownProps> = ({
     try {
       setIsLoading(true);
       
+      // Get vehicle information based on driver type
+      const vehicleInfo = driverType === 'driver-1' ? driver1Vehicle : 
+                          driverType === 'driver-2' ? driver2Vehicle : undefined;
+                          
       // Create assignment details with required assignedAt property
       const assignment = {
         driverType,
@@ -57,6 +63,7 @@ const QuickDriverAssignDropdown: React.FC<QuickDriverAssignDropdownProps> = ({
         driverName: driverType === "3rd-party" ? undefined : undefined,
         isPreliminary: isPreliminaryOnly,
         assignedAt: new Date(), // Add the required assignedAt property
+        vehicleInfo: vehicleInfo // Store vehicle information
       };
 
       // Create a new order object with the updated assignment

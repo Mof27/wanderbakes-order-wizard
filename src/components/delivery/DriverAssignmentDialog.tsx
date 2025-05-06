@@ -41,6 +41,8 @@ const DriverAssignmentDialog = ({
   // Get driver names from settings or use defaults
   const driver1Name = settings?.driverSettings?.driver1Name || "Driver 1";
   const driver2Name = settings?.driverSettings?.driver2Name || "Driver 2";
+  const driver1Vehicle = settings?.driverSettings?.driver1Vehicle || "Car";
+  const driver2Vehicle = settings?.driverSettings?.driver2Vehicle || "Car";
   
   // Initialize from existing assignment if available
   const existingAssignment = order.deliveryAssignment;
@@ -67,7 +69,10 @@ const DriverAssignmentDialog = ({
       const assignment: Omit<DeliveryAssignment, 'assignedAt'> = {
         driverType,
         notes: notes.trim() || undefined,
-        isPreliminary: isPreliminary
+        isPreliminary: isPreliminary,
+        // Add vehicle information to metadata based on driver type
+        vehicleInfo: driverType === 'driver-1' ? driver1Vehicle : 
+                    driverType === 'driver-2' ? driver2Vehicle : undefined
       };
       
       // Only include driver name for 3rd-party

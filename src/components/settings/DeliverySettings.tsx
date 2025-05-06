@@ -18,12 +18,14 @@ import {
   FormMessage 
 } from "@/components/ui/form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Truck, User } from "lucide-react";
+import { Truck, User, Car } from "lucide-react";
 
 // Form schema for driver settings
 const driverSettingsSchema = z.object({
   driver1Name: z.string().min(1, "Driver 1 name is required"),
-  driver2Name: z.string().min(1, "Driver 2 name is required")
+  driver2Name: z.string().min(1, "Driver 2 name is required"),
+  driver1Vehicle: z.string().min(1, "Driver 1 vehicle is required"),
+  driver2Vehicle: z.string().min(1, "Driver 2 vehicle is required")
 });
 
 type DriverSettingsFormValues = z.infer<typeof driverSettingsSchema>;
@@ -43,11 +45,15 @@ const DeliverySettings = () => {
     resolver: zodResolver(driverSettingsSchema),
     defaultValues: {
       driver1Name: settings?.driverSettings?.driver1Name || "Driver 1",
-      driver2Name: settings?.driverSettings?.driver2Name || "Driver 2"
+      driver2Name: settings?.driverSettings?.driver2Name || "Driver 2",
+      driver1Vehicle: settings?.driverSettings?.driver1Vehicle || "Car",
+      driver2Vehicle: settings?.driverSettings?.driver2Vehicle || "Car"
     },
     values: {
       driver1Name: settings?.driverSettings?.driver1Name || "Driver 1",
-      driver2Name: settings?.driverSettings?.driver2Name || "Driver 2"
+      driver2Name: settings?.driverSettings?.driver2Name || "Driver 2",
+      driver1Vehicle: settings?.driverSettings?.driver1Vehicle || "Car",
+      driver2Vehicle: settings?.driverSettings?.driver2Vehicle || "Car"
     }
   });
 
@@ -69,10 +75,12 @@ const DeliverySettings = () => {
   // Form submission handler
   const onSubmit = (data: DriverSettingsFormValues) => {
     setIsLoading(true);
-    // Ensure both properties are always defined by creating a proper DriverSettings object
+    // Ensure all properties are properly defined in a DriverSettings object
     const driverSettings: DriverSettings = {
       driver1Name: data.driver1Name,
-      driver2Name: data.driver2Name
+      driver2Name: data.driver2Name,
+      driver1Vehicle: data.driver1Vehicle,
+      driver2Vehicle: data.driver2Vehicle
     };
     updateDriverSettingsMutation.mutate(driverSettings);
   };
@@ -85,44 +93,90 @@ const DeliverySettings = () => {
           Driver Settings
         </CardTitle>
         <CardDescription>
-          Customize the driver names for your business. These names will be used throughout the application for driver assignments.
+          Customize the driver names for your business and assign vehicles for data collection. The vehicle information is used for reporting purposes only.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="driver1Name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-1">
-                      <User className="h-4 w-4" /> Driver 1 Name
-                    </FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter driver 1 name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <div className="grid grid-cols-1 gap-4">
+              <div className="border p-4 rounded-md">
+                <h3 className="text-md font-medium mb-3 flex items-center gap-1">
+                  <User className="h-4 w-4" /> Driver 1
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="driver1Name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-1">
+                          <User className="h-4 w-4" /> Name
+                        </FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter driver 1 name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="driver1Vehicle"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-1">
+                          <Car className="h-4 w-4" /> Vehicle
+                        </FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter driver 1 vehicle" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
               
-              <FormField
-                control={form.control}
-                name="driver2Name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-1">
-                      <User className="h-4 w-4" /> Driver 2 Name
-                    </FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter driver 2 name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="border p-4 rounded-md">
+                <h3 className="text-md font-medium mb-3 flex items-center gap-1">
+                  <User className="h-4 w-4" /> Driver 2
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="driver2Name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-1">
+                          <User className="h-4 w-4" /> Name
+                        </FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter driver 2 name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="driver2Vehicle"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-1">
+                          <Car className="h-4 w-4" /> Vehicle
+                        </FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter driver 2 vehicle" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
             </div>
             
             <div className="flex justify-end">

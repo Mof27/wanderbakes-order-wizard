@@ -67,7 +67,9 @@ export class MockSettingsRepository implements SettingsRepository {
       deliveryLabelTemplate: this.createDefaultDeliveryLabelTemplate(),
       driverSettings: {
         driver1Name: "Driver 1",
-        driver2Name: "Driver 2"
+        driver2Name: "Driver 2",
+        driver1Vehicle: "Car",
+        driver2Vehicle: "Car"
       }
     };
     
@@ -90,12 +92,22 @@ export class MockSettingsRepository implements SettingsRepository {
             parsedSettings.deliveryLabelTemplate = this.createDefaultDeliveryLabelTemplate();
           }
           
-          // If driver settings are not in saved settings, add default values
+          // If driver settings are not in saved settings or missing vehicle info, add default values
           if (!parsedSettings.driverSettings) {
             parsedSettings.driverSettings = {
               driver1Name: "Driver 1",
-              driver2Name: "Driver 2"
+              driver2Name: "Driver 2",
+              driver1Vehicle: "Car",
+              driver2Vehicle: "Car"
             };
+          } else {
+            // Ensure vehicle properties are set (for backwards compatibility)
+            if (!parsedSettings.driverSettings.driver1Vehicle) {
+              parsedSettings.driverSettings.driver1Vehicle = "Car";
+            }
+            if (!parsedSettings.driverSettings.driver2Vehicle) {
+              parsedSettings.driverSettings.driver2Vehicle = "Car";
+            }
           }
           
           return parsedSettings;
