@@ -69,7 +69,12 @@ const DeliverySettings = () => {
   // Form submission handler
   const onSubmit = (data: DriverSettingsFormValues) => {
     setIsLoading(true);
-    updateDriverSettingsMutation.mutate(data);
+    // Ensure both properties are always defined by creating a proper DriverSettings object
+    const driverSettings: DriverSettings = {
+      driver1Name: data.driver1Name,
+      driver2Name: data.driver2Name
+    };
+    updateDriverSettingsMutation.mutate(driverSettings);
   };
 
   return (
