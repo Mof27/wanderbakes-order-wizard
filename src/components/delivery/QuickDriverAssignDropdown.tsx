@@ -44,10 +44,14 @@ const QuickDriverAssignDropdown: React.FC<QuickDriverAssignDropdownProps> = ({
         isPreliminary: isPreliminaryOnly,
       };
 
-      // Update the order with the new assignment
-      await updateOrder(order.id, {
+      // Create a new order object with the updated assignment
+      const updatedOrder = {
+        ...order,
         deliveryAssignment: assignment,
-      });
+      };
+
+      // Update the order with the new assignment
+      await updateOrder(updatedOrder);
 
       // Show success notification
       toast({
