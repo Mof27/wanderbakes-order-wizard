@@ -1,3 +1,4 @@
+
 import { useState, useMemo, useEffect } from "react";
 import { useApp } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
@@ -592,9 +593,9 @@ const DeliveryPage = () => {
                       <TableHead className="w-[50px]">Select</TableHead>
                     )}
                     <TableHead className="w-[60px]">Order ID</TableHead>
-                    <TableHead className="w-[100px]">Status</TableHead>
+                    <TableHead className="w-[120px]">Status</TableHead>
                     <TableHead className="w-[100px]">Delivery</TableHead>
-                    <TableHead className="w-[110px]">
+                    <TableHead className="w-[150px]">
                       <div className="flex items-center">
                         <User className="h-3.5 w-3.5 mr-1" />
                         Driver
