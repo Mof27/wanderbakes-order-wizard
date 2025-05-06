@@ -29,6 +29,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import CreateTripDialog from "@/components/delivery/CreateTripDialog";
 import TripBadge from "@/components/delivery/TripBadge";
 import { DeliveryTrip } from "@/types/trip";
+import { Checkbox } from "@/components/ui/checkbox";
 
 // Helper function to determine the time slot background color
 const getTimeSlotColor = (timeSlot?: string): string => {
