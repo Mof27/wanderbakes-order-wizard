@@ -1,25 +1,16 @@
 
 import React from 'react';
 import { Badge } from "@/components/ui/badge";
-import { Car, X } from "lucide-react";
+import { Car } from "lucide-react";
 import { DeliveryTrip } from "@/types/trip";
-import { cn } from "@/lib/utils";
 
 interface TripBadgeProps {
   trip: DeliveryTrip;
   compact?: boolean;
   size?: 'compact' | 'medium' | 'full';
-  onRemoveOrder?: (tripId: string, orderId?: string) => void;
-  orderId?: string;
 }
 
-const TripBadge: React.FC<TripBadgeProps> = ({ 
-  trip, 
-  compact = false, 
-  size = 'full',
-  onRemoveOrder,
-  orderId
-}) => {
+const TripBadge: React.FC<TripBadgeProps> = ({ trip, compact = false, size = 'full' }) => {
   const driverLabel = trip.driverName || (trip.driverId === 'driver-1' ? 'Driver #1' : 'Driver #2');
   
   // Handle size-based rendering
@@ -41,18 +32,11 @@ const TripBadge: React.FC<TripBadgeProps> = ({
     className = 'text-sm';
     iconSize = 'h-3 w-3';
   }
-
-  const handleRemoveClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent event bubbling
-    if (onRemoveOrder && trip.id) {
-      onRemoveOrder(trip.id, orderId);
-    }
-  };
   
   return (
     <Badge 
       variant="outline" 
-      className={cn(`
+      className={`
         ${className} 
         bg-blue-50 
         text-blue-700 
@@ -60,23 +44,10 @@ const TripBadge: React.FC<TripBadgeProps> = ({
         flex 
         items-center 
         gap-1
-        group
-        relative
-      `)}
+      `}
     >
       <Car className={iconSize} />
       <span>{content}</span>
-      
-      {onRemoveOrder && (
-        <button
-          type="button"
-          onClick={handleRemoveClick}
-          className="ml-1 opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100 inline-flex items-center justify-center rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200"
-          aria-label="Remove from trip"
-        >
-          <X className="h-3 w-3" />
-        </button>
-      )}
     </Badge>
   );
 };
