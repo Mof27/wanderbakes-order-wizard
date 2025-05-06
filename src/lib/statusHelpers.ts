@@ -1,4 +1,4 @@
-import { Order } from "@/types";
+import { Order, OrderStatus } from "@/types";
 import { startOfDay, addDays } from "date-fns";
 import { getOrderTimeStatus } from "@/components/delivery/utils/deliveryHelpers";
 
