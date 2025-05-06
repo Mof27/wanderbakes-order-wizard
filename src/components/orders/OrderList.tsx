@@ -2,19 +2,23 @@
 import { Order } from "@/types";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import OrderTableRow from "./OrderTableRow";
+import { DeliveryTrip } from "@/types/trip";
+import TripBadge from "@/components/delivery/TripBadge";
 
 interface OrderListProps {
   orders: Order[];
   onOrderClick?: (orderId: string) => void;
   renderActions?: (order: Order) => React.ReactNode;
   useWorkflowStatus?: boolean; // Add this prop to control status display
+  tripsMap?: Map<string, DeliveryTrip>;
 }
 
 const OrderList = ({ 
   orders, 
   onOrderClick, 
   renderActions,
-  useWorkflowStatus = true // Default to using workflow status in Orders page
+  useWorkflowStatus = true, // Default to using workflow status in Orders page
+  tripsMap
 }: OrderListProps) => {
   if (orders.length === 0) {
     return (
@@ -35,19 +39,25 @@ const OrderList = ({
             <TableHead>Delivery Date</TableHead>
             <TableHead>Cake</TableHead>
             <TableHead>Price</TableHead>
+            <TableHead>Trip</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {orders.map((order) => (
-            <OrderTableRow 
-              key={order.id} 
-              order={order} 
-              onClick={() => onOrderClick && onOrderClick(order.id)}
-              customActions={renderActions ? renderActions(order) : undefined}
-              useWorkflowStatus={useWorkflowStatus}
-            />
-          ))}
+          {orders.map((order) => {
+            const trip = tripsMap?.get(order.id);
+            
+            return (
+              <OrderTableRow 
+                key={order.id} 
+                order={order} 
+                onClick={() => onOrderClick && onOrderClick(order.id)}
+                customActions={renderActions ? renderActions(order) : undefined}
+                useWorkflowStatus={useWorkflowStatus}
+                trip={trip}
+              />
+            );
+          })}
         </TableBody>
       </Table>
     </div>

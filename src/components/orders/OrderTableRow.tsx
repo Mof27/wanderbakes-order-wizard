@@ -1,23 +1,26 @@
 
-import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Order } from "@/types";
 import { TableCell, TableRow } from "@/components/ui/table";
 import StatusBadge from "./StatusBadge";
+import { DeliveryTrip } from "@/types/trip";
+import TripBadge from "@/components/delivery/TripBadge";
 
 interface OrderTableRowProps {
   order: Order;
   onClick?: () => void;
   customActions?: React.ReactNode;
-  useWorkflowStatus?: boolean; // Add this prop for workflow status display
+  useWorkflowStatus?: boolean;
+  trip?: DeliveryTrip;
 }
 
-const OrderTableRow: React.FC<OrderTableRowProps> = ({ 
+const OrderTableRow = ({ 
   order, 
   onClick, 
   customActions,
-  useWorkflowStatus = true // Default to showing workflow status in Orders page
-}) => {
+  useWorkflowStatus = true,
+  trip
+}: OrderTableRowProps) => {
   const navigate = useNavigate();
 
   const handleClick = () => {
@@ -29,10 +32,7 @@ const OrderTableRow: React.FC<OrderTableRowProps> = ({
   };
 
   return (
-    <TableRow 
-      className="cursor-pointer hover:bg-muted/30"
-      onClick={handleClick}
-    >
+    <TableRow className="cursor-pointer hover:bg-muted/30" onClick={handleClick}>
       <TableCell>#{order.id.substring(order.id.length - 5)}</TableCell>
       <TableCell>{order.customer.name}</TableCell>
       <TableCell>
@@ -57,6 +57,9 @@ const OrderTableRow: React.FC<OrderTableRowProps> = ({
           currency: 'IDR',
           minimumFractionDigits: 0
         }).format(order.cakePrice)}
+      </TableCell>
+      <TableCell>
+        {trip && <TripBadge trip={trip} compact={true} />}
       </TableCell>
       <TableCell className="text-right">
         {customActions}
