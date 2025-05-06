@@ -1,5 +1,6 @@
-
-import { OrderStatus } from "@/types";
+import { Order } from "@/types";
+import { startOfDay, addDays } from "date-fns";
+import { getOrderTimeStatus } from "@/components/delivery/utils/deliveryHelpers";
 
 /**
  * Helper function to check if an order status matches a specified status
@@ -122,4 +123,81 @@ export const hasPreliminaryAssignment = (order: { deliveryAssignment?: { isPreli
 export const canPreAssignDriver = (status: OrderStatus): boolean => {
   // Orders in these statuses can have a driver pre-assigned
   return ['in-queue', 'in-kitchen', 'waiting-photo', 'pending-approval', 'needs-revision'].includes(status);
+};
+
+// Helper function to determine if order status is waiting-photo
+export const isWaitingPhoto = (status: string): boolean => {
+  return status === 'waiting-photo';
+};
+
+// Helper function to determine if order is pending approval
+export const isPendingApproval = (status: string): boolean => {
+  return status === 'pending-approval';
+};
+
+// Helper function to determine if order needs revision
+export const isNeedsRevision = (status: string): boolean => {
+  return status === 'needs-revision';
+};
+
+// Filter orders based on selected date filter
+export const filterOrdersByDate = (orders: Order[], dateFilter: string): Order[] => {
+  const today = startOfDay(new Date());
+  const tomorrow = startOfDay(addDays(today, 1));
+  const dayAfterTomorrow = startOfDay(addDays(today, 2));
+  
+  return orders.filter(order => {
+    const deliveryDate = startOfDay(new Date(order.deliveryDate));
+    
+    switch(dateFilter) {
+      case 'today':
+        return deliveryDate.getTime() === today.getTime();
+      case 'tomorrow':
+        return deliveryDate.getTime() === tomorrow.getTime();
+      case 'd-plus-2':
+        return deliveryDate.getTime() === dayAfterTomorrow.getTime();
+      default:
+        return true;
+    }
+  });
+};
+
+// Filter orders based on selected status
+export const filterOrdersByStatus = (orders: Order[], statusFilter: string): Order[] => {
+  return orders.filter(order => {
+    switch(statusFilter) {
+      case 'ready':
+        return matchesStatus(order.status, 'ready-to-deliver');
+      case 'in-transit':
+        return matchesStatus(order.status, 'in-delivery');
+      case 'pending-approval':
+        return matchesStatus(order.status, 'pending-approval');
+      case 'needs-revision':
+        return matchesStatus(order.status, 'needs-revision');
+      case 'delivery-statuses':
+        return isInDeliveryStatus(order.status) || isInApprovalFlow(order.status);
+      case 'all-statuses':
+        return shouldShowInAllStatusesDelivery(order.status);
+      default:
+        return isInDeliveryStatus(order.status) || isInApprovalFlow(order.status);
+    }
+  });
+};
+
+// Filter orders based on selected time slot
+export const filterOrdersByTimeSlot = (orders: Order[], timeSlotFilter: string): Order[] => {
+  if (timeSlotFilter === 'all') {
+    return orders;
+  }
+  
+  return orders.filter(order => {
+    // Handle time-based filters (late or within 2 hours)
+    if (timeSlotFilter === 'late' || timeSlotFilter === 'within-2-hours') {
+      const timeStatus = getOrderTimeStatus(order);
+      return timeStatus === timeSlotFilter;
+    }
+    
+    // Handle specific time slots
+    return order.deliveryTimeSlot === timeSlotFilter;
+  });
 };
