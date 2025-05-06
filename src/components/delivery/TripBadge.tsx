@@ -23,7 +23,8 @@ const TripBadge: React.FC<TripBadgeProps> = ({ trip, compact = false, size = 'fu
     className = 'text-xs px-1.5 py-0';
     iconSize = 'h-2.5 w-2.5';
   } else if (size === 'medium') {
-    content = `${driverLabel.split(' ')[0]} T${trip.tripNumber}`;
+    // Modified to show full driver label with trip number
+    content = `${driverLabel} - T${trip.tripNumber}`;
     className = 'text-xs px-2 py-0.5';
     iconSize = 'h-3 w-3';
   } else {
