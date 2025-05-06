@@ -52,8 +52,7 @@ const QuickDriverAssignDropdown: React.FC<QuickDriverAssignDropdownProps> = ({
       // Show success notification
       toast({
         title: isPreliminaryOnly ? "Driver Pre-Assigned" : "Driver Assigned",
-        description: `Order ${order.id} has been ${isPreliminaryOnly ? 'pre-assigned' : 'assigned'} to ${driverType === "3rd-party" ? "3rd Party" : driverType === "driver-1" ? "Driver 1" : "Driver 2"}`,
-        variant: "default",
+        description: `Order ${order.id} has been ${isPreliminaryOnly ? 'pre-assigned' : 'assigned'} to ${driverType === "3rd-party" ? "3rd Party" : driverType === "driver-1" ? "Driver 1" : "Driver 2"}`
       });
 
       // Call onSuccess callback if provided
@@ -65,7 +64,7 @@ const QuickDriverAssignDropdown: React.FC<QuickDriverAssignDropdownProps> = ({
       toast({
         title: "Assignment Failed",
         description: "There was an error assigning the driver. Please try again.",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setIsLoading(false);
