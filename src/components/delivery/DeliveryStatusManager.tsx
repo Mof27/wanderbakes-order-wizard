@@ -105,7 +105,7 @@ const DeliveryStatusManager = ({
               className={`bg-indigo-600 hover:bg-indigo-700 text-white ${isUpdating ? 'opacity-70' : ''}`}
               onClick={openApprovalDialog}
             >
-              <CheckSquare2 className="h-4 w-4" /> 
+              <CheckSquare2 className="h-3.5 w-3.5" /> 
             </Button>
           </TooltipTrigger>
           <TooltipContent>
@@ -134,7 +134,7 @@ const DeliveryStatusManager = ({
               className={`bg-amber-600 hover:bg-amber-700 text-white ${isUpdating ? 'opacity-70' : ''}`}
               disabled={true} // This button is disabled since the action happens elsewhere
             >
-              <XCircle className="h-4 w-4" /> 
+              <XCircle className="h-3.5 w-3.5" /> 
             </Button>
           </TooltipTrigger>
           <TooltipContent>
@@ -153,7 +153,7 @@ const DeliveryStatusManager = ({
       if (hasPreliminaryAssignment) {
         return (
           <TooltipProvider>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-0.5">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button 
@@ -161,7 +161,7 @@ const DeliveryStatusManager = ({
                     variant="outline"
                     onClick={() => openDriverDialog(false)}
                   >
-                    <User className="h-4 w-4" />
+                    <User className="h-3.5 w-3.5" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -177,7 +177,7 @@ const DeliveryStatusManager = ({
                     disabled={isUpdating}
                     onClick={() => updateStatus('in-delivery')}
                   >
-                    <Truck className="h-4 w-4" /> 
+                    <Truck className="h-3.5 w-3.5" /> 
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -198,7 +198,7 @@ const DeliveryStatusManager = ({
       } else {
         return (
           <TooltipProvider>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-0.5">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button 
@@ -206,7 +206,7 @@ const DeliveryStatusManager = ({
                     variant="outline"
                     onClick={() => openDriverDialog(false)}
                   >
-                    <User className="h-4 w-4" />
+                    <User className="h-3.5 w-3.5" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -222,7 +222,7 @@ const DeliveryStatusManager = ({
                     disabled={isUpdating}
                     onClick={() => updateStatus('in-delivery')}
                   >
-                    <Truck className="h-4 w-4" /> 
+                    <Truck className="h-3.5 w-3.5" /> 
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -253,7 +253,7 @@ const DeliveryStatusManager = ({
               className={`bg-blue-600 hover:bg-blue-700 text-white ${isUpdating ? 'opacity-70' : ''}`}
               onClick={() => openDriverDialog(false)}
             >
-              <User className="h-4 w-4" /> 
+              <User className="h-3.5 w-3.5" /> 
             </Button>
           </TooltipTrigger>
           <TooltipContent>
@@ -284,7 +284,7 @@ const DeliveryStatusManager = ({
               disabled={isUpdating}
               onClick={openDeliveryInfoDialog}
             >
-              <CheckCircle2 className="h-4 w-4" />
+              <CheckCircle2 className="h-3.5 w-3.5" />
             </Button>
           </TooltipTrigger>
           <TooltipContent>
@@ -313,7 +313,7 @@ const DeliveryStatusManager = ({
               className="bg-indigo-600 hover:bg-indigo-700 text-white"
               onClick={openFeedbackDialog}
             >
-              <MessageSquare className="h-4 w-4" />
+              <MessageSquare className="h-3.5 w-3.5" />
             </Button>
           </TooltipTrigger>
           <TooltipContent>
@@ -344,7 +344,7 @@ const DeliveryStatusManager = ({
                 variant="outline"
                 onClick={() => openDriverDialog(true)}
               >
-                <User className="h-4 w-4" />
+                <User className="h-3.5 w-3.5" />
               </Button>
             </TooltipTrigger>
             <TooltipContent>
@@ -372,7 +372,7 @@ const DeliveryStatusManager = ({
                 onClick={() => openDriverDialog(true)}
                 className="border-blue-200 text-blue-700 hover:bg-blue-50"
               >
-                <User className="h-4 w-4" />
+                <User className="h-3.5 w-3.5" />
               </Button>
             </TooltipTrigger>
             <TooltipContent>
@@ -402,7 +402,7 @@ const DeliveryStatusManager = ({
             variant="outline"
             onClick={openDeliveryInfoDialog}
           >
-            <Clock className="h-4 w-4" />
+            <Clock className="h-3.5 w-3.5" />
           </Button>
         </TooltipTrigger>
         <TooltipContent>
