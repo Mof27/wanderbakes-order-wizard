@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useApp } from "@/context/AppContext";
 import { 
@@ -27,6 +28,8 @@ import {
 } from "lucide-react";
 import { Order, OrderStatus, DriverType } from "@/types";
 import { formatDate } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import { dataService } from "@/services";
 
 interface DeliveryInfoDialogProps {
   open: boolean;
@@ -48,6 +51,18 @@ const DeliveryInfoDialog = ({
   const { updateOrder } = useApp();
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('delivery-photos');
+  
+  // Fetch driver settings
+  const { data: settings } = useQuery({
+    queryKey: ['settings'],
+    queryFn: () => dataService.settings.getAll()
+  });
+
+  // Get driver names and vehicles from settings or use defaults
+  const driver1Name = settings?.driverSettings?.driver1Name || "Driver 1";
+  const driver2Name = settings?.driverSettings?.driver2Name || "Driver 2";
+  const driver1Vehicle = settings?.driverSettings?.driver1Vehicle || "Car";
+  const driver2Vehicle = settings?.driverSettings?.driver2Vehicle || "Car";
   
   // Delivery documentation photos
   const [photos, setPhotos] = useState<string[]>(order.deliveryDocumentationPhotos || []);
@@ -72,6 +87,11 @@ const DeliveryInfoDialog = ({
     order.deliveryAssignment?.driverName || ""
   );
   
+  // Get vehicle information based on driver type or from existing assignment
+  const [vehicleInfo, setVehicleInfo] = useState<string | undefined>(
+    order.deliveryAssignment?.vehicleInfo || undefined
+  );
+  
   // Reset form state when order changes
   useEffect(() => {
     setPhotos(order.deliveryDocumentationPhotos || []);
@@ -81,6 +101,7 @@ const DeliveryInfoDialog = ({
     setRecipientName("");
     setDriverType(order.deliveryAssignment?.driverType || null);
     setDriverName(order.deliveryAssignment?.driverName || "");
+    setVehicleInfo(order.deliveryAssignment?.vehicleInfo || undefined);
     
     // Set the most appropriate tab based on edit mode
     if (editMode === 'all') {
@@ -89,6 +110,17 @@ const DeliveryInfoDialog = ({
       setActiveTab('delivery-photos');
     }
   }, [order, editMode, open]);
+
+  // Update vehicle info when driver type changes
+  useEffect(() => {
+    if (driverType === 'driver-1') {
+      setVehicleInfo(driver1Vehicle);
+    } else if (driverType === 'driver-2') {
+      setVehicleInfo(driver2Vehicle);
+    } else if (driverType === '3rd-party') {
+      setVehicleInfo(undefined); // Reset vehicle info for 3rd party
+    }
+  }, [driverType, driver1Vehicle, driver2Vehicle]);
 
   // Handle file upload for both types of photos
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, photoType: 'cake' | 'delivery') => {
@@ -139,6 +171,21 @@ const DeliveryInfoDialog = ({
     return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
   };
 
+  // Get display name for current driver type
+  const getDriverDisplayName = (type: DriverType | null): string => {
+    if (!type) return "";
+    switch (type) {
+      case "driver-1":
+        return driver1Name;
+      case "driver-2":
+        return driver2Name;
+      case "3rd-party":
+        return "Lalamove";
+      default:
+        return "Unknown";
+    }
+  };
+
   // Save delivery information
   const handleSave = async () => {
     setIsLoading(true);
@@ -162,6 +209,7 @@ const DeliveryInfoDialog = ({
         driverName: driverName || undefined,
         assignedAt: new Date(),
         isPreliminary: false,
+        vehicleInfo: vehicleInfo, // Preserve existing vehicle information
       };
       
       // Determine if we need to update the status
@@ -344,14 +392,14 @@ const DeliveryInfoDialog = ({
                 <RadioGroupItem value="driver-1" id="driver-1" />
                 <Label htmlFor="driver-1" className="flex items-center">
                   <Car className="h-4 w-4 mr-2" />
-                  Driver 1
+                  {driver1Name}
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="driver-2" id="driver-2" />
                 <Label htmlFor="driver-2" className="flex items-center">
                   <Car className="h-4 w-4 mr-2" />
-                  Driver 2
+                  {driver2Name}
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
@@ -362,6 +410,14 @@ const DeliveryInfoDialog = ({
                 </Label>
               </div>
             </RadioGroup>
+            
+            {/* Display current vehicle information if available */}
+            {vehicleInfo && driverType !== '3rd-party' && (
+              <div className="mt-1 text-sm text-muted-foreground flex items-center">
+                <Car className="h-3 w-3 mr-1 inline" />
+                Vehicle: {vehicleInfo}
+              </div>
+            )}
             
             {driverType === '3rd-party' && (
               <div className="mt-2">
