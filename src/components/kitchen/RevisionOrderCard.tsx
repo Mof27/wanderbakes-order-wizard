@@ -55,26 +55,26 @@ const RevisionOrderCard: React.FC<RevisionOrderCardProps> = ({
         urgencyClass,
         "border-purple-200 bg-purple-50"
       )}>
-        <CardContent className={`${isCompact ? 'p-3' : 'p-4'} space-y-3`}>
-          <div className="flex justify-between items-start">
-            <div className="font-medium text-sm">{order.id}</div>
+        <CardContent className={`${isCompact ? 'p-3' : 'p-4'} space-y-2`}>
+          <div className="flex justify-between items-center">
+            <div className="font-medium">{order.id}</div>
             <Badge className="bg-purple-100 text-purple-800">
               {getRevisionStatusText(order)}
             </Badge>
           </div>
           
-          <div className="grid grid-cols-1 gap-1 text-xs">
-            <div className="flex justify-between">
+          <div className="grid grid-cols-2 gap-1 text-xs">
+            <div className="flex items-center gap-1">
               <span className="text-muted-foreground">Delivery:</span>
               <span className="font-semibold">{formatDate(order.deliveryDate)}</span>
             </div>
             
-            <div className="flex justify-between">
+            <div className="flex items-center gap-1">
               <span className="text-muted-foreground">Customer:</span>
               <span>{order.customer.name}</span>
             </div>
             
-            <div className="flex justify-between">
+            <div className="flex items-center gap-1 col-span-2">
               <span className="text-muted-foreground">Cake:</span>
               <span>{order.cakeTier > 1 ? `${order.cakeTier}-Tier ${order.cakeShape}` : `${order.cakeShape} ${order.cakeSize}`}</span>
             </div>
@@ -82,13 +82,10 @@ const RevisionOrderCard: React.FC<RevisionOrderCardProps> = ({
           
           {latestRevision && (
             <div className="space-y-2 mt-2">
-              <div className={`text-xs font-semibold text-purple-900 ${isCompact ? '' : 'mb-1'}`}>
-                Revision #{order.revisionCount || 1} Feedback:
-              </div>
-              
               {latestRevision.notes && (
-                <div className="bg-white rounded-md p-2 text-xs border border-purple-200">
-                  <p className="italic">{latestRevision.notes}</p>
+                <div className="bg-white rounded-md p-3 text-sm border border-purple-200">
+                  <p className="font-medium text-xs text-purple-900 mb-1">Revision Feedback:</p>
+                  <p className="text-xs italic">{latestRevision.notes}</p>
                 </div>
               )}
               
@@ -111,7 +108,7 @@ const RevisionOrderCard: React.FC<RevisionOrderCardProps> = ({
                         </div>
                       </div>
                       <div className="absolute top-1 right-1">
-                        <Badge className="bg-red-100 text-red-800 text-xs">
+                        <Badge className="bg-red-100 text-red-800 text-xs" size="xs">
                           Rejected
                         </Badge>
                       </div>
@@ -140,8 +137,8 @@ const RevisionOrderCard: React.FC<RevisionOrderCardProps> = ({
                 />
               </div>
               {latestRevision.notes && (
-                <div className="bg-muted p-3 rounded-md">
-                  <h4 className="text-sm font-medium mb-1">Revision Feedback:</h4>
+                <div className="bg-purple-50 p-3 rounded-md border border-purple-200">
+                  <h4 className="text-sm font-medium mb-1 text-purple-900">Revision Feedback:</h4>
                   <p className="text-sm italic">{latestRevision.notes}</p>
                 </div>
               )}
