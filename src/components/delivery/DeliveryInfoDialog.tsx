@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useApp } from "@/context/AppContext";
 import { 
@@ -22,9 +21,11 @@ import {
   Loader2,
   Save,
   Camera,
-  Image
+  Image,
+  Car,
+  ExternalLink
 } from "lucide-react";
-import { Order, OrderStatus } from "@/types";
+import { Order, OrderStatus, DriverType } from "@/types";
 import { formatDate } from "@/lib/utils";
 
 interface DeliveryInfoDialogProps {
@@ -62,6 +63,14 @@ const DeliveryInfoDialog = ({
   // Recipient info
   const [recipientType, setRecipientType] = useState<RecipientType>("customer");
   const [recipientName, setRecipientName] = useState<string>("");
+
+  // Driver information
+  const [driverType, setDriverType] = useState<DriverType | null>(
+    order.deliveryAssignment?.driverType || null
+  );
+  const [driverName, setDriverName] = useState<string>(
+    order.deliveryAssignment?.driverName || ""
+  );
   
   // Reset form state when order changes
   useEffect(() => {
@@ -70,6 +79,8 @@ const DeliveryInfoDialog = ({
     setActualDeliveryTime(order.actualDeliveryTime || new Date());
     setRecipientType("customer");
     setRecipientName("");
+    setDriverType(order.deliveryAssignment?.driverType || null);
+    setDriverName(order.deliveryAssignment?.driverName || "");
     
     // Set the most appropriate tab based on edit mode
     if (editMode === 'all') {
@@ -144,6 +155,14 @@ const DeliveryInfoDialog = ({
       if (editMode === 'all') {
         updatedOrder.finishedCakePhotos = cakePhotos;
       }
+
+      // Add driver information to the updated order
+      updatedOrder.deliveryAssignment = {
+        driverType: driverType || "driver-1",
+        driverName: driverName || undefined,
+        assignedAt: new Date(),
+        isPreliminary: false,
+      };
       
       // Determine if we need to update the status
       // If coming from 'in-delivery', move straight to 'waiting-feedback'
@@ -308,6 +327,53 @@ const DeliveryInfoDialog = ({
                 />
               </div>
             </div>
+          </div>
+
+          {/* Driver Information Section */}
+          <div className="grid gap-2">
+            <Label className="text-base font-semibold flex items-center">
+              <Car className="h-4 w-4 mr-2" /> Driver Information
+            </Label>
+            
+            <RadioGroup 
+              value={driverType || ""} 
+              onValueChange={(value) => setDriverType(value as DriverType)}
+              className="grid grid-cols-3 gap-2 mt-2"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="driver-1" id="driver-1" />
+                <Label htmlFor="driver-1" className="flex items-center">
+                  <Car className="h-4 w-4 mr-2" />
+                  Driver 1
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="driver-2" id="driver-2" />
+                <Label htmlFor="driver-2" className="flex items-center">
+                  <Car className="h-4 w-4 mr-2" />
+                  Driver 2
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="3rd-party" id="3rd-party" />
+                <Label htmlFor="3rd-party" className="flex items-center">
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Lalamove
+                </Label>
+              </div>
+            </RadioGroup>
+            
+            {driverType === '3rd-party' && (
+              <div className="mt-2">
+                <Label htmlFor="driver-name">Lalamove Booking ID</Label>
+                <Input 
+                  id="driver-name" 
+                  value={driverName}
+                  onChange={(e) => setDriverName(e.target.value)}
+                  placeholder="Enter Lalamove booking ID"
+                />
+              </div>
+            )}
           </div>
 
           {/* Recipient Section */}

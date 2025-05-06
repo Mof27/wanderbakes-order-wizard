@@ -39,7 +39,7 @@ const QuickDriverAssignDropdown: React.FC<QuickDriverAssignDropdownProps> = ({
       // Create assignment details with required assignedAt property
       const assignment = {
         driverType,
-        // Initial 3rd-party assignment doesn't need a name yet
+        // Initial Lalamove assignment doesn't need a name yet
         driverName: driverType === "3rd-party" ? undefined : undefined,
         isPreliminary: isPreliminaryOnly,
         assignedAt: new Date(), // Add the required assignedAt property
@@ -57,7 +57,7 @@ const QuickDriverAssignDropdown: React.FC<QuickDriverAssignDropdownProps> = ({
       // Show success notification
       toast({
         title: isPreliminaryOnly ? "Driver Pre-Assigned" : "Driver Assigned",
-        description: `Order ${order.id} has been ${isPreliminaryOnly ? 'pre-assigned' : 'assigned'} to ${driverType === "3rd-party" ? "3rd Party" : driverType === "driver-1" ? "Driver 1" : "Driver 2"}`
+        description: `Order ${order.id} has been ${isPreliminaryOnly ? 'pre-assigned' : 'assigned'} to ${driverType === "3rd-party" ? "Lalamove" : driverType === "driver-1" ? "Driver 1" : "Driver 2"}`
       });
 
       // Call onSuccess callback if provided
@@ -137,7 +137,7 @@ const QuickDriverAssignDropdown: React.FC<QuickDriverAssignDropdownProps> = ({
           )}
         >
           <ExternalLink className="h-4 w-4 mr-2" />
-          <span>3rd Party</span>
+          <span>Lalamove</span>
           {currentDriverType === "3rd-party" && isPreliminary && (
             <AlertCircle className="h-3 w-3 ml-2 text-purple-500" />
           )}

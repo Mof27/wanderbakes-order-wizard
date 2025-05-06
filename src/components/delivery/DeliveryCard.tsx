@@ -1,4 +1,3 @@
-
 import { Order } from "@/types";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -96,7 +95,7 @@ const DeliveryCard = ({ order, onStatusChange }: DeliveryCardProps) => {
         break;
       case "3rd-party":
         icon = <ExternalLink className="h-3 w-3 mr-1" />;
-        label = driverName || "3rd Party";
+        label = driverName || "Lalamove";
         color = "bg-purple-100 text-purple-800 hover:bg-purple-200";
         break;
     }

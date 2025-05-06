@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useApp } from "@/context/AppContext";
 import { Order, DriverType, DeliveryAssignment } from "@/types";
@@ -99,7 +98,7 @@ const DriverAssignmentDialog = ({
       case "driver-2":
         return "Driver 2 (Car)";
       case "3rd-party":
-        return name ? `${name} (3rd Party)` : "3rd Party Service";
+        return name ? `${name} (Lalamove)` : "Lalamove";
       default:
         return "Unknown";
     }
@@ -173,7 +172,7 @@ const DriverAssignmentDialog = ({
                   <RadioGroupItem value="3rd-party" id="3rd-party" />
                   <Label htmlFor="3rd-party" className="flex items-center cursor-pointer">
                     <ExternalLink className="h-4 w-4 mr-2" />
-                    3rd Party
+                    Lalamove
                   </Label>
                 </div>
               </RadioGroup>
@@ -181,12 +180,12 @@ const DriverAssignmentDialog = ({
             
             {driverType === '3rd-party' && (
               <div className="space-y-2">
-                <Label htmlFor="driverName">3rd Party Driver/Service Name</Label>
+                <Label htmlFor="driverName">Lalamove Booking ID</Label>
                 <Input
                   id="driverName"
                   value={driverName}
                   onChange={(e) => setDriverName(e.target.value)}
-                  placeholder="Enter service name (e.g., Lalamove, GoSend)"
+                  placeholder="Enter Lalamove booking ID"
                 />
               </div>
             )}
