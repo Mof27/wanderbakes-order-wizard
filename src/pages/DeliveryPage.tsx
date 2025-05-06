@@ -160,6 +160,30 @@ const getDriverBadge = (order: Order) => {
   }
 };
 
+// Add the missing functions
+// Clear all selected orders
+const handleClearSelection = () => {
+  setSelectedOrderIds([]);
+};
+
+// Open the trip creation dialog
+const handleCreateTrip = () => {
+  setTripCreationDialogOpen(true);
+};
+
+// Handle trip creation success
+const handleTripCreationSuccess = (tripId: string) => {
+  // Clear selected orders and close dialog
+  setSelectedOrderIds([]);
+  setTripCreationDialogOpen(false);
+  // Show success message and refresh data
+  toast.success(`Trip created successfully`);
+  handleStatusChange();
+  
+  // Optionally navigate to trip planner tab to see the new trip
+  setActiveTab('trip-planner');
+};
+
 const DeliveryPage = () => {
   const { orders } = useApp();
   const [dateFilter, setDateFilter] = useState<'today' | 'tomorrow' | 'd-plus-2' | 'all'>('today');
