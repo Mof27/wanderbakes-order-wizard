@@ -12,7 +12,10 @@ const orderRepository = new MockOrderRepository(mockOrders);
 const tripRepository = new MockTripRepository([]);
 const customerRepository = new MockCustomerRepository(mockCustomers);
 const productRepository = new MockProductRepository();
-const settingsRepository = new MockSettingsRepository({
+const settingsRepository = new MockSettingsRepository();
+
+// Initialize settings with default values after creation
+settingsRepository.update({
   cakeSizes: [],
   cakeShapes: [],
   cakeFlavors: [],
