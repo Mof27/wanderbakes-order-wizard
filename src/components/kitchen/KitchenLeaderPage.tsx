@@ -1,12 +1,12 @@
-
 import { useState, useEffect } from "react";
 import { useApp } from "@/context/AppContext";
 import { Helmet } from "react-helmet-async";
 import { Order, KitchenOrderStatus } from "@/types";
-import { matchesStatus } from "@/lib/statusHelpers";
+import { matchesStatus, isInRevisionProcess } from "@/lib/statusHelpers";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import KitchenOrderCard from "@/components/kitchen/KitchenOrderCard";
+import RevisionOrderCard from "@/components/kitchen/RevisionOrderCard";
 import { formatDate } from "@/lib/utils";
 import { Archive, Check, ChevronDown, Filter, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -48,6 +48,7 @@ const KitchenLeaderPage = () => {
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("all");
   const [inQueueOrders, setInQueueOrders] = useState<Order[]>([]);
   const [inKitchenOrders, setInKitchenOrders] = useState<Order[]>([]);
+  const [revisionOrders, setRevisionOrders] = useState<Order[]>([]);
   const [activeFilter, setActiveFilter] = useState<KitchenOrderStatus | "all">("all");
   
   // Filter and sort orders for kitchen production
@@ -56,13 +57,17 @@ const KitchenLeaderPage = () => {
     const relevantOrders = orders.filter(order => 
       order.status === 'in-queue' || 
       order.status === 'in-kitchen' || 
-      order.status === 'waiting-photo'
+      order.status === 'waiting-photo' ||
+      order.status === 'needs-revision'
     );
     
-    // Split into in-queue and in-kitchen orders
+    // Split into different order categories
     const queueOrders = relevantOrders.filter(order => order.status === 'in-queue');
     const kitchenOrders = relevantOrders.filter(order => 
       order.status === 'in-kitchen' || order.status === 'waiting-photo'
+    );
+    const needsRevisionOrders = relevantOrders.filter(order => 
+      order.status === 'needs-revision'
     );
     
     // Apply time filter if needed
@@ -76,9 +81,14 @@ const KitchenLeaderPage = () => {
     const sortedKitchenOrders = kitchenOrders.sort(
       (a, b) => new Date(a.deliveryDate).getTime() - new Date(b.deliveryDate).getTime()
     );
+
+    const sortedRevisionOrders = needsRevisionOrders.sort(
+      (a, b) => new Date(a.deliveryDate).getTime() - new Date(b.deliveryDate).getTime()
+    );
     
     setInQueueOrders(sortedQueueOrders);
     setInKitchenOrders(sortedKitchenOrders);
+    setRevisionOrders(sortedRevisionOrders);
   }, [orders, timeFilter]);
 
   // Apply time filter to orders
@@ -295,6 +305,66 @@ const KitchenLeaderPage = () => {
     );
   };
 
+  // Render revisions section - similar to renderAllOrders but specifically for revisions
+  const renderRevisions = (orders: Order[]) => {
+    if (orders.length === 0) {
+      return (
+        <div className="text-center p-8 bg-gray-50 rounded-md">
+          <p className="text-muted-foreground">No orders needing revision</p>
+        </div>
+      );
+    }
+    
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {orders.map(order => (
+          <RevisionOrderCard 
+            key={order.id} 
+            order={order} 
+          />
+        ))}
+      </div>
+    );
+  };
+
+  // Render revisions by date
+  const renderRevisionsByDate = (orders: Order[]) => {
+    const ordersByDate = getOrdersByDeliveryDate(orders);
+    
+    if (Object.keys(ordersByDate).length === 0) {
+      return (
+        <div className="text-center p-8 bg-gray-50 rounded-md">
+          <p className="text-muted-foreground">No orders needing revision</p>
+        </div>
+      );
+    }
+    
+    return (
+      <div className="space-y-6">
+        {Object.entries(ordersByDate)
+          .sort(([dateA], [dateB]) => new Date(dateA).getTime() - new Date(dateB).getTime())
+          .map(([date, dateOrders]) => (
+            <Card key={date} className="bg-white">
+              <CardHeader className="bg-purple-50">
+                <CardTitle className="text-lg font-medium">
+                  {date} ({dateOrders.length} orders)
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {dateOrders.map(order => (
+                  <RevisionOrderCard 
+                    key={order.id} 
+                    order={order}
+                    isCompact={true}
+                  />
+                ))}
+              </CardContent>
+            </Card>
+          ))}
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6">
       <Helmet>
@@ -328,12 +398,15 @@ const KitchenLeaderPage = () => {
       </p>
       
       <Tabs defaultValue="queue" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="queue" className="text-center">
             Production Queue ({inQueueOrders.length})
           </TabsTrigger>
           <TabsTrigger value="in-kitchen" className="text-center">
             In Production ({inKitchenOrders.length})
+          </TabsTrigger>
+          <TabsTrigger value="revisions" className="text-center">
+            Revisions ({revisionOrders.length})
           </TabsTrigger>
         </TabsList>
 
@@ -361,6 +434,18 @@ const KitchenLeaderPage = () => {
           {view === "all" 
             ? renderAllOrders(getFilteredInKitchenOrders(), false)
             : renderOrdersByDate(getFilteredInKitchenOrders(), false)}
+        </TabsContent>
+        
+        <TabsContent value="revisions" className="pt-4">
+          <div className="mb-4">
+            <p className="text-sm text-muted-foreground mb-4">
+              Orders needing revision. Review feedback and make necessary corrections.
+            </p>
+          </div>
+          
+          {view === "all" 
+            ? renderRevisions(revisionOrders)
+            : renderRevisionsByDate(revisionOrders)}
         </TabsContent>
       </Tabs>
     </div>
