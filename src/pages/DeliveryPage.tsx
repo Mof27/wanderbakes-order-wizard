@@ -1,4 +1,3 @@
-
 import { useState, useMemo, useEffect } from "react";
 import { useApp } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
@@ -160,8 +159,40 @@ const getDriverBadge = (order: Order) => {
   }
 };
 
+// Add function to remove an order from a trip
+const handleRemoveOrderFromTrip = async (tripId: string, orderId?: string) => {
+  if (!orderId) return;
+  
+  try {
+    // Find the trip
+    const tripToUpdate = trips.find(t => t.id === tripId);
+    
+    if (!tripToUpdate) {
+      toast.error("Trip not found");
+      return;
+    }
+    
+    // Create a new trip object with the order removed
+    const updatedTrip = {
+      ...tripToUpdate,
+      orderIds: tripToUpdate.orderIds.filter(id => id !== orderId)
+    };
+    
+    // Update the trip in the context
+    await updateTrip(updatedTrip);
+    
+    // Force refresh the local trips map
+    setRefreshKey(prev => prev + 1);
+    
+    toast.success(`Order ${orderId} removed from trip`);
+  } catch (error) {
+    console.error("Failed to remove order from trip:", error);
+    toast.error("Failed to remove order from trip");
+  }
+};
+
 const DeliveryPage = () => {
-  const { orders, orderSelection, toggleOrderSelection, toggleSelectionMode, clearOrderSelection, trips, getTripForOrder } = useApp();
+  const { orders, orderSelection, toggleOrderSelection, toggleSelectionMode, clearOrderSelection, trips, getTripForOrder, updateTrip } = useApp();
   const [dateFilter, setDateFilter] = useState<'today' | 'tomorrow' | 'd-plus-2' | 'all'>('today');
   const [statusFilter, setStatusFilter] = useState<'ready' | 'in-transit' | 'pending-approval' | 'needs-revision' | 'delivery-statuses' | 'all-statuses'>('all-statuses');
   const [timeSlotFilter, setTimeSlotFilter] = useState<'all' | 'late' | 'within-2-hours' | 'slot1' | 'slot2' | 'slot3'>('all');
@@ -664,7 +695,12 @@ const DeliveryPage = () => {
                         <TableCell className="py-1">
                           <div className="flex items-center gap-0.5">
                             {trip ? (
-                              <TripBadge trip={trip} size="medium" />
+                              <TripBadge 
+                                trip={trip} 
+                                size="medium" 
+                                orderId={order.id}
+                                onRemoveOrder={handleRemoveOrderFromTrip}
+                              />
                             ) : (
                               <>
                                 {getDriverBadge(order)}
