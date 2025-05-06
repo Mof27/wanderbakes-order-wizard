@@ -8,6 +8,7 @@ import { Info } from 'lucide-react';
 import { getColorStyle } from '@/utils/colorUtils';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface KitchenInfoDrawerProps {
   order: Order;
@@ -15,6 +16,8 @@ interface KitchenInfoDrawerProps {
 }
 
 const KitchenInfoDrawer: React.FC<KitchenInfoDrawerProps> = ({ order, children }) => {
+  const isMobile = useIsMobile();
+  
   // Function to extract cake layer information from order
   const getCakeLayerInfo = (order: Order): string => {
     if (order.cakeTier > 1 && order.tierDetails && order.tierDetails.length > 0) {
@@ -30,18 +33,34 @@ const KitchenInfoDrawer: React.FC<KitchenInfoDrawerProps> = ({ order, children }
         {children ? (
           children
         ) : (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon-sm" className="ml-1">
-                  <Info className="h-4 w-4 text-muted-foreground" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>View order details</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          isMobile ? (
+            // Larger touch target for mobile devices without tooltip
+            <Button 
+              variant="ghost" 
+              size="icon" // Use regular icon size instead of icon-sm for better touch target
+              className="ml-1 bg-gray-100/80 rounded-full" // Add subtle background for better visibility
+            >
+              <Info className="h-5 w-5 text-primary" />
+            </Button>
+          ) : (
+            // Desktop version with tooltip
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="icon-sm" 
+                    className="ml-1"
+                  >
+                    <Info className="h-4 w-4 text-primary" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>View order details</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )
         )}
       </DrawerTrigger>
       <DrawerContent className="px-4 pb-6">
@@ -151,7 +170,7 @@ const KitchenInfoDrawer: React.FC<KitchenInfoDrawerProps> = ({ order, children }
             {order.attachments && order.attachments.length > 0 && (
               <div className="mt-3">
                 <p className="text-xs text-muted-foreground mb-2">Reference Images</p>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 gap-2">
                   {order.attachments.map((attachment, index) => (
                     <div 
                       key={index} 

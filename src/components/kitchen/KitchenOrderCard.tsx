@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Order, KitchenOrderStatus } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
@@ -153,7 +152,7 @@ const KitchenOrderCard: React.FC<KitchenOrderCardProps> = ({
       
       <div className="flex justify-between text-xs">
         <span className="text-muted-foreground">Flavor:</span>
-        <span className="font-medium">{order.cakeFlavor}</span>
+        <span className="font-medium">{order.cakeFlavor}</span >
       </div>
       
       <div className="flex justify-between text-xs">
