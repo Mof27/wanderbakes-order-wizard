@@ -1,4 +1,4 @@
-import { SettingItem, ColorSettingItem, SettingsData, ShapeSettingItem, PrintTemplate, DeliveryLabelTemplate } from "@/types";
+import { SettingItem, ColorSettingItem, SettingsData, ShapeSettingItem, PrintTemplate, DeliveryLabelTemplate, DriverSettings } from "@/types";
 import { baseColors } from "@/data/colorData";
 import { cakeFlavors, cakeSizes, cakeShapes } from "@/data/mockData";
 
@@ -13,6 +13,7 @@ export interface SettingsRepository {
   updateColors(items: ColorSettingItem[]): Promise<ColorSettingItem[]>;
   updatePrintTemplate(template: PrintTemplate): Promise<PrintTemplate>;
   updateDeliveryLabelTemplate(template: DeliveryLabelTemplate): Promise<DeliveryLabelTemplate>;
+  updateDriverSettings(settings: DriverSettings): Promise<DriverSettings>;
 }
 
 /**
@@ -63,7 +64,11 @@ export class MockSettingsRepository implements SettingsRepository {
         createdAt: new Date()
       })),
       printTemplate: this.createDefaultPrintTemplate(),
-      deliveryLabelTemplate: this.createDefaultDeliveryLabelTemplate()
+      deliveryLabelTemplate: this.createDefaultDeliveryLabelTemplate(),
+      driverSettings: {
+        driver1Name: "Driver 1",
+        driver2Name: "Driver 2"
+      }
     };
     
     // Try to load from localStorage if available
@@ -83,6 +88,14 @@ export class MockSettingsRepository implements SettingsRepository {
           // If delivery label template is not in saved settings, add it
           if (!parsedSettings.deliveryLabelTemplate) {
             parsedSettings.deliveryLabelTemplate = this.createDefaultDeliveryLabelTemplate();
+          }
+          
+          // If driver settings are not in saved settings, add default values
+          if (!parsedSettings.driverSettings) {
+            parsedSettings.driverSettings = {
+              driver1Name: "Driver 1",
+              driver2Name: "Driver 2"
+            };
           }
           
           return parsedSettings;
@@ -575,5 +588,11 @@ export class MockSettingsRepository implements SettingsRepository {
     this.settings.deliveryLabelTemplate = template;
     this.saveSettings();
     return template;
+  }
+
+  async updateDriverSettings(settings: DriverSettings): Promise<DriverSettings> {
+    this.settings.driverSettings = settings;
+    this.saveSettings();
+    return settings;
   }
 }

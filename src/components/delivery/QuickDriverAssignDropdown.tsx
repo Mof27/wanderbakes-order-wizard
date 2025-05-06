@@ -12,6 +12,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import { dataService } from "@/services";
 
 interface QuickDriverAssignDropdownProps {
   order: Order;
@@ -28,6 +30,16 @@ const QuickDriverAssignDropdown: React.FC<QuickDriverAssignDropdownProps> = ({
 }) => {
   const { updateOrder } = useApp();
   const [isLoading, setIsLoading] = React.useState(false);
+
+  // Fetch driver settings
+  const { data: settings } = useQuery({
+    queryKey: ['settings'],
+    queryFn: () => dataService.settings.getAll()
+  });
+
+  // Get driver names from settings or use defaults
+  const driver1Name = settings?.driverSettings?.driver1Name || "Driver 1";
+  const driver2Name = settings?.driverSettings?.driver2Name || "Driver 2";
 
   // Check if there's already an assignment
   const hasAssignment = !!order.deliveryAssignment;
@@ -59,7 +71,10 @@ const QuickDriverAssignDropdown: React.FC<QuickDriverAssignDropdownProps> = ({
       // Show success notification
       toast({
         title: isPreliminaryOnly ? "Driver Pre-Assigned" : "Driver Assigned",
-        description: `Order ${order.id} has been ${isPreliminaryOnly ? 'pre-assigned' : 'assigned'} to ${driverType === "3rd-party" ? "Lalamove" : driverType === "driver-1" ? "Driver 1" : "Driver 2"}`
+        description: `Order ${order.id} has been ${isPreliminaryOnly ? 'pre-assigned' : 'assigned'} to ${
+          driverType === "3rd-party" ? "Lalamove" : 
+          driverType === "driver-1" ? driver1Name : driver2Name
+        }`
       });
 
       // Call onSuccess callback if provided
@@ -120,7 +135,7 @@ const QuickDriverAssignDropdown: React.FC<QuickDriverAssignDropdownProps> = ({
           )}
         >
           <Car className="h-3.5 w-3.5 mr-1.5" />
-          <span>Driver 1</span>
+          <span>{driver1Name}</span>
           {currentDriverType === "driver-1" && isPreliminary && (
             <AlertCircle className="h-3 w-3 ml-1 text-blue-500" />
           )}
@@ -132,7 +147,7 @@ const QuickDriverAssignDropdown: React.FC<QuickDriverAssignDropdownProps> = ({
           )}
         >
           <Car className="h-3.5 w-3.5 mr-1.5" />
-          <span>Driver 2</span>
+          <span>{driver2Name}</span>
           {currentDriverType === "driver-2" && isPreliminary && (
             <AlertCircle className="h-3 w-3 ml-1 text-indigo-500" />
           )}

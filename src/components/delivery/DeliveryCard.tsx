@@ -10,6 +10,8 @@ import { useState } from "react";
 import { toast } from "@/components/ui/sonner";
 import DriverAssignmentDialog from "./DriverAssignmentDialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useQuery } from "@tanstack/react-query";
+import { dataService } from "@/services";
 
 interface DeliveryCardProps {
   order: Order;
@@ -19,6 +21,16 @@ interface DeliveryCardProps {
 const DeliveryCard = ({ order, onStatusChange }: DeliveryCardProps) => {
   const [showDriverDialog, setShowDriverDialog] = useState(false);
   const [isPreliminary, setIsPreliminary] = useState(false);
+  
+  // Fetch driver settings
+  const { data: settings } = useQuery({
+    queryKey: ['settings'],
+    queryFn: () => dataService.settings.getAll()
+  });
+
+  // Get driver names from settings or use defaults
+  const driver1Name = settings?.driverSettings?.driver1Name || "Driver 1";
+  const driver2Name = settings?.driverSettings?.driver2Name || "Driver 2";
   
   const isReady = matchesStatus(order.status, 'ready-to-deliver');
   const isInTransit = matchesStatus(order.status, 'in-delivery');
@@ -87,12 +99,12 @@ const DeliveryCard = ({ order, onStatusChange }: DeliveryCardProps) => {
     switch (driverType) {
       case "driver-1":
         icon = <Car className="h-3 w-3 mr-1" />;
-        label = "Driver 1";
+        label = driver1Name;
         color = "bg-blue-100 text-blue-800 hover:bg-blue-200";
         break;
       case "driver-2":
         icon = <Car className="h-3 w-3 mr-1" />;
-        label = "Driver 2";
+        label = driver2Name;
         color = "bg-indigo-100 text-indigo-800 hover:bg-indigo-200";
         break;
       case "3rd-party":

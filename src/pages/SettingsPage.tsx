@@ -4,7 +4,7 @@ import { Helmet } from "react-helmet-async";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { dataService } from "@/services";
-import { CakeIcon, Palette, Printer } from "lucide-react";
+import { CakeIcon, Palette, Printer, Truck } from "lucide-react";
 
 // Category Dashboard Components
 import SettingsCategoryCard from "@/components/settings/SettingsCategoryCard";
@@ -17,6 +17,7 @@ import CakeFlavorsSettings from "@/components/settings/CakeFlavorsSettings";
 import ColorsSettings from "@/components/settings/ColorsSettings";
 import PrintSettings from "@/components/settings/PrintSettings";
 import DeliveryLabelSettings from "@/components/settings/DeliveryLabelSettings";
+import DeliverySettings from "@/components/settings/DeliverySettings";
 
 const SettingsDashboard = () => {
   const { data: settings } = useQuery({
@@ -31,6 +32,7 @@ const SettingsDashboard = () => {
     settings.colors.length : 0;
     
   const printTemplatesCount = settings ? 2 : 0; // Print form and delivery label
+  const deliverySettingsCount = settings ? 1 : 0; // Driver settings
 
   return (
     <>
@@ -58,6 +60,14 @@ const SettingsDashboard = () => {
             icon={<Printer className="h-5 w-5" />}
             category="printing-templates"
             itemCount={printTemplatesCount}
+          />
+          
+          <SettingsCategoryCard 
+            title="Delivery Settings" 
+            description="Configure driver names and delivery options"
+            icon={<Truck className="h-5 w-5" />}
+            category="delivery-settings"
+            itemCount={deliverySettingsCount}
           />
         </div>
       </div>
@@ -90,6 +100,12 @@ const SettingsPage = () => {
         <SettingsDetailView>
           <PrintSettings />
           <DeliveryLabelSettings />
+        </SettingsDetailView>
+      } />
+      
+      <Route path="/delivery-settings" element={
+        <SettingsDetailView>
+          <DeliverySettings />
         </SettingsDetailView>
       } />
     </Routes>

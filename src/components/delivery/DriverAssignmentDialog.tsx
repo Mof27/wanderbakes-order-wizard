@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { useApp } from "@/context/AppContext";
 import { Order, DriverType, DeliveryAssignment } from "@/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -10,6 +11,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { AlertCircle, Car, Truck, ExternalLink } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useQuery } from "@tanstack/react-query";
+import { dataService } from "@/services";
 
 interface DriverAssignmentDialogProps {
   order: Order;
@@ -28,6 +31,16 @@ const DriverAssignmentDialog = ({
 }: DriverAssignmentDialogProps) => {
   const { updateOrder } = useApp();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Fetch driver settings
+  const { data: settings } = useQuery({
+    queryKey: ['settings'],
+    queryFn: () => dataService.settings.getAll()
+  });
+
+  // Get driver names from settings or use defaults
+  const driver1Name = settings?.driverSettings?.driver1Name || "Driver 1";
+  const driver2Name = settings?.driverSettings?.driver2Name || "Driver 2";
   
   // Initialize from existing assignment if available
   const existingAssignment = order.deliveryAssignment;
@@ -94,9 +107,9 @@ const DriverAssignmentDialog = ({
   const getDriverDisplayName = (type: DriverType, name?: string): string => {
     switch (type) {
       case "driver-1":
-        return "Driver 1 (Car)";
+        return `${driver1Name} (Car)`;
       case "driver-2":
-        return "Driver 2 (Car)";
+        return `${driver2Name} (Car)`;
       case "3rd-party":
         return name ? `${name} (Lalamove)` : "Lalamove";
       default:
@@ -156,7 +169,7 @@ const DriverAssignmentDialog = ({
                   <RadioGroupItem value="driver-1" id="driver-1" />
                   <Label htmlFor="driver-1" className="flex items-center cursor-pointer">
                     <Car className="h-4 w-4 mr-2" />
-                    Driver 1
+                    {driver1Name}
                   </Label>
                 </div>
                 
@@ -164,7 +177,7 @@ const DriverAssignmentDialog = ({
                   <RadioGroupItem value="driver-2" id="driver-2" />
                   <Label htmlFor="driver-2" className="flex items-center cursor-pointer">
                     <Car className="h-4 w-4 mr-2" />
-                    Driver 2
+                    {driver2Name}
                   </Label>
                 </div>
                 

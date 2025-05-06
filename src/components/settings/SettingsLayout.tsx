@@ -26,6 +26,8 @@ const SettingsLayout = ({
         return "cake-sizes";
       case "printing-templates":
         return "print-form";
+      case "delivery-settings":
+        return "driver-settings";
       default:
         return defaultTab;
     }
@@ -66,15 +68,22 @@ const SettingsLayout = ({
             <TabsTrigger value="delivery-label">Delivery Label</TabsTrigger>
           </TabsList>
         );
+      case "delivery-settings":
+        return (
+          <TabsList className="grid w-full grid-cols-1">
+            <TabsTrigger value="driver-settings">Driver Names</TabsTrigger>
+          </TabsList>
+        );
       default:
         return (
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="cake-sizes">Cake Sizes</TabsTrigger>
             <TabsTrigger value="cake-shapes">Cake Shapes</TabsTrigger>
             <TabsTrigger value="cake-flavors">Cake Flavors</TabsTrigger>
             <TabsTrigger value="colors">Colors</TabsTrigger>
             <TabsTrigger value="print-form">Print Form</TabsTrigger>
             <TabsTrigger value="delivery-label">Delivery Label</TabsTrigger>
+            <TabsTrigger value="driver-settings">Driver Names</TabsTrigger>
           </TabsList>
         );
     }

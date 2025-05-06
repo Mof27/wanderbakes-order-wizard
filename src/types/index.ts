@@ -285,11 +285,19 @@ export interface DeliveryLabelTemplate {
   sections: DeliveryLabelSection[];
 }
 
+// New interface for driver settings
+export interface DriverSettings {
+  driver1Name: string;
+  driver2Name: string;
+  defaultDriverType?: DriverType;
+}
+
 export type SettingsData = {
   cakeSizes: SettingItem[];
   cakeShapes: ShapeSettingItem[];
   cakeFlavors: SettingItem[];
   colors: ColorSettingItem[];
   printTemplate: PrintTemplate;
-  deliveryLabelTemplate: DeliveryLabelTemplate; // New field for delivery label template
+  deliveryLabelTemplate: DeliveryLabelTemplate;
+  driverSettings: DriverSettings;
 };
