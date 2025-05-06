@@ -595,7 +595,7 @@ const DeliveryPage = () => {
                     <TableHead className="w-[60px]">Order ID</TableHead>
                     <TableHead className="w-[120px]">Status</TableHead>
                     <TableHead className="w-[100px]">Delivery</TableHead>
-                    <TableHead className="w-[150px]">
+                    <TableHead className="w-[180px]">
                       <div className="flex items-center">
                         <User className="h-3.5 w-3.5 mr-1" />
                         Driver
