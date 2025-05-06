@@ -8,9 +8,7 @@ export interface OrderRepository extends BaseRepository<Order> {
   updatePrintHistory(orderId: string, printEvent: PrintEvent): Promise<Order>;
   addOrderLog(orderId: string, logEvent: Omit<OrderLogEvent, 'id'>): Promise<Order>;
   addRevision(orderId: string, revision: Omit<CakeRevision, 'id'>): Promise<Order>;
-  assignDriver(orderId: string, assignment: Omit<DeliveryAssignment, 'assignedAt'>): Promise<Order>;
-  assignToTrip(orderId: string, tripId: string, sequence?: number): Promise<Order>;
-  removeFromTrip(orderId: string): Promise<Order>;
+  assignDriver(orderId: string, assignment: Omit<DeliveryAssignment, 'assignedAt'>): Promise<Order>; // Method for driver assignment
 }
 
 export class MockOrderRepository implements OrderRepository {
@@ -243,54 +241,6 @@ export class MockOrderRepository implements OrderRepository {
       orderLogs,
       updatedAt: new Date()
     };
-    
-    return this.orders[index];
-  }
-  
-  async assignToTrip(orderId: string, tripId: string, sequence?: number): Promise<Order> {
-    const index = this.orders.findIndex(o => o.id === orderId);
-    if (index === -1) throw new Error(`Order with id ${orderId} not found`);
-    
-    this.orders[index] = {
-      ...this.orders[index],
-      tripId,
-      tripSequence: sequence,
-      updatedAt: new Date()
-    };
-    
-    // Add log entry for trip assignment
-    await this.addOrderLog(orderId, {
-      timestamp: new Date(),
-      type: 'delivery-update',
-      note: `Assigned to trip ${tripId}${sequence ? ` with sequence ${sequence}` : ''}`,
-      metadata: { tripId, sequence }
-    });
-    
-    return this.orders[index];
-  }
-  
-  async removeFromTrip(orderId: string): Promise<Order> {
-    const index = this.orders.findIndex(o => o.id === orderId);
-    if (index === -1) throw new Error(`Order with id ${orderId} not found`);
-    
-    const tripId = this.orders[index].tripId;
-    
-    this.orders[index] = {
-      ...this.orders[index],
-      tripId: undefined,
-      tripSequence: undefined,
-      updatedAt: new Date()
-    };
-    
-    // Add log entry for trip removal
-    if (tripId) {
-      await this.addOrderLog(orderId, {
-        timestamp: new Date(),
-        type: 'delivery-update',
-        note: `Removed from trip ${tripId}`,
-        metadata: { removedFromTripId: tripId }
-      });
-    }
     
     return this.orders[index];
   }

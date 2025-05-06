@@ -1,4 +1,3 @@
-
 export type Address = {
   id: string;
   text: string;
@@ -109,30 +108,6 @@ export type CakeRevision = {
   requestedBy?: string;
 };
 
-// New type for trip status
-export type TripStatus = 'planned' | 'in-progress' | 'completed' | 'cancelled';
-
-// New type for Trip
-export interface Trip {
-  id: string;
-  name: string;          // E.g., "Morning Trip 1"
-  driverType: DriverType; // driver-1, driver-2, or 3rd-party
-  driverName?: string;   // Custom driver name
-  vehicleInfo?: string;  // Vehicle information
-  date: Date;            // Trip date
-  startTime?: Date;      // Planned start time
-  endTime?: Date;        // Expected end time
-  status: TripStatus;
-  notes?: string;        // Trip notes
-  createdAt: Date;
-  updatedAt: Date;
-  orderIds: string[];    // List of order IDs in this trip
-  completedOrderIds: string[]; // Orders completed in this trip
-  sequence: Record<string, number>; // Order sequence mapping {orderId: sequenceNumber}
-  routeDistance?: number; // Optional estimated route distance
-  routeDuration?: number; // Optional estimated route duration
-}
-
 export type Order = {
   id: string;
   customer: Customer;
@@ -184,10 +159,6 @@ export type Order = {
   
   // New field for driver assignment
   deliveryAssignment?: DeliveryAssignment;
-  
-  // New fields for trip planning
-  tripId?: string;       // Reference to the trip this order is part of
-  tripSequence?: number; // Sequence number in the trip
 };
 
 export type Ingredient = {
@@ -333,4 +304,3 @@ export type SettingsData = {
   deliveryLabelTemplate: DeliveryLabelTemplate;
   driverSettings: DriverSettings;
 };
-

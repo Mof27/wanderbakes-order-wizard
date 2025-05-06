@@ -14,7 +14,6 @@ export interface SettingsRepository {
   updatePrintTemplate(template: PrintTemplate): Promise<PrintTemplate>;
   updateDeliveryLabelTemplate(template: DeliveryLabelTemplate): Promise<DeliveryLabelTemplate>;
   updateDriverSettings(settings: DriverSettings): Promise<DriverSettings>;
-  update(settings: Partial<SettingsData>): Promise<SettingsData>; // Add this new method
 }
 
 /**
@@ -28,13 +27,6 @@ export class MockSettingsRepository implements SettingsRepository {
     console.log("Initializing MockSettingsRepository...");
     this.settings = this.loadInitialSettings();
     console.log("Settings initialized:", this.settings);
-  }
-  
-  // Add this new method to update all settings at once
-  async update(settings: Partial<SettingsData>): Promise<SettingsData> {
-    this.settings = { ...this.settings, ...settings };
-    this.saveSettings();
-    return this.settings;
   }
   
   private loadInitialSettings(): SettingsData {
