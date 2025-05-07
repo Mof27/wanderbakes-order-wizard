@@ -2,12 +2,15 @@
 import React from 'react';
 import { Order } from '@/types';
 import { formatDate } from '@/lib/utils';
-import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
 import { Info } from 'lucide-react';
 import { getColorStyle } from '@/utils/colorUtils';
 import { Separator } from '@/components/ui/separator';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { 
+  Sheet, 
+  SheetContent, 
+  SheetTrigger 
+} from '@/components/ui/sheet';
 
 interface KitchenInfoDrawerProps {
   order: Order;
@@ -25,30 +28,22 @@ const KitchenInfoDrawer: React.FC<KitchenInfoDrawerProps> = ({ order, children }
   };
 
   return (
-    <Drawer>
-      <DrawerTrigger asChild>
+    <Sheet>
+      <SheetTrigger asChild>
         {children ? (
           children
         ) : (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="ml-1 bg-gray-100/80 rounded-full hover:bg-gray-200/80"
-                >
-                  <Info className="h-5 w-5 text-primary" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>View order details</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="ml-1 bg-gray-100/80 rounded-full hover:bg-gray-200/80"
+          >
+            <Info className="h-5 w-5 text-primary" />
+            <span className="sr-only">View order details</span>
+          </Button>
         )}
-      </DrawerTrigger>
-      <DrawerContent className="px-4 pb-6">
+      </SheetTrigger>
+      <SheetContent side="bottom" className="px-4 pb-6 sm:max-w-lg sm:mx-auto">
         <div className="mx-auto w-full max-w-lg">
           {/* Order ID and Customer Section */}
           <div className="py-4">
@@ -173,8 +168,8 @@ const KitchenInfoDrawer: React.FC<KitchenInfoDrawerProps> = ({ order, children }
             )}
           </div>
         </div>
-      </DrawerContent>
-    </Drawer>
+      </SheetContent>
+    </Sheet>
   );
 };
 
