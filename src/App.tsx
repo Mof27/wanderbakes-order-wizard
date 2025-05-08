@@ -15,6 +15,7 @@ import CustomerOrdersPage from "./pages/CustomerOrdersPage";
 import SettingsPage from "./pages/SettingsPage";
 import ScanQrPage from "./pages/ScanQrPage";
 import KitchenLeaderPage from "./pages/KitchenLeaderPage";
+import BakerPage from "./pages/BakerPage";
 import DeliveryPage from "./pages/DeliveryPage";
 import WorkflowPage from "./pages/WorkflowPage";
 import ArchivedOrdersPage from "./pages/ArchivedOrdersPage";
@@ -97,6 +98,11 @@ const App = () => {
                 <Route path="/kitchen" element={
                   <MainLayout>
                     <KitchenLeaderPage />
+                  </MainLayout>
+                } />
+                <Route path="/baker" element={
+                  <MainLayout>
+                    <BakerPage />
                   </MainLayout>
                 } />
                 <Route path="/delivery" element={
