@@ -332,15 +332,20 @@ const KitchenInfoDrawer: React.FC<KitchenInfoDrawerProps> = ({ order, children }
           </Button>
         )}
       </TriggerComponent>
-      <ContentComponent 
-        className={cn(
-          isMobile ? "px-4 pb-6 sm:max-w-lg sm:mx-auto" : "max-w-lg",
-          "max-h-[85vh] overflow-y-auto"
-        )}
-        side={isMobile ? "bottom" : undefined}
-      >
-        {drawerContent}
-      </ContentComponent>
+      {isMobile ? (
+        <SheetContent 
+          className="px-4 pb-6 sm:max-w-lg sm:mx-auto max-h-[85vh] overflow-y-auto"
+          side="bottom"
+        >
+          {drawerContent}
+        </SheetContent>
+      ) : (
+        <DialogContent 
+          className="max-w-lg max-h-[85vh] overflow-y-auto"
+        >
+          {drawerContent}
+        </DialogContent>
+      )}
     </InfoComponent>
   );
 };
