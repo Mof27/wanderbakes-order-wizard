@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { dataService } from '@/services';
@@ -59,16 +58,44 @@ const BakerPage: React.FC = () => {
     queryFn: () => dataService.baker.getProductionLog(),
   });
   
-  // Sync tasks with orders on component mount
+  // Sync tasks with orders on component mount and when tab is changed
   useEffect(() => {
     const syncTasks = async () => {
-      const orders = await dataService.orders.getAll();
-      await dataService.baker.aggregateOrdersIntoTasks(orders);
-      queryClient.invalidateQueries({ queryKey: ['bakingTasks'] });
+      try {
+        console.log("Syncing baker tasks with orders...");
+        const orders = await dataService.orders.getAll();
+        console.log("Orders fetched:", orders);
+        
+        // Filter orders to log which ones would qualify for baker tasks
+        const qualifyingOrders = orders.filter(order => 
+          order.status === 'in-queue' || 
+          (order.status === 'in-kitchen' && order.kitchenStatus === 'waiting-baker')
+        );
+        console.log("Qualifying orders for baker tasks:", qualifyingOrders);
+        
+        const newTasks = await dataService.baker.aggregateOrdersIntoTasks(orders);
+        console.log("New baker tasks created:", newTasks);
+        
+        queryClient.invalidateQueries({ queryKey: ['bakingTasks'] });
+      } catch (error) {
+        console.error("Error syncing baker tasks:", error);
+        toast({
+          title: "Sync Error",
+          description: "Failed to sync orders with baker tasks",
+          variant: "destructive"
+        });
+      }
     };
     
     syncTasks();
-  }, [queryClient]);
+    
+    // Set up an interval to sync tasks every minute
+    const intervalId = setInterval(syncTasks, 60000);
+    
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [queryClient, toast]);
   
   // Mutations
   const startTaskMutation = useMutation({
