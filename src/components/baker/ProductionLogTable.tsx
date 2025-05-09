@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/table';
 import { Check, X } from 'lucide-react';
 import { format } from 'date-fns';
+import { Badge } from '@/components/ui/badge';
 
 interface ProductionLogTableProps {
   logs: ProductionLogEntry[];
@@ -25,6 +26,7 @@ const ProductionLogTable: React.FC<ProductionLogTableProps> = ({ logs }) => {
             <TableHead>Date</TableHead>
             <TableHead>Cake</TableHead>
             <TableHead className="text-center">Quantity</TableHead>
+            <TableHead className="text-center">Status</TableHead>
             <TableHead className="text-center">Quality Checks</TableHead>
             <TableHead>Notes</TableHead>
           </TableRow>
@@ -32,7 +34,7 @@ const ProductionLogTable: React.FC<ProductionLogTableProps> = ({ logs }) => {
         <TableBody>
           {logs.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
+              <TableCell colSpan={6} className="text-center py-4 text-muted-foreground">
                 No production logs found
               </TableCell>
             </TableRow>
@@ -49,10 +51,23 @@ const ProductionLogTable: React.FC<ProductionLogTableProps> = ({ logs }) => {
                   </div>
                 </TableCell>
                 <TableCell className="text-center">
-                  {log.quantity}
+                  {log.cancelled ? '-' : log.quantity}
+                </TableCell>
+                <TableCell className="text-center">
+                  {log.cancelled ? (
+                    <Badge variant="secondary" className="bg-rose-100 text-rose-700">
+                      Cancelled
+                    </Badge>
+                  ) : (
+                    <Badge variant="secondary" className="bg-green-100 text-green-700">
+                      Completed
+                    </Badge>
+                  )}
                 </TableCell>
                 <TableCell>
-                  {log.qualityChecks ? (
+                  {log.cancelled ? (
+                    <span className="text-muted-foreground text-center block">N/A</span>
+                  ) : log.qualityChecks ? (
                     <div className="flex justify-center gap-3">
                       <div className="flex items-center" title="Properly Baked">
                         {log.qualityChecks.properlyBaked ? (
@@ -81,7 +96,14 @@ const ProductionLogTable: React.FC<ProductionLogTableProps> = ({ logs }) => {
                   )}
                 </TableCell>
                 <TableCell>
-                  {log.notes || <span className="text-muted-foreground">-</span>}
+                  {log.cancelled && log.cancellationReason ? (
+                    <div>
+                      <p className="text-rose-700 text-sm">{log.cancellationReason}</p>
+                      {log.notes && <p className="text-muted-foreground text-sm">{log.notes}</p>}
+                    </div>
+                  ) : (
+                    log.notes || <span className="text-muted-foreground">-</span>
+                  )}
                 </TableCell>
               </TableRow>
             ))

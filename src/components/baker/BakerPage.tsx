@@ -5,7 +5,7 @@ import { BakingTask, BakerPageTab, TaskFilter, QualityCheck } from '@/types/bake
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Cake, Layers, FileText } from 'lucide-react';
+import { Cake, Layers, FileText, X } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { 
   Select,
@@ -15,6 +15,7 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import BakingTaskList from './BakingTaskList';
 import InventorySection from './InventorySection';
 import ProductionLogTable from './ProductionLogTable';
@@ -68,8 +69,7 @@ const BakerPage: React.FC = () => {
         
         // Filter orders to log which ones would qualify for baker tasks
         const qualifyingOrders = orders.filter(order => 
-          order.status === 'in-queue' || 
-          (order.status === 'in-kitchen' && order.kitchenStatus === 'waiting-baker')
+          order.status === 'in-kitchen' && order.kitchenStatus === 'waiting-baker'
         );
         console.log("Qualifying orders for baker tasks:", qualifyingOrders);
         
@@ -110,6 +110,21 @@ const BakerPage: React.FC = () => {
       toast({
         title: "Task Started",
         description: "The task has been marked as in progress."
+      });
+    }
+  });
+  
+  const acknowledgeCancelMutation = useMutation({
+    mutationFn: (taskId: string) => {
+      return dataService.baker.acknowledgeCancelledTask(taskId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bakingTasks'] });
+      queryClient.invalidateQueries({ queryKey: ['productionLog'] });
+      
+      toast({
+        title: "Task Acknowledged",
+        description: "The cancelled task has been acknowledged and removed."
       });
     }
   });
@@ -163,6 +178,10 @@ const BakerPage: React.FC = () => {
     }
   };
   
+  const handleAcknowledgeCancel = (taskId: string) => {
+    acknowledgeCancelMutation.mutate(taskId);
+  };
+  
   const handleCompleteTask = (data: {
     taskId: string;
     quantity: number;
@@ -176,9 +195,10 @@ const BakerPage: React.FC = () => {
   const pendingTasksCount = tasks.filter(task => task.status === 'pending').length;
   const inProgressTasksCount = tasks.filter(task => task.status === 'in-progress').length;
   const completedTasksCount = tasks.filter(task => task.status === 'completed').length;
+  const cancelledTasksCount = tasks.filter(task => task.status === 'cancelled').length;
   
   // Total inventory count
-  const totalInventoryCount = inventory.reduce((sum, item) => sum + item.quantity, 0);
+  const totalInventoryCount = inventory?.reduce((sum, item) => sum + item.quantity, 0) || 0;
   
   return (
     <div className="space-y-6">
@@ -191,7 +211,7 @@ const BakerPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-4">
         <Card className="p-4 bg-orange-50">
           <div className="flex items-center gap-2">
             <div className="p-2 bg-orange-100 rounded-full">
@@ -212,6 +232,18 @@ const BakerPage: React.FC = () => {
             <div>
               <p className="text-sm text-muted-foreground">In Progress</p>
               <p className="text-2xl font-semibold">{inProgressTasksCount}</p>
+            </div>
+          </div>
+        </Card>
+        
+        <Card className="p-4 bg-rose-50">
+          <div className="flex items-center gap-2">
+            <div className="p-2 bg-rose-100 rounded-full">
+              <X className="h-5 w-5 text-rose-700" />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Cancelled</p>
+              <p className="text-2xl font-semibold">{cancelledTasksCount}</p>
             </div>
           </div>
         </Card>
@@ -257,6 +289,7 @@ const BakerPage: React.FC = () => {
                 <SelectItem value="pending">Pending</SelectItem>
                 <SelectItem value="in-progress">In Progress</SelectItem>
                 <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="cancelled">Cancelled</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -269,6 +302,7 @@ const BakerPage: React.FC = () => {
               filter={taskFilter}
               onStartTask={handleStartTask}
               onCompleteTask={handleShowCompletionForm}
+              onAcknowledgeCancel={handleAcknowledgeCancel}
             />
           )}
         </TabsContent>

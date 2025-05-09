@@ -8,6 +8,7 @@ export interface BakerRepository extends BaseRepository<BakingTask> {
   createProductionEntry(entry: Omit<ProductionLogEntry, 'id'>): Promise<ProductionLogEntry>;
   updateInventory(item: Partial<CakeInventoryItem> & { id: string }): Promise<CakeInventoryItem>;
   aggregateOrdersIntoTasks(orders: Order[]): Promise<BakingTask[]>;
+  acknowledgeCancelledTask(taskId: string, notes?: string): Promise<ProductionLogEntry>;
 }
 
 export class MockBakerRepository implements BakerRepository {
@@ -187,31 +188,119 @@ export class MockBakerRepository implements BakerRepository {
     return this.cakeInventory[index];
   }
   
+  async acknowledgeCancelledTask(taskId: string, notes?: string): Promise<ProductionLogEntry> {
+    const task = await this.getById(taskId);
+    if (!task) throw new Error(`Task with id ${taskId} not found`);
+    
+    if (task.status !== 'cancelled') {
+      throw new Error('Can only acknowledge cancelled tasks');
+    }
+
+    // Create a production log entry for the cancelled task
+    const newEntry: ProductionLogEntry = {
+      id: `log${this.productionLog.length + 1}`,
+      taskId: task.id,
+      cakeShape: task.cakeShape,
+      cakeSize: task.cakeSize,
+      cakeFlavor: task.cakeFlavor,
+      quantity: 0, // No cakes were produced
+      completedAt: new Date(),
+      cancelled: true,
+      cancellationReason: task.cancellationReason,
+      notes: notes || 'Task cancelled and acknowledged by baker'
+    };
+
+    this.productionLog.push(newEntry);
+    
+    // Remove the task from the active tasks list
+    await this.delete(taskId);
+    
+    return newEntry;
+  }
+
   async aggregateOrdersIntoTasks(orders: Order[]): Promise<BakingTask[]> {
-    // Group orders by cake specifications
+    // Only include orders that are "in-kitchen" AND "waiting-baker"
+    const relevantOrders = orders.filter(order => 
+      order.status === 'in-kitchen' && order.kitchenStatus === 'waiting-baker'
+    );
+    console.log("Filtered orders for baker tasks:", relevantOrders.length);
+
+    // Track all order IDs that are currently in the system
+    const currentOrderIds = relevantOrders.map(order => order.id);
+    
+    // First, handle tasks with orders that have been modified
+    const tasksToUpdate: BakingTask[] = [];
+    
+    for (const task of this.bakingTasks) {
+      if (!task.orderIds || task.status === 'completed' || task.status === 'cancelled') {
+        continue;
+      }
+
+      // Check if any orders in this task have been modified or removed
+      const modifiedOrderIds: string[] = [];
+      
+      for (const orderId of task.orderIds) {
+        // Find the current order
+        const currentOrder = relevantOrders.find(o => o.id === orderId);
+        
+        // If order doesn't exist anymore or specifications changed
+        if (!currentOrder) {
+          if (currentOrderIds.includes(orderId)) {
+            // Order still exists but is no longer in the relevant status
+            modifiedOrderIds.push(orderId);
+          }
+          continue;
+        }
+        
+        // Check if cake specifications changed
+        if (currentOrder.cakeShape !== task.cakeShape ||
+            currentOrder.cakeSize !== task.cakeSize ||
+            currentOrder.cakeFlavor !== task.cakeFlavor) {
+          modifiedOrderIds.push(orderId);
+        }
+      }
+      
+      // If orders have been modified, cancel the task
+      if (modifiedOrderIds.length > 0 && task.status !== 'completed') {
+        const remainingOrderIds = task.orderIds.filter(id => !modifiedOrderIds.includes(id));
+        
+        if (remainingOrderIds.length === 0) {
+          // All orders in this task have been modified, cancel the task
+          task.status = 'cancelled';
+          task.cancellationReason = `Order${modifiedOrderIds.length > 1 ? 's' : ''} ${modifiedOrderIds.join(', ')} modified`;
+          task.updatedAt = new Date();
+          tasksToUpdate.push(task);
+        } else {
+          // Some orders have been modified, update the task with remaining orders
+          task.orderIds = remainingOrderIds;
+          task.quantity = remainingOrderIds.length;
+          task.updatedAt = new Date();
+          tasksToUpdate.push(task);
+        }
+      }
+    }
+    
+    // Now process all current orders to create or update tasks
     const groupedOrders: Record<string, { orders: Order[], earliestDate: Date }> = {};
     
-    orders.filter(order => order.status === 'in-queue' || 
-                           (order.status === 'in-kitchen' && 
-                            order.kitchenStatus === 'waiting-baker'))
-          .forEach(order => {
-            const key = `${order.cakeShape}-${order.cakeSize}-${order.cakeFlavor}`;
-            
-            if (!groupedOrders[key]) {
-              groupedOrders[key] = { 
-                orders: [], 
-                earliestDate: new Date(order.deliveryDate) 
-              };
-            }
-            
-            groupedOrders[key].orders.push(order);
-            
-            // Keep track of earliest delivery date
-            const orderDate = new Date(order.deliveryDate);
-            if (orderDate < groupedOrders[key].earliestDate) {
-              groupedOrders[key].earliestDate = orderDate;
-            }
-          });
+    relevantOrders.forEach(order => {
+      const key = `${order.cakeShape}-${order.cakeSize}-${order.cakeFlavor}`;
+      
+      if (!groupedOrders[key]) {
+        groupedOrders[key] = { 
+          orders: [], 
+          earliestDate: new Date(order.deliveryDate) 
+        };
+      }
+      
+      groupedOrders[key].orders.push(order);
+      
+      // Keep track of earliest delivery date
+      const orderDate = new Date(order.deliveryDate);
+      if (orderDate < groupedOrders[key].earliestDate) {
+        groupedOrders[key].earliestDate = orderDate;
+      }
+    });
     
     // Create tasks from grouped orders
     const tasks: BakingTask[] = [];
@@ -223,7 +312,8 @@ export class MockBakerRepository implements BakerRepository {
         t => t.cakeShape === cakeShape && 
         t.cakeSize === cakeSize && 
         t.cakeFlavor === cakeFlavor &&
-        t.status !== 'completed'
+        t.status !== 'completed' &&
+        t.status !== 'cancelled'
       );
       
       if (existingTaskIndex >= 0) {
@@ -267,6 +357,14 @@ export class MockBakerRepository implements BakerRepository {
         tasks.push(newTask);
       }
     });
+    
+    // Update all tasks that needed modification
+    for (const task of tasksToUpdate) {
+      const index = this.bakingTasks.findIndex(t => t.id === task.id);
+      if (index !== -1) {
+        this.bakingTasks[index] = task;
+      }
+    }
     
     return tasks;
   }

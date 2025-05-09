@@ -8,6 +8,7 @@ interface BakingTaskListProps {
   filter: string;
   onStartTask: (taskId: string) => void;
   onCompleteTask: (taskId: string) => void;
+  onAcknowledgeCancel?: (taskId: string) => void;
 }
 
 const BakingTaskList: React.FC<BakingTaskListProps> = ({
@@ -15,6 +16,7 @@ const BakingTaskList: React.FC<BakingTaskListProps> = ({
   filter,
   onStartTask,
   onCompleteTask,
+  onAcknowledgeCancel,
 }) => {
   // Filter tasks based on selected filter
   const filteredTasks = React.useMemo(() => {
@@ -41,6 +43,7 @@ const BakingTaskList: React.FC<BakingTaskListProps> = ({
               task={task}
               onStartTask={onStartTask}
               onCompleteTask={onCompleteTask}
+              onAcknowledgeCancel={onAcknowledgeCancel}
             />
           ))}
         </div>
