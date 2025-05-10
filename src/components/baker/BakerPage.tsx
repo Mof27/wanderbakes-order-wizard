@@ -210,7 +210,7 @@ const BakerPage: React.FC = () => {
       quantity: number;
       notes?: string;
     }) => {
-      // Remove quantityCompleted as it's not in the expected type
+      // Pass only the fields expected by the repository method
       return dataService.baker.createManualTask({
         ...data,
         dueDate: new Date(), // Use current date for priority calculation
