@@ -1,4 +1,3 @@
-
 import { BakingTask, CakeInventoryItem, ProductionLogEntry } from '@/types/baker';
 import { BaseRepository } from './base.repository';
 import { Order } from '@/types';
@@ -10,6 +9,9 @@ export interface BakerRepository extends BaseRepository<BakingTask> {
   updateInventory(item: Partial<CakeInventoryItem> & { id: string }): Promise<CakeInventoryItem>;
   aggregateOrdersIntoTasks(orders: Order[]): Promise<BakingTask[]>;
   acknowledgeCancelledTask(taskId: string, notes?: string): Promise<ProductionLogEntry>;
+  createManualTask(task: Omit<BakingTask, 'id' | 'createdAt' | 'status' | 'quantityCompleted' | 'isManual'>): Promise<BakingTask>;
+  deleteManualTask(taskId: string): Promise<boolean>;
+  cancelManualTask(taskId: string, reason: string): Promise<BakingTask>;
 }
 
 export class MockBakerRepository implements BakerRepository {
@@ -208,7 +210,8 @@ export class MockBakerRepository implements BakerRepository {
       completedAt: new Date(),
       cancelled: true,
       cancellationReason: task.cancellationReason,
-      notes: notes || 'Task cancelled and acknowledged by baker'
+      notes: notes || 'Task cancelled and acknowledged by baker',
+      isManual: task.isManual
     };
 
     this.productionLog.push(newEntry);
@@ -217,6 +220,79 @@ export class MockBakerRepository implements BakerRepository {
     await this.delete(taskId);
     
     return newEntry;
+  }
+  
+  async createManualTask(taskData: Omit<BakingTask, 'id' | 'createdAt' | 'status' | 'quantityCompleted' | 'isManual'>): Promise<BakingTask> {
+    // Create new task with isManual flag
+    const newTask: BakingTask = {
+      ...taskData,
+      id: `task${this.bakingTasks.length + 1}_manual`,
+      createdAt: new Date(),
+      status: 'pending',
+      quantityCompleted: 0,
+      isManual: true,
+      // We'll use today's date as due date for calculating priority
+      dueDate: taskData.dueDate || new Date()
+    };
+    
+    // Check if the delivery is today to set priority
+    const today = new Date();
+    if (newTask.dueDate && 
+        newTask.dueDate.getDate() === today.getDate() &&
+        newTask.dueDate.getMonth() === today.getMonth() &&
+        newTask.dueDate.getFullYear() === today.getFullYear()) {
+      newTask.isPriority = true;
+    }
+    
+    this.bakingTasks.push(newTask);
+    return newTask;
+  }
+  
+  async deleteManualTask(taskId: string): Promise<boolean> {
+    const task = await this.getById(taskId);
+    if (!task) throw new Error(`Task with id ${taskId} not found`);
+    
+    if (!task.isManual) {
+      throw new Error('Only manual tasks can be deleted');
+    }
+    
+    // Create a log entry to track the deletion
+    const deletionLog: ProductionLogEntry = {
+      id: `log${this.productionLog.length + 1}`,
+      taskId: task.id,
+      cakeShape: task.cakeShape,
+      cakeSize: task.cakeSize,
+      cakeFlavor: task.cakeFlavor,
+      quantity: 0,
+      completedAt: new Date(),
+      cancelled: true,
+      cancellationReason: 'Manual task deleted by baker',
+      notes: 'Task deleted manually',
+      isManual: true
+    };
+    
+    this.productionLog.push(deletionLog);
+    
+    // Remove from tasks
+    return this.delete(taskId);
+  }
+  
+  async cancelManualTask(taskId: string, reason: string): Promise<BakingTask> {
+    const task = await this.getById(taskId);
+    if (!task) throw new Error(`Task with id ${taskId} not found`);
+    
+    if (!task.isManual) {
+      throw new Error('Only manual tasks can be cancelled this way');
+    }
+    
+    // Update task status
+    const updatedTask = await this.update(taskId, {
+      status: 'cancelled',
+      cancellationReason: reason || 'Cancelled by baker',
+      updatedAt: new Date()
+    });
+    
+    return updatedTask;
   }
 
   async aggregateOrdersIntoTasks(orders: Order[]): Promise<BakingTask[]> {

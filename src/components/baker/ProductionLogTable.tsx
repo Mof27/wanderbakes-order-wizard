@@ -46,7 +46,14 @@ const ProductionLogTable: React.FC<ProductionLogTableProps> = ({ logs }) => {
                 </TableCell>
                 <TableCell>
                   <div>
-                    <p>{log.cakeShape} {log.cakeSize}</p>
+                    <p>
+                      {log.cakeShape} {log.cakeSize}
+                      {log.isManual && (
+                        <Badge variant="outline" className="ml-1 bg-purple-100 text-purple-700 text-xs">
+                          Manual
+                        </Badge>
+                      )}
+                    </p>
                     <p className="text-sm text-muted-foreground">{log.cakeFlavor}</p>
                   </div>
                 </TableCell>

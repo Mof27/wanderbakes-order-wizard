@@ -9,6 +9,8 @@ interface BakingTaskListProps {
   onStartTask: (taskId: string) => void;
   onCompleteTask: (taskId: string) => void;
   onAcknowledgeCancel?: (taskId: string) => void;
+  onDeleteManualTask?: (taskId: string) => void;
+  onCancelManualTask?: (taskId: string) => void;
 }
 
 const BakingTaskList: React.FC<BakingTaskListProps> = ({
@@ -17,6 +19,8 @@ const BakingTaskList: React.FC<BakingTaskListProps> = ({
   onStartTask,
   onCompleteTask,
   onAcknowledgeCancel,
+  onDeleteManualTask,
+  onCancelManualTask,
 }) => {
   // Filter tasks based on selected filter
   const filteredTasks = React.useMemo(() => {
@@ -24,9 +28,16 @@ const BakingTaskList: React.FC<BakingTaskListProps> = ({
     return tasks.filter(task => task.status === filter);
   }, [tasks, filter]);
 
-  // Sort tasks by due date (closest due date first)
+  // Sort tasks: priority first, then by due date
   const sortedTasks = React.useMemo(() => {
-    return [...filteredTasks].sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime());
+    return [...filteredTasks].sort((a, b) => {
+      // Priority tasks come first
+      if (a.isPriority && !b.isPriority) return -1;
+      if (!a.isPriority && b.isPriority) return 1;
+      
+      // Then sort by due date
+      return a.dueDate.getTime() - b.dueDate.getTime();
+    });
   }, [filteredTasks]);
 
   return (
@@ -44,6 +55,8 @@ const BakingTaskList: React.FC<BakingTaskListProps> = ({
               onStartTask={onStartTask}
               onCompleteTask={onCompleteTask}
               onAcknowledgeCancel={onAcknowledgeCancel}
+              onDeleteManualTask={onDeleteManualTask}
+              onCancelManualTask={onCancelManualTask}
             />
           ))}
         </div>
