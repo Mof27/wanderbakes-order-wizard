@@ -23,6 +23,7 @@ export interface BakingTask {
   cancellationReason?: string; // Added to track why a task was cancelled
   isManual?: boolean; // Flag to indicate if the task was manually created by a baker
   isPriority?: boolean; // Flag to indicate if the task should be prioritized
+  notes?: string; // Notes for the task
 }
 
 export interface CakeInventoryItem {
@@ -53,4 +54,3 @@ export interface ProductionLogEntry {
 
 export type BakerPageTab = 'tasks' | 'inventory' | 'log';
 export type TaskFilter = 'all' | 'pending' | 'in-progress' | 'completed' | 'cancelled';
-

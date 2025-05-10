@@ -5,9 +5,9 @@ import { BakingTask, BakerPageTab, TaskFilter, QualityCheck } from '@/types/bake
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Cake, Layers, FileText, X, Plus } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
 import { 
   Select,
   SelectContent,
@@ -349,51 +349,51 @@ const BakerPage: React.FC = () => {
         )}
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card className="p-4 bg-orange-50">
+      <div className="flex flex-wrap gap-4">
+        <Card className="p-3 bg-orange-50 flex-1 min-w-[130px]">
           <div className="flex items-center gap-2">
             <div className="p-2 bg-orange-100 rounded-full">
-              <Cake className="h-5 w-5 text-orange-700" />
+              <Cake className="h-4 w-4 text-orange-700" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Pending Tasks</p>
-              <p className="text-2xl font-semibold">{pendingTasksCount}</p>
+              <p className="text-xs text-muted-foreground">Pending Tasks</p>
+              <p className="text-xl font-semibold">{pendingTasksCount}</p>
             </div>
           </div>
         </Card>
         
-        <Card className="p-4 bg-blue-50">
+        <Card className="p-3 bg-blue-50 flex-1 min-w-[130px]">
           <div className="flex items-center gap-2">
             <div className="p-2 bg-blue-100 rounded-full">
-              <Cake className="h-5 w-5 text-blue-700" />
+              <Cake className="h-4 w-4 text-blue-700" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">In Progress</p>
-              <p className="text-2xl font-semibold">{inProgressTasksCount}</p>
+              <p className="text-xs text-muted-foreground">In Progress</p>
+              <p className="text-xl font-semibold">{inProgressTasksCount}</p>
             </div>
           </div>
         </Card>
         
-        <Card className="p-4 bg-amber-50">
+        <Card className="p-3 bg-amber-50 flex-1 min-w-[130px]">
           <div className="flex items-center gap-2">
             <div className="p-2 bg-amber-100 rounded-full">
-              <Cake className="h-5 w-5 text-amber-700" />
+              <Cake className="h-4 w-4 text-amber-700" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Priority</p>
-              <p className="text-2xl font-semibold">{priorityTasksCount}</p>
+              <p className="text-xs text-muted-foreground">Priority</p>
+              <p className="text-xl font-semibold">{priorityTasksCount}</p>
             </div>
           </div>
         </Card>
         
-        <Card className="p-4 bg-green-50">
+        <Card className="p-3 bg-green-50 flex-1 min-w-[130px]">
           <div className="flex items-center gap-2">
             <div className="p-2 bg-green-100 rounded-full">
-              <Layers className="h-5 w-5 text-green-700" />
+              <Layers className="h-4 w-4 text-green-700" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Cakes in Stock</p>
-              <p className="text-2xl font-semibold">{totalInventoryCount}</p>
+              <p className="text-xs text-muted-foreground">Cakes in Stock</p>
+              <p className="text-xl font-semibold">{totalInventoryCount}</p>
             </div>
           </div>
         </Card>

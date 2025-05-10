@@ -1,3 +1,4 @@
+
 import { BakingTask, CakeInventoryItem, ProductionLogEntry } from '@/types/baker';
 import { BaseRepository } from './base.repository';
 import { Order } from '@/types';
@@ -9,7 +10,7 @@ export interface BakerRepository extends BaseRepository<BakingTask> {
   updateInventory(item: Partial<CakeInventoryItem> & { id: string }): Promise<CakeInventoryItem>;
   aggregateOrdersIntoTasks(orders: Order[]): Promise<BakingTask[]>;
   acknowledgeCancelledTask(taskId: string, notes?: string): Promise<ProductionLogEntry>;
-  createManualTask(task: Omit<BakingTask, 'id' | 'createdAt' | 'status' | 'quantityCompleted' | 'isManual'>): Promise<BakingTask>;
+  createManualTask(task: Pick<BakingTask, 'cakeShape' | 'cakeSize' | 'cakeFlavor' | 'quantity' | 'dueDate' | 'notes'>): Promise<BakingTask>;
   deleteManualTask(taskId: string): Promise<boolean>;
   cancelManualTask(taskId: string, reason: string): Promise<BakingTask>;
 }

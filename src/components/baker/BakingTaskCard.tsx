@@ -2,10 +2,9 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Cake, Check, PlayCircle, X, Trash2, AlertTriangle } from 'lucide-react';
+import { Cake, Check, PlayCircle, X, Trash2, AlertTriangle, ArrowUp } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { BakingTask } from '@/types/baker';
-import { formatDistanceToNow } from 'date-fns';
 
 interface BakingTaskCardProps {
   task: BakingTask;
@@ -24,11 +23,6 @@ const BakingTaskCard: React.FC<BakingTaskCardProps> = ({
   onDeleteManualTask,
   onCancelManualTask,
 }) => {
-  // Helper to format due date
-  const formatDueDate = (date: Date) => {
-    return formatDistanceToNow(date, { addSuffix: true });
-  };
-
   // Helper to determine status color
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -45,11 +39,40 @@ const BakingTaskCard: React.FC<BakingTaskCardProps> = ({
     }
   };
 
+  // Helper to determine urgency indicator
+  const UrgencyIndicator = () => {
+    if (task.isPriority) {
+      // Highest urgency - purple indicator
+      return (
+        <div className="absolute top-0 right-0 w-0 h-0 border-t-[20px] border-r-[20px] border-t-[#9b87f5] border-r-[#9b87f5] border-b-transparent border-l-transparent" />
+      );
+    } else {
+      // Add a subtle urgency indicator based on createdAt
+      // Newer tasks get a light amber or gray indicator
+      const daysSinceCreation = Math.ceil(
+        (new Date().getTime() - task.createdAt.getTime()) / (1000 * 3600 * 24)
+      );
+      
+      if (daysSinceCreation <= 1) {
+        // Medium urgency - orange indicator
+        return (
+          <div className="absolute top-0 right-0 w-0 h-0 border-t-[15px] border-r-[15px] border-t-[#FEC6A1] border-r-[#FEC6A1] border-b-transparent border-l-transparent" />
+        );
+      } else {
+        // Low urgency - gray indicator
+        return (
+          <div className="absolute top-0 right-0 w-0 h-0 border-t-[10px] border-r-[10px] border-t-[#F1F0FB] border-r-[#F1F0FB] border-b-transparent border-l-transparent" />
+        );
+      }
+    }
+  };
+
   return (
-    <Card className={`bg-white shadow-sm hover:shadow-md transition-shadow 
+    <Card className={`bg-white shadow-sm hover:shadow-md transition-shadow relative
       ${task.status === 'cancelled' ? 'border-rose-300 bg-rose-50' : ''}
       ${task.isPriority ? 'border-amber-300' : ''}
       ${task.isManual ? 'border-l-4 border-l-purple-400' : ''}`}>
+      <UrgencyIndicator />
       <CardContent className="p-4">
         <div className="flex justify-between items-start">
           <div className="flex items-center gap-2">
@@ -81,19 +104,13 @@ const BakingTaskCard: React.FC<BakingTaskCardProps> = ({
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-4">
+        <div className="mt-4">
           <div>
             <p className="text-xs text-muted-foreground">Quantity</p>
             <p className="font-medium">
               {task.quantityCompleted} / {task.quantity}
             </p>
           </div>
-          {task.dueDate && (
-            <div>
-              <p className="text-xs text-muted-foreground">Due</p>
-              <p className="font-medium">{formatDueDate(task.dueDate)}</p>
-            </div>
-          )}
         </div>
 
         {task.cancellationReason && (

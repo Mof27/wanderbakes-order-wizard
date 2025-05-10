@@ -28,15 +28,15 @@ const BakingTaskList: React.FC<BakingTaskListProps> = ({
     return tasks.filter(task => task.status === filter);
   }, [tasks, filter]);
 
-  // Sort tasks: priority first, then by due date
+  // Sort tasks: priority first, then by creation date (newest first)
   const sortedTasks = React.useMemo(() => {
     return [...filteredTasks].sort((a, b) => {
       // Priority tasks come first
       if (a.isPriority && !b.isPriority) return -1;
       if (!a.isPriority && b.isPriority) return 1;
       
-      // Then sort by due date
-      return a.dueDate.getTime() - b.dueDate.getTime();
+      // Then sort by creation date (newer tasks first)
+      return b.createdAt.getTime() - a.createdAt.getTime();
     });
   }, [filteredTasks]);
 
