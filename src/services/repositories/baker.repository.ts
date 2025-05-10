@@ -1,3 +1,4 @@
+
 import { BakingTask, CakeInventoryItem, ProductionLogEntry } from '@/types/baker';
 import { BaseRepository } from './base.repository';
 import { Order } from '@/types';
@@ -261,7 +262,7 @@ export class MockBakerRepository implements BakerRepository {
       }
       
       // If orders have been modified, cancel the task
-      if (modifiedOrderIds.length > 0 && task.status !== 'completed') {
+      if (modifiedOrderIds.length > 0) {
         const remainingOrderIds = task.orderIds.filter(id => !modifiedOrderIds.includes(id));
         
         if (remainingOrderIds.length === 0) {
