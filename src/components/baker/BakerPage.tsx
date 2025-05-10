@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { dataService } from '@/services';
@@ -8,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Cake, Layers, FileText, X, Plus } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
 import { 
   Select,
   SelectContent,
@@ -210,11 +210,10 @@ const BakerPage: React.FC = () => {
       quantity: number;
       notes?: string;
     }) => {
-      // Remove due date as requested
+      // Remove quantityCompleted as it's not in the expected type
       return dataService.baker.createManualTask({
         ...data,
         dueDate: new Date(), // Use current date for priority calculation
-        quantityCompleted: 0
       });
     },
     onSuccess: () => {
