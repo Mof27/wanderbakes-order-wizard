@@ -488,9 +488,9 @@ const BakerPage: React.FC = () => {
         </DialogContent>
       </Dialog>
       
-      {/* Manual task creation dialog */}
+      {/* Manual task creation dialog - Modified for better touch experience */}
       <Dialog open={isManualTaskFormOpen} onOpenChange={setIsManualTaskFormOpen}>
-        <DialogContent className={isMobile ? "max-w-full p-4" : "max-w-md"}>
+        <DialogContent className={isMobile ? "max-w-full p-4" : "max-w-xl"}>
           <ManualBakingTaskForm 
             onSubmit={handleCreateManualTask}
             onCancel={() => setIsManualTaskFormOpen(false)}
@@ -501,26 +501,27 @@ const BakerPage: React.FC = () => {
       {/* Cancel manual task dialog */}
       <Dialog open={isCancelDialogOpen} onOpenChange={setIsCancelDialogOpen}>
         <DialogContent className={isMobile ? "max-w-full p-4" : "max-w-md"}>
-          <h2 className="text-lg font-semibold mb-4">Cancel Manual Task</h2>
-          <div className="space-y-4">
-            <p>Are you sure you want to cancel this manual task?</p>
+          <h2 className="text-xl font-semibold mb-5">Cancel Manual Task</h2>
+          <div className="space-y-5">
+            <p className="text-base">Are you sure you want to cancel this manual task?</p>
             <div className="space-y-2">
-              <label className="text-sm font-medium" htmlFor="cancelReason">
+              <label className="text-base font-medium mb-1.5" htmlFor="cancelReason">
                 Cancellation Reason (Optional):
               </label>
               <textarea
                 id="cancelReason"
-                className="w-full border rounded-md p-2"
+                className="w-full border rounded-md p-3 min-h-24 text-base"
                 value={cancelReason}
                 onChange={(e) => setCancelReason(e.target.value)}
                 rows={3}
               />
             </div>
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-end gap-3 pt-2">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setIsCancelDialogOpen(false)}
+                className="h-12 px-6 text-base"
               >
                 No, Keep Task
               </Button>
@@ -528,6 +529,7 @@ const BakerPage: React.FC = () => {
                 type="button"
                 variant="destructive"
                 onClick={handleConfirmCancelManualTask}
+                className="h-12 px-6 text-base"
               >
                 Yes, Cancel Task
               </Button>

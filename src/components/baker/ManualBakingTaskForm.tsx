@@ -78,32 +78,36 @@ const ManualBakingTaskForm: React.FC<ManualBakingTaskFormProps> = ({
   }
 
   return (
-    <div>
-      <h2 className="text-lg font-semibold mb-4">Create Manual Baking Task</h2>
+    <div className="px-1">
+      <h2 className="text-xl font-semibold mb-5">Create Manual Baking Task</h2>
       
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
           <FormField
             control={form.control}
             name="cakeShape"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel>Cake Shape</FormLabel>
+              <FormItem className="mb-2">
+                <FormLabel className="text-base mb-1.5">Cake Shape</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
-                    <SelectTrigger>
+                    <SelectTrigger className="h-12 text-base">
                       <SelectValue placeholder="Select cake shape" />
                     </SelectTrigger>
                   </FormControl>
-                  <SelectContent>
+                  <SelectContent className="max-h-60">
                     {cakeShapes.map((shape) => (
-                      <SelectItem key={shape.id} value={shape.value}>
+                      <SelectItem 
+                        key={shape.id} 
+                        value={shape.value}
+                        className="py-3 text-base cursor-pointer"
+                      >
                         {shape.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                <FormMessage />
+                <FormMessage className="text-sm" />
               </FormItem>
             )}
           />
@@ -112,23 +116,27 @@ const ManualBakingTaskForm: React.FC<ManualBakingTaskFormProps> = ({
             control={form.control}
             name="cakeSize"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel>Cake Size</FormLabel>
+              <FormItem className="mb-2">
+                <FormLabel className="text-base mb-1.5">Cake Size</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
-                    <SelectTrigger>
+                    <SelectTrigger className="h-12 text-base">
                       <SelectValue placeholder="Select cake size" />
                     </SelectTrigger>
                   </FormControl>
-                  <SelectContent>
+                  <SelectContent className="max-h-60">
                     {cakeSizes.map((size) => (
-                      <SelectItem key={size.id} value={size.value}>
+                      <SelectItem 
+                        key={size.id} 
+                        value={size.value}
+                        className="py-3 text-base cursor-pointer"
+                      >
                         {size.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                <FormMessage />
+                <FormMessage className="text-sm" />
               </FormItem>
             )}
           />
@@ -137,23 +145,27 @@ const ManualBakingTaskForm: React.FC<ManualBakingTaskFormProps> = ({
             control={form.control}
             name="cakeFlavor"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel>Cake Flavor</FormLabel>
+              <FormItem className="mb-2">
+                <FormLabel className="text-base mb-1.5">Cake Flavor</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
-                    <SelectTrigger>
+                    <SelectTrigger className="h-12 text-base">
                       <SelectValue placeholder="Select cake flavor" />
                     </SelectTrigger>
                   </FormControl>
-                  <SelectContent>
+                  <SelectContent className="max-h-60">
                     {cakeFlavors.map((flavor) => (
-                      <SelectItem key={flavor.id} value={flavor.value}>
+                      <SelectItem 
+                        key={flavor.id} 
+                        value={flavor.value}
+                        className="py-3 text-base cursor-pointer"
+                      >
                         {flavor.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                <FormMessage />
+                <FormMessage className="text-sm" />
               </FormItem>
             )}
           />
@@ -162,12 +174,12 @@ const ManualBakingTaskForm: React.FC<ManualBakingTaskFormProps> = ({
             control={form.control}
             name="quantity"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel>Quantity</FormLabel>
+              <FormItem className="mb-2">
+                <FormLabel className="text-base mb-1.5">Quantity</FormLabel>
                 <FormControl>
-                  <Input type="number" min="1" {...field} />
+                  <Input type="number" min="1" className="h-12 text-base" {...field} />
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="text-sm" />
               </FormItem>
             )}
           />
@@ -176,21 +188,35 @@ const ManualBakingTaskForm: React.FC<ManualBakingTaskFormProps> = ({
             control={form.control}
             name="notes"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel>Notes (Optional)</FormLabel>
+              <FormItem className="mb-2">
+                <FormLabel className="text-base mb-1.5">Notes (Optional)</FormLabel>
                 <FormControl>
-                  <Textarea placeholder="Add any additional notes here..." {...field} />
+                  <Textarea 
+                    placeholder="Add any additional notes here..." 
+                    className="min-h-24 text-base"
+                    {...field} 
+                  />
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="text-sm" />
               </FormItem>
             )}
           />
 
-          <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={onCancel}>
+          <div className="flex justify-end gap-3 pt-3">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={onCancel}
+              className="h-12 px-6 text-base"
+            >
               Cancel
             </Button>
-            <Button type="submit">Create Task</Button>
+            <Button 
+              type="submit"
+              className="h-12 px-6 text-base"
+            >
+              Create Task
+            </Button>
           </div>
         </form>
       </Form>
