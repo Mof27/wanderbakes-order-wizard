@@ -418,8 +418,8 @@ const BakerPage: React.FC = () => {
           <div className="flex items-center gap-2 w-full sm:w-auto">
             {activeTab === 'tasks' && (
               <>
-                <Select value={taskFilter} onValueChange={(value) => setTaskFilter(value as TaskFilter)} className="w-32">
-                  <SelectTrigger className="h-9">
+                <Select value={taskFilter} onValueChange={(value) => setTaskFilter(value as TaskFilter)}>
+                  <SelectTrigger className="h-9 w-32">
                     <SelectValue placeholder="Filter" />
                   </SelectTrigger>
                   <SelectContent>
