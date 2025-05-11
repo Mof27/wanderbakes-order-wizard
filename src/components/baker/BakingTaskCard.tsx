@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Cake, Check, PlayCircle, X, Trash2, AlertTriangle, ArrowUp } from 'lucide-react';
+import { Cake, Check, PlayCircle, X, Trash2, AlertTriangle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { BakingTask } from '@/types/baker';
 
@@ -48,7 +48,6 @@ const BakingTaskCard: React.FC<BakingTaskCardProps> = ({
       );
     } else {
       // Add a subtle urgency indicator based on createdAt
-      // Newer tasks get a light amber or gray indicator
       const daysSinceCreation = Math.ceil(
         (new Date().getTime() - task.createdAt.getTime()) / (1000 * 3600 * 24)
       );
@@ -73,74 +72,74 @@ const BakingTaskCard: React.FC<BakingTaskCardProps> = ({
       ${task.isPriority ? 'border-amber-300' : ''}
       ${task.isManual ? 'border-l-4 border-l-purple-400' : ''}`}>
       <UrgencyIndicator />
-      <CardContent className="p-4">
+      <CardContent className="p-3">
         <div className="flex justify-between items-start">
-          <div className="flex items-center gap-2">
-            <Cake className={`h-5 w-5 ${task.status === 'cancelled' ? 'text-rose-500' : 'text-primary'}`} />
+          <div className="flex items-center gap-1.5">
+            <Cake className={`h-4 w-4 ${task.status === 'cancelled' ? 'text-rose-500' : 'text-primary'}`} />
             <div>
-              <h3 className="font-medium">
+              <h3 className="font-medium text-sm">
                 {task.cakeShape} {task.cakeSize}
                 {task.isManual && (
-                  <Badge variant="outline" className="ml-2 bg-purple-100 text-purple-700 border-purple-300">
+                  <Badge variant="outline" className="ml-2 bg-purple-100 text-purple-700 border-purple-300 text-[10px] px-1 py-0" size="xs">
                     Manual
                   </Badge>
                 )}
               </h3>
-              <p className="text-sm text-muted-foreground">{task.cakeFlavor}</p>
+              <p className="text-xs text-muted-foreground">{task.cakeFlavor}</p>
             </div>
           </div>
           <div className="flex flex-col items-end gap-1">
-            <Badge className={getStatusColor(task.status)} variant="secondary">
+            <Badge className={getStatusColor(task.status)} variant="secondary" size="sm">
               {task.status === 'in-progress' ? 'In Progress' : 
               task.status === 'cancelled' ? 'Cancelled' : 
               task.status.charAt(0).toUpperCase() + task.status.slice(1)}
             </Badge>
             
             {task.isPriority && (
-              <Badge className="bg-amber-100 text-amber-700" variant="secondary">
-                <AlertTriangle className="h-3 w-3 mr-1" /> Priority
+              <Badge className="bg-amber-100 text-amber-700" variant="secondary" size="xs">
+                <AlertTriangle className="h-3 w-3 mr-0.5" /> Priority
               </Badge>
             )}
           </div>
         </div>
 
-        <div className="mt-4">
+        <div className="mt-2 flex items-center justify-between">
           <div>
             <p className="text-xs text-muted-foreground">Quantity</p>
-            <p className="font-medium">
+            <p className="font-medium text-sm">
               {task.quantityCompleted} / {task.quantity}
             </p>
           </div>
         </div>
 
         {task.cancellationReason && (
-          <div className="mt-2">
-            <p className="text-xs text-muted-foreground">Cancellation Reason:</p>
-            <p className="text-sm text-rose-700">{task.cancellationReason}</p>
+          <div className="mt-1.5 text-xs">
+            <p className="text-muted-foreground">Cancellation:</p>
+            <p className="text-rose-700">{task.cancellationReason}</p>
           </div>
         )}
 
-        <div className="mt-4 flex gap-2">
+        <div className="mt-3 flex gap-1.5">
           {task.status === 'pending' && (
             <>
               <Button
-                className="flex-1"
+                className="flex-1 text-xs h-8"
                 size="sm"
                 onClick={() => onStartTask(task.id)}
               >
-                <PlayCircle className="mr-1 h-4 w-4" />
+                <PlayCircle className="mr-1 h-3.5 w-3.5" />
                 Start
               </Button>
               
               {/* Delete button for manual tasks only */}
               {task.isManual && onDeleteManualTask && (
                 <Button
-                  className="flex-none"
+                  className="flex-none h-8"
                   size="sm"
                   variant="outline"
                   onClick={() => onDeleteManualTask(task.id)}
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               )}
             </>
@@ -148,35 +147,35 @@ const BakingTaskCard: React.FC<BakingTaskCardProps> = ({
           
           {task.status === 'in-progress' && (
             <Button
-              className="flex-1"
+              className="flex-1 text-xs h-8"
               size="sm"
               onClick={() => onCompleteTask(task.id)}
             >
-              <Check className="mr-1 h-4 w-4" />
+              <Check className="mr-1 h-3.5 w-3.5" />
               Complete
             </Button>
           )}
           
           {task.status === 'completed' && (
             <Button
-              className="flex-1"
+              className="flex-1 text-xs h-8"
               size="sm"
               variant="outline"
               disabled
             >
-              <Check className="mr-1 h-4 w-4" />
+              <Check className="mr-1 h-3.5 w-3.5" />
               Completed
             </Button>
           )}
           
           {task.status === 'cancelled' && onAcknowledgeCancel && (
             <Button
-              className="flex-1"
+              className="flex-1 text-xs h-8"
               size="sm"
               variant="outline"
               onClick={() => onAcknowledgeCancel(task.id)}
             >
-              <X className="mr-1 h-4 w-4" />
+              <X className="mr-1 h-3.5 w-3.5" />
               Acknowledge
             </Button>
           )}
@@ -186,12 +185,12 @@ const BakingTaskCard: React.FC<BakingTaskCardProps> = ({
            ['pending', 'in-progress'].includes(task.status) && 
            onCancelManualTask && (
             <Button
-              className="flex-none"
+              className="flex-none h-8"
               size="sm"
               variant="outline"
               onClick={() => onCancelManualTask(task.id)}
             >
-              <X className="h-4 w-4" />
+              <X className="h-3.5 w-3.5" />
             </Button>
           )}
         </div>

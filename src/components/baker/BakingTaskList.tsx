@@ -43,11 +43,11 @@ const BakingTaskList: React.FC<BakingTaskListProps> = ({
   return (
     <div>
       {sortedTasks.length === 0 ? (
-        <div className="text-center p-8 bg-gray-50 rounded-md border border-dashed">
+        <div className="text-center p-4 bg-gray-50 rounded-md border border-dashed">
           <p className="text-muted-foreground">No tasks matching the current filter</p>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {sortedTasks.map((task) => (
             <BakingTaskCard
               key={task.id}

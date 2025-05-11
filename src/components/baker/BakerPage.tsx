@@ -332,113 +332,117 @@ const BakerPage: React.FC = () => {
   const totalInventoryCount = inventory?.reduce((sum, item) => sum + item.quantity, 0) || 0;
   
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
           <h1 className="text-2xl font-bold">Baker Workstation</h1>
           <p className="text-muted-foreground">
             Manage cake production and inventory
           </p>
         </div>
-        
-        {activeTab === 'tasks' && (
-          <Button onClick={() => setIsManualTaskFormOpen(true)}>
-            <Plus className="mr-1 h-4 w-4" />
-            Create Manual Task
-          </Button>
-        )}
       </div>
 
-      <div className="flex flex-wrap gap-4">
-        <Card className="p-3 bg-orange-50 flex-1 min-w-[130px]">
+      {/* Condensed status cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Card className="p-2 bg-orange-50">
           <div className="flex items-center gap-2">
-            <div className="p-2 bg-orange-100 rounded-full">
+            <div className="p-1 bg-orange-100 rounded-full">
               <Cake className="h-4 w-4 text-orange-700" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Pending Tasks</p>
-              <p className="text-xl font-semibold">{pendingTasksCount}</p>
+              <p className="text-xs text-muted-foreground">Pending</p>
+              <p className="text-lg font-semibold">{pendingTasksCount}</p>
             </div>
           </div>
         </Card>
         
-        <Card className="p-3 bg-blue-50 flex-1 min-w-[130px]">
+        <Card className="p-2 bg-blue-50">
           <div className="flex items-center gap-2">
-            <div className="p-2 bg-blue-100 rounded-full">
+            <div className="p-1 bg-blue-100 rounded-full">
               <Cake className="h-4 w-4 text-blue-700" />
             </div>
             <div>
               <p className="text-xs text-muted-foreground">In Progress</p>
-              <p className="text-xl font-semibold">{inProgressTasksCount}</p>
+              <p className="text-lg font-semibold">{inProgressTasksCount}</p>
             </div>
           </div>
         </Card>
         
-        <Card className="p-3 bg-amber-50 flex-1 min-w-[130px]">
+        <Card className="p-2 bg-amber-50">
           <div className="flex items-center gap-2">
-            <div className="p-2 bg-amber-100 rounded-full">
+            <div className="p-1 bg-amber-100 rounded-full">
               <Cake className="h-4 w-4 text-amber-700" />
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Priority</p>
-              <p className="text-xl font-semibold">{priorityTasksCount}</p>
+              <p className="text-lg font-semibold">{priorityTasksCount}</p>
             </div>
           </div>
         </Card>
         
-        <Card className="p-3 bg-green-50 flex-1 min-w-[130px]">
+        <Card className="p-2 bg-green-50">
           <div className="flex items-center gap-2">
-            <div className="p-2 bg-green-100 rounded-full">
+            <div className="p-1 bg-green-100 rounded-full">
               <Layers className="h-4 w-4 text-green-700" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Cakes in Stock</p>
-              <p className="text-xl font-semibold">{totalInventoryCount}</p>
+              <p className="text-xs text-muted-foreground">In Stock</p>
+              <p className="text-lg font-semibold">{totalInventoryCount}</p>
             </div>
           </div>
         </Card>
       </div>
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as BakerPageTab)}>
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="tasks">
-            <Cake className="h-4 w-4 mr-2" />
-            <span>Baking Tasks</span>
-            {manualTasksCount > 0 && (
-              <Badge className="ml-2 bg-purple-100 text-purple-700 border-purple-300">
-                {manualTasksCount}
-              </Badge>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+          <TabsList className="grid w-full sm:w-auto grid-cols-3">
+            <TabsTrigger value="tasks">
+              <Cake className="h-4 w-4 mr-2" />
+              <span>Baking Tasks</span>
+              {manualTasksCount > 0 && (
+                <Badge className="ml-2 bg-purple-100 text-purple-700 border-purple-300">
+                  {manualTasksCount}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="inventory">
+              <Layers className="h-4 w-4 mr-2" />
+              <span>Cake Inventory</span>
+            </TabsTrigger>
+            <TabsTrigger value="log">
+              <FileText className="h-4 w-4 mr-2" />
+              <span>Production Log</span>
+            </TabsTrigger>
+          </TabsList>
+          
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            {activeTab === 'tasks' && (
+              <>
+                <Select value={taskFilter} onValueChange={(value) => setTaskFilter(value as TaskFilter)} className="w-32">
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="Filter" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="in-progress">In Progress</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+                
+                <Button onClick={() => setIsManualTaskFormOpen(true)} size="sm">
+                  <Plus className="h-4 w-4 mr-1" />
+                  Create Manual Task
+                </Button>
+              </>
             )}
-          </TabsTrigger>
-          <TabsTrigger value="inventory">
-            <Layers className="h-4 w-4 mr-2" />
-            <span>Cake Inventory</span>
-          </TabsTrigger>
-          <TabsTrigger value="log">
-            <FileText className="h-4 w-4 mr-2" />
-            <span>Production Log</span>
-          </TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="tasks" className="space-y-4 mt-4">
-          <div className="flex justify-between items-center">
-            <h2 className="font-semibold">Baking Tasks</h2>
-            <Select value={taskFilter} onValueChange={(value) => setTaskFilter(value as TaskFilter)}>
-              <SelectTrigger className="w-32">
-                <SelectValue placeholder="Filter" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="in-progress">In Progress</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
-          <Separator />
+        </div>
+        
+        <TabsContent value="tasks" className="mt-3">
           {isLoadingTasks ? (
-            <div className="text-center p-8">Loading tasks...</div>
+            <div className="text-center p-4">Loading tasks...</div>
           ) : (
             <BakingTaskList
               tasks={tasks}
@@ -452,21 +456,19 @@ const BakerPage: React.FC = () => {
           )}
         </TabsContent>
         
-        <TabsContent value="inventory" className="space-y-4 mt-4">
-          <h2 className="font-semibold">Cake Inventory</h2>
-          <Separator />
+        <TabsContent value="inventory" className="mt-3">
+          <h2 className="font-semibold mb-3">Cake Inventory</h2>
           {isLoadingInventory ? (
-            <div className="text-center p-8">Loading inventory...</div>
+            <div className="text-center p-4">Loading inventory...</div>
           ) : (
             <InventorySection inventory={inventory} />
           )}
         </TabsContent>
         
-        <TabsContent value="log" className="space-y-4 mt-4">
-          <h2 className="font-semibold">Production Log</h2>
-          <Separator />
+        <TabsContent value="log" className="mt-3">
+          <h2 className="font-semibold mb-3">Production Log</h2>
           {isLoadingLog ? (
-            <div className="text-center p-8">Loading production logs...</div>
+            <div className="text-center p-4">Loading production logs...</div>
           ) : (
             <ProductionLogTable logs={productionLog} />
           )}
