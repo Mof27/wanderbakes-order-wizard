@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useApp } from "@/context/AppContext";
 import { 
   Dialog,
@@ -13,26 +13,69 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { toast } from "@/components/ui/sonner";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 import { 
   MessageSquare,
   Loader2,
   Save,
-  Tag
+  Tag,
+  Plus
 } from "lucide-react";
 import { Order, OrderStatus, OrderTag } from "@/types";
 import { formatDate } from "@/lib/utils";
+import { dataService } from "@/services";
+import { useQuery } from "@tanstack/react-query";
 
-// Available order tags
-const availableTags: { value: OrderTag; label: string }[] = [
-  { value: 'for-kids', label: 'For Kids' },
-  { value: 'for-man', label: 'For Man' },
-  { value: 'for-woman', label: 'For Woman' },
-  { value: 'birthday', label: 'Birthday' },
-  { value: 'anniversary', label: 'Anniversary' },
-  { value: 'wedding', label: 'Wedding' },
-  { value: 'other', label: 'Other' },
-];
+// Component for adding new tags
+const AddTagInput = ({ onAddTag }: { onAddTag: (tagName: string) => void }) => {
+  const [newTagName, setNewTagName] = useState("");
+  const [isAdding, setIsAdding] = useState(false);
+  
+  const handleAddTag = async () => {
+    if (!newTagName.trim()) return;
+    
+    setIsAdding(true);
+    try {
+      await onAddTag(newTagName.trim());
+      setNewTagName("");
+    } finally {
+      setIsAdding(false);
+    }
+  };
+  
+  return (
+    <div className="flex gap-2 items-center mt-3">
+      <div className="flex-1">
+        <Input 
+          placeholder="Add new tag..." 
+          value={newTagName} 
+          onChange={(e) => setNewTagName(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              handleAddTag();
+            }
+          }}
+          disabled={isAdding}
+        />
+      </div>
+      <Button 
+        size="sm" 
+        disabled={!newTagName.trim() || isAdding} 
+        onClick={handleAddTag}
+      >
+        {isAdding ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <Plus className="h-4 w-4" />
+        )}
+        Add
+      </Button>
+    </div>
+  );
+};
 
 interface FeedbackDialogProps {
   open: boolean;
@@ -51,6 +94,12 @@ const FeedbackDialog = ({
   const [isLoading, setIsLoading] = useState(false);
   const [feedback, setFeedback] = useState<string>(order.customerFeedback || "");
   const [selectedTags, setSelectedTags] = useState<OrderTag[]>(order.orderTags || []);
+
+  // Get all available tags including custom ones
+  const { data: allTags = [] } = useQuery({
+    queryKey: ['galleryTags'],
+    queryFn: () => dataService.gallery.getAllTags(),
+  });
   
   // Handle tag selection
   const handleTagChange = (tag: OrderTag, checked: boolean) => {
@@ -58,6 +107,19 @@ const FeedbackDialog = ({
       setSelectedTags(prev => [...prev, tag]);
     } else {
       setSelectedTags(prev => prev.filter(t => t !== tag));
+    }
+  };
+
+  // Handle creating new custom tag
+  const handleAddCustomTag = async (tagName: string) => {
+    try {
+      const newTag = await dataService.gallery.createCustomTag(tagName);
+      // Add the new tag to selected tags
+      setSelectedTags(prev => [...prev, newTag.value as OrderTag]);
+      toast.success(`Tag "${tagName}" created successfully`);
+    } catch (error) {
+      console.error("Error creating tag:", error);
+      toast.error("Failed to create tag");
     }
   };
 
@@ -74,6 +136,17 @@ const FeedbackDialog = ({
         // Update status to finished when feedback is saved
         status: 'finished' as OrderStatus
       };
+      
+      // If we have finished cake photos, add them to the gallery with selected tags
+      if (order.finishedCakePhotos && order.finishedCakePhotos.length > 0) {
+        for (const photoUrl of order.finishedCakePhotos) {
+          await dataService.gallery.addPhotoFromOrder(
+            updatedOrder,
+            photoUrl,
+            selectedTags
+          );
+        }
+      }
       
       // Update the order
       await updateOrder(updatedOrder);
@@ -124,19 +197,27 @@ const FeedbackDialog = ({
             </Label>
             
             <div className="grid grid-cols-2 gap-4">
-              {availableTags.map((tag) => (
-                <div key={tag.value} className="flex items-center space-x-2">
+              {allTags.map((tag) => (
+                <div key={tag.id} className="flex items-center space-x-2">
                   <Checkbox
                     id={`tag-${tag.value}`}
-                    checked={selectedTags.includes(tag.value)}
-                    onCheckedChange={(checked) => handleTagChange(tag.value, !!checked)}
+                    checked={selectedTags.includes(tag.value as OrderTag)}
+                    onCheckedChange={(checked) => handleTagChange(tag.value as OrderTag, !!checked)}
                   />
-                  <Label htmlFor={`tag-${tag.value}`}>{tag.label}</Label>
+                  <Label htmlFor={`tag-${tag.value}`} className="flex items-center gap-1">
+                    {tag.label}
+                    {tag.id.startsWith('custom') && (
+                      <Badge variant="outline" className="text-xs bg-purple-50">custom</Badge>
+                    )}
+                  </Label>
                 </div>
               ))}
             </div>
+            
+            <AddTagInput onAddTag={handleAddCustomTag} />
+            
             <p className="text-xs text-muted-foreground mt-1">
-              Tags help categorize orders for reporting and analytics.
+              Tags help categorize cakes for the design gallery and reporting.
             </p>
           </div>
         </div>

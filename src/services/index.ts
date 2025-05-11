@@ -1,102 +1,71 @@
-
-import { MockDataProvider } from "./mock";
-import { LiveApiClient } from "./api";
 import { CustomerRepository } from "./repositories/customer.repository";
 import { OrderRepository } from "./repositories/order.repository";
-import { ProductRepository } from "./repositories/product.repository";
-import { SettingsRepository, MockSettingsRepository } from "./repositories/settings.repository";
-import { BakerRepository, MockBakerRepository } from "./repositories/baker.repository";
+import { SettingsRepository } from "./repositories/settings.repository";
+import { KitchenRepository } from "./repositories/kitchen.repository";
+import { BakerRepository } from "./repositories/baker.repository";
+import { DeliveryRepository } from "./repositories/delivery.repository";
+import { GalleryRepository } from "./repositories/gallery.repository";
 
-/**
- * Data source mode to determine which data provider to use
- */
-export type DataSourceMode = 'mock' | 'live';
-
-/**
- * Data service class that provides access to all repositories
- * and handles toggling between mock and live data
- */
-export class DataService {
-  private static instance: DataService;
-  private mockDataProvider: MockDataProvider;
-  private liveApiClient: LiveApiClient | null = null;
-  private mode: DataSourceMode = 'mock'; // Default to mock
-  private settingsRepository: SettingsRepository;
-  private bakerRepository: BakerRepository;
-
-  private constructor() {
-    this.mockDataProvider = new MockDataProvider();
-    this.settingsRepository = new MockSettingsRepository();
-    this.bakerRepository = new MockBakerRepository();
-  }
-
-  /**
-   * Get the singleton instance of the data service
-   */
-  public static getInstance(): DataService {
-    if (!DataService.instance) {
-      DataService.instance = new DataService();
-    }
-    return DataService.instance;
-  }
-
-  /**
-   * Set the data source mode (mock or live)
-   */
-  public setMode(mode: DataSourceMode, apiBaseUrl?: string): void {
-    this.mode = mode;
-    
-    // Initialize live API client if switching to live mode
-    if (mode === 'live' && apiBaseUrl) {
-      this.liveApiClient = new LiveApiClient(apiBaseUrl);
-    }
-  }
-
-  /**
-   * Get the current data source mode
-   */
-  public getMode(): DataSourceMode {
-    return this.mode;
-  }
-
-  /**
-   * Get the customer repository
-   */
-  public get customers(): CustomerRepository {
-    // In future, return live repository when mode is 'live'
-    return this.mockDataProvider.customerRepository;
-  }
-
-  /**
-   * Get the order repository
-   */
-  public get orders(): OrderRepository {
-    // In future, return live repository when mode is 'live'
-    return this.mockDataProvider.orderRepository;
-  }
-
-  /**
-   * Get the product repository
-   */
-  public get products(): ProductRepository {
-    // In future, return live repository when mode is 'live'
-    return this.mockDataProvider.productRepository;
-  }
-
-  /**
-   * Get the settings repository
-   */
-  public get settings(): SettingsRepository {
-    return this.settingsRepository;
-  }
-
-  /**
-   * Get the baker repository
-   */
-  public get baker(): BakerRepository {
-    return this.bakerRepository;
-  }
+// Define the complete data service interface
+export interface DataService {
+  customers: CustomerRepository;
+  orders: OrderRepository;
+  settings: SettingsRepository;
+  kitchen: KitchenRepository;
+  baker: BakerRepository;
+  delivery: DeliveryRepository;
+  gallery: GalleryRepository;
+  setMode: (mode: 'mock' | 'firebase', baseUrl?: string) => void;
 }
 
-// Create a default export for easier imports
-export const dataService = DataService.getInstance();
+// Function to set the data source mode
+let currentMode: 'mock' | 'firebase' = 'mock';
+let currentBaseUrl: string | undefined = undefined;
+
+const dataService: DataService = {
+  customers: null as any,
+  orders: null as any,
+  settings: null as any,
+  kitchen: null as any,
+  baker: null as any,
+  delivery: null as any,
+  gallery: null as any,
+  setMode: (mode: 'mock' | 'firebase', baseUrl?: string) => {
+    currentMode = mode;
+    currentBaseUrl = baseUrl;
+    
+    // Dynamically import the data service based on the mode
+    if (mode === 'mock') {
+      import('./mock')
+        .then(mock => {
+          dataService.customers = mock.mockDataService.customers;
+          dataService.orders = mock.mockDataService.orders;
+          dataService.settings = mock.mockDataService.settings;
+          dataService.kitchen = mock.mockDataService.kitchen;
+          dataService.baker = mock.mockDataService.baker;
+          dataService.delivery = mock.mockDataService.delivery;
+          dataService.gallery = mock.mockDataService.gallery;
+        })
+        .catch(err => console.error('Failed to load mock data service', err));
+    } else if (mode === 'firebase') {
+      if (!baseUrl) {
+        throw new Error('Base URL is required for Firebase mode');
+      }
+      
+      import('./firebase')
+        .then(firebase => {
+          firebase.firebaseDataService.setBaseUrl(baseUrl);
+          dataService.customers = firebase.firebaseDataService.customers;
+          dataService.orders = firebase.firebaseDataService.orders;
+          dataService.settings = firebase.firebaseDataService.settings;
+          dataService.kitchen = firebase.firebaseDataService.kitchen;
+          dataService.baker = firebase.firebaseDataService.baker;
+          dataService.delivery = firebase.firebaseDataService.delivery;
+          dataService.gallery = firebase.firebaseDataService.gallery;
+        })
+        .catch(err => console.error('Failed to load firebase data service', err));
+    }
+  }
+};
+
+export { dataService, currentMode, currentBaseUrl };

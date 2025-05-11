@@ -1,12 +1,16 @@
+
 import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { OrderStatus, OrderTag } from "@/types";
-import { Camera, Image, Archive } from "lucide-react";
+import { Camera, Image, Archive, Tag } from "lucide-react";
 import { matchesStatus } from "@/lib/statusHelpers";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
+import { dataService } from "@/services";
 
 interface DeliveryRecapSectionProps {
   orderId?: string;
@@ -25,16 +29,6 @@ interface DeliveryRecapSectionProps {
   readOnly?: boolean;
 }
 
-const availableTags: { value: OrderTag; label: string }[] = [
-  { value: 'for-kids', label: 'For Kids' },
-  { value: 'for-man', label: 'For Man' },
-  { value: 'for-woman', label: 'For Woman' },
-  { value: 'birthday', label: 'Birthday' },
-  { value: 'anniversary', label: 'Anniversary' },
-  { value: 'wedding', label: 'Wedding' },
-  { value: 'other', label: 'Other' },
-];
-
 const DeliveryRecapSection: React.FC<DeliveryRecapSectionProps> = ({
   orderId,
   status,
@@ -51,6 +45,18 @@ const DeliveryRecapSection: React.FC<DeliveryRecapSectionProps> = ({
   onStatusChange,
   readOnly = false
 }) => {
+  // Fetch all available tags
+  const { data: allTags = [] } = useQuery({
+    queryKey: ['galleryTags'],
+    queryFn: () => dataService.gallery.getAllTags(),
+  });
+
+  // Get the label for a tag value
+  const getTagLabel = (tagValue: string) => {
+    const tag = allTags.find(t => t.value === tagValue);
+    return tag?.label || tagValue;
+  };
+
   // Handle tag changes directly
   const handleTagChange = (tag: OrderTag, checked: boolean) => {
     const newTags = checked 
@@ -101,7 +107,7 @@ const DeliveryRecapSection: React.FC<DeliveryRecapSectionProps> = ({
     } else if (matchesStatus(status, 'finished')) {
       return {
         type: 'success',
-        message: 'This order has been finished. You can now archive it if no further changes are needed.'
+        message: 'This order has been finished. Make sure to add tags for the gallery before archiving.'
       };
     }
     
@@ -203,6 +209,16 @@ const DeliveryRecapSection: React.FC<DeliveryRecapSectionProps> = ({
               ))
             )}
           </div>
+          
+          {status === 'finished' && finishedCakePhotos.length > 0 && (
+            <Alert className="mt-2 bg-purple-50 border-purple-200">
+              <AlertDescription className="text-purple-800 flex items-center gap-2">
+                <Tag className="h-4 w-4" />
+                These cake photos will be added to the gallery when you archive the order. 
+                Make sure to add relevant tags below.
+              </AlertDescription>
+            </Alert>
+          )}
         </div>
       )}
       
@@ -261,20 +277,39 @@ const DeliveryRecapSection: React.FC<DeliveryRecapSectionProps> = ({
       
       {/* Order tags section - make checkboxes respect readOnly */}
       <div className="space-y-3">
-        <h3 className="text-lg font-medium">Order Tags</h3>
-        <div className="grid grid-cols-2 gap-4">
-          {availableTags.map((tag) => (
-            <div key={tag.value} className="flex items-center space-x-2">
+        <h3 className="text-lg font-medium flex items-center gap-2">
+          <Tag className="h-4 w-4" /> Order Tags
+          {status === 'finished' && finishedCakePhotos.length > 0 && (
+            <Badge variant="outline" className="bg-purple-50 text-purple-800">
+              For Gallery
+            </Badge>
+          )}
+        </h3>
+        
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {allTags.map((tag) => (
+            <div key={tag.id} className="flex items-center space-x-2">
               <Checkbox
                 id={`tag-${tag.value}`}
-                checked={orderTags?.includes(tag.value)}
-                onCheckedChange={(checked) => !readOnly && handleTagChange(tag.value, checked === true)}
+                checked={orderTags?.includes(tag.value as OrderTag)}
+                onCheckedChange={(checked) => !readOnly && handleTagChange(tag.value as OrderTag, !!checked)}
                 disabled={readOnly}
               />
-              <Label htmlFor={`tag-${tag.value}`}>{tag.label}</Label>
+              <Label htmlFor={`tag-${tag.value}`} className="flex items-center gap-1">
+                {tag.label}
+                {tag.id.startsWith('custom') && (
+                  <Badge variant="outline" className="text-xs bg-purple-50">custom</Badge>
+                )}
+              </Label>
             </div>
           ))}
         </div>
+        
+        {status === 'finished' && !readOnly && (
+          <p className="text-sm text-muted-foreground">
+            Need more tags? Go to the Gallery page to create custom tags.
+          </p>
+        )}
       </div>
       
       {/* Add "Finish Order" button only for waiting-feedback status - hide if readOnly */}

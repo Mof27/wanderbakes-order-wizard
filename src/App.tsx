@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -18,6 +19,7 @@ import BakerPage from "./pages/BakerPage";
 import DeliveryPage from "./pages/DeliveryPage";
 import WorkflowPage from "./pages/WorkflowPage";
 import ArchivedOrdersPage from "./pages/ArchivedOrdersPage";
+import GalleryPage from "./pages/GalleryPage";
 import NotFound from "./pages/NotFound";
 import { AppProvider } from "./context/AppContext";
 import { useEffect } from "react";
@@ -119,6 +121,11 @@ const App = () => {
                 <Route path="/workflow" element={
                   <MainLayout>
                     <WorkflowPage />
+                  </MainLayout>
+                } />
+                <Route path="/gallery" element={
+                  <MainLayout>
+                    <GalleryPage />
                   </MainLayout>
                 } />
                 <Route path="/customers" element={
