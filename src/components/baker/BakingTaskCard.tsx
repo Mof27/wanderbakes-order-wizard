@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Cake, Check, PlayCircle, X, Trash2, AlertTriangle } from 'lucide-react';
+import { Cake, Check, PlayCircle, X, AlertTriangle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { BakingTask } from '@/types/baker';
 
@@ -39,39 +39,11 @@ const BakingTaskCard: React.FC<BakingTaskCardProps> = ({
     }
   };
 
-  // Helper to determine urgency indicator
-  const UrgencyIndicator = () => {
-    if (task.isPriority) {
-      // Highest urgency - purple indicator
-      return (
-        <div className="absolute top-0 right-0 w-0 h-0 border-t-[20px] border-r-[20px] border-t-[#9b87f5] border-r-[#9b87f5] border-b-transparent border-l-transparent" />
-      );
-    } else {
-      // Add a subtle urgency indicator based on createdAt
-      const daysSinceCreation = Math.ceil(
-        (new Date().getTime() - task.createdAt.getTime()) / (1000 * 3600 * 24)
-      );
-      
-      if (daysSinceCreation <= 1) {
-        // Medium urgency - orange indicator
-        return (
-          <div className="absolute top-0 right-0 w-0 h-0 border-t-[15px] border-r-[15px] border-t-[#FEC6A1] border-r-[#FEC6A1] border-b-transparent border-l-transparent" />
-        );
-      } else {
-        // Low urgency - gray indicator
-        return (
-          <div className="absolute top-0 right-0 w-0 h-0 border-t-[10px] border-r-[10px] border-t-[#F1F0FB] border-r-[#F1F0FB] border-b-transparent border-l-transparent" />
-        );
-      }
-    }
-  };
-
   return (
     <Card className={`bg-white shadow-sm hover:shadow-md transition-shadow relative
       ${task.status === 'cancelled' ? 'border-rose-300 bg-rose-50' : ''}
       ${task.isPriority ? 'border-amber-300' : ''}
       ${task.isManual ? 'border-l-4 border-l-purple-400' : ''}`}>
-      <UrgencyIndicator />
       <CardContent className="p-3">
         <div className="flex justify-between items-start">
           <div className="flex items-center gap-1.5">
@@ -121,28 +93,14 @@ const BakingTaskCard: React.FC<BakingTaskCardProps> = ({
 
         <div className="mt-3 flex gap-1.5">
           {task.status === 'pending' && (
-            <>
-              <Button
-                className="flex-1 text-xs h-8"
-                size="sm"
-                onClick={() => onStartTask(task.id)}
-              >
-                <PlayCircle className="mr-1 h-3.5 w-3.5" />
-                Start
-              </Button>
-              
-              {/* Delete button for manual tasks only */}
-              {task.isManual && onDeleteManualTask && (
-                <Button
-                  className="flex-none h-8"
-                  size="sm"
-                  variant="outline"
-                  onClick={() => onDeleteManualTask(task.id)}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
-              )}
-            </>
+            <Button
+              className="flex-1 text-xs h-8"
+              size="sm"
+              onClick={() => onStartTask(task.id)}
+            >
+              <PlayCircle className="mr-1 h-3.5 w-3.5" />
+              Start
+            </Button>
           )}
           
           {task.status === 'in-progress' && (
@@ -180,17 +138,18 @@ const BakingTaskCard: React.FC<BakingTaskCardProps> = ({
             </Button>
           )}
           
-          {/* Cancel button for manual tasks that are pending or in-progress */}
+          {/* Only show cancel button for manual tasks that are pending or in-progress */}
           {task.isManual && 
            ['pending', 'in-progress'].includes(task.status) && 
            onCancelManualTask && (
             <Button
-              className="flex-none h-8"
+              className="flex-1 h-8"
               size="sm"
               variant="outline"
               onClick={() => onCancelManualTask(task.id)}
             >
-              <X className="h-3.5 w-3.5" />
+              <X className="mr-1 h-3.5 w-3.5" />
+              Cancel
             </Button>
           )}
         </div>
