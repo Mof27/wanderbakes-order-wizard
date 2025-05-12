@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { SandboxState } from "@/types/template";
 import { PrintTemplate, DeliveryLabelTemplate, PrintField, PrintSection } from "@/types";
@@ -16,14 +15,26 @@ interface PropertiesPanelProps {
   sandboxState: SandboxState;
   template: PrintTemplate | DeliveryLabelTemplate | null;
   onTemplateChange: (updatedTemplate: PrintTemplate | DeliveryLabelTemplate) => void;
+  onSandboxStateChange?: (state: SandboxState) => void; // Added this prop
 }
 
 const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ 
   sandboxState, 
   template, 
-  onTemplateChange 
+  onTemplateChange,
+  onSandboxStateChange // Added parameter
 }) => {
   const [activeTab, setActiveTab] = useState<'element' | 'section' | 'template'>('template');
+  
+  // Helper function to update sandbox state
+  const updateSandboxState = (partialState: Partial<SandboxState>) => {
+    if (onSandboxStateChange) {
+      onSandboxStateChange({
+        ...sandboxState,
+        ...partialState
+      });
+    }
+  };
   
   if (!template) {
     return (
@@ -508,8 +519,7 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               max={200}
               step={10}
               onValueChange={([value]) => {
-                setSandboxState({
-                  ...sandboxState,
+                updateSandboxState({
                   zoom: value
                 });
               }}

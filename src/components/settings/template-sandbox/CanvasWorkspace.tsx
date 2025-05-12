@@ -29,6 +29,7 @@ const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
   const sampleOrder = {
     id: "ORD12345",
     customer: {
+      id: "CUST12345", // Added missing id field
       name: "John Doe",
       whatsappNumber: "+62 812 3456 7890",
       email: "john@example.com",
