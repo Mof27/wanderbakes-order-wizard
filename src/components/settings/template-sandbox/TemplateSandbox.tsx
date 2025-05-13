@@ -1,11 +1,20 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { dataService } from "@/services";
-import { SandboxTemplateType, SandboxState, TemplateVersion, ElementLibraryItem } from "@/types/template";
-import { PrintTemplate, DeliveryLabelTemplate } from "@/types";
+import { 
+  SandboxTemplateType, 
+  SandboxState, 
+  TemplateVersion, 
+  ElementLibraryItem 
+} from "@/types/template";
+import { 
+  PrintTemplate, 
+  DeliveryLabelTemplate, 
+  PrintFieldType, 
+  DeliveryLabelFieldType 
+} from "@/types";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "@/components/ui/sonner";
@@ -230,37 +239,75 @@ const TemplateSandbox = () => {
     }
     
     // Create a new field based on the element
-    const newField = {
-      id: uuidv4(),
-      type: element.type,
-      label: element.defaultProps.label || '',
-      value: element.defaultProps.value || '',
-      fieldKey: element.defaultProps.fieldKey || '',
-      order: section.fields.length,
-      enabled: true,
-      fontSize: element.defaultProps.fontSize || 'base',
-      fontWeight: element.defaultProps.fontWeight || 'normal',
-      fontStyle: element.defaultProps.fontStyle || 'normal',
-      alignment: element.defaultProps.alignment || 'left',
-      size: element.defaultProps.size || 100,
-    };
-    
-    // Add the new field to the section
-    const updatedSections = currentTemplate.sections.map(s => {
-      if (s.id === sandboxState.selectedSectionId) {
-        return {
-          ...s,
-          fields: [...s.fields, newField]
-        };
-      }
-      return s;
-    });
-    
-    // Update the template
-    handleTemplateChange({
-      ...currentTemplate,
-      sections: updatedSections
-    });
+    if (templateType === 'delivery-label') {
+      // For delivery label templates
+      const newField = {
+        id: uuidv4(),
+        type: element.type as DeliveryLabelFieldType,
+        label: element.defaultProps.label || '',
+        value: element.defaultProps.value || '',
+        fieldKey: element.defaultProps.fieldKey || '',
+        order: section.fields.length,
+        enabled: true,
+        fontSize: element.defaultProps.fontSize || 'base',
+        fontWeight: element.defaultProps.fontWeight || 'normal',
+        fontStyle: element.defaultProps.fontStyle || 'normal',
+        alignment: element.defaultProps.alignment || 'left',
+        size: element.defaultProps.size || 100,
+        height: element.defaultProps.height || 16,
+      };
+      
+      // Add the new field to the section
+      const updatedSections = (currentTemplate as DeliveryLabelTemplate).sections.map(s => {
+        if (s.id === sandboxState.selectedSectionId) {
+          return {
+            ...s,
+            fields: [...s.fields, newField]
+          };
+        }
+        return s;
+      });
+      
+      // Update the template
+      handleTemplateChange({
+        ...currentTemplate as DeliveryLabelTemplate,
+        sections: updatedSections
+      });
+    } else {
+      // For order form templates
+      const newField = {
+        id: uuidv4(),
+        type: element.type as PrintFieldType,
+        label: element.defaultProps.label || '',
+        value: element.defaultProps.value || '',
+        fieldKey: element.defaultProps.fieldKey || '',
+        order: section.fields.length,
+        enabled: true,
+        fontSize: element.defaultProps.fontSize || 'base',
+        fontWeight: element.defaultProps.fontWeight || 'normal',
+        fontStyle: element.defaultProps.fontStyle || 'normal',
+        alignment: element.defaultProps.alignment || 'left',
+        size: element.defaultProps.size || 100,
+        height: element.defaultProps.height || 16,
+      };
+      
+      // Add the new field to the section
+      const updatedSections = (currentTemplate as PrintTemplate).sections.map(s => {
+        if (s.id === sandboxState.selectedSectionId) {
+          return {
+            ...s,
+            fields: [...s.fields, newField]
+          };
+        }
+        return s;
+      });
+      
+      // Update the template
+      handleTemplateChange({
+        ...currentTemplate as PrintTemplate,
+        sections: updatedSections
+      });
+    }
     
     // Select the new element
     setSandboxState({

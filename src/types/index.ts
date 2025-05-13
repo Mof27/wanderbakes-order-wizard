@@ -226,7 +226,7 @@ export type PrintFieldType = 'section-title' | 'text' | 'field' | 'separator' | 
 export type FontWeight = 'normal' | 'medium' | 'semibold' | 'bold';
 export type FontStyle = 'normal' | 'italic';
 export type FontSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl' | '2xl';
-export type TextAlignment = 'left' | 'center' | 'right'; // Add TextAlignment type
+export type TextAlignment = 'left' | 'center' | 'right';
 
 export interface PrintField {
   id: string;
@@ -241,7 +241,7 @@ export interface PrintField {
   fontWeight?: FontWeight;
   fontStyle?: FontStyle;
   fontSize?: FontSize;
-  alignment?: TextAlignment; // Add alignment property
+  alignment?: TextAlignment;
   height?: number; // Add height property for spacers
 }
 
@@ -274,7 +274,7 @@ export interface DeliveryLabelField {
   fontWeight?: FontWeight;
   fontStyle?: FontStyle;
   fontSize?: FontSize;
-  alignment?: TextAlignment; // Add alignment property
+  alignment?: TextAlignment;
   height?: number; // Add height property for spacers
 }
 

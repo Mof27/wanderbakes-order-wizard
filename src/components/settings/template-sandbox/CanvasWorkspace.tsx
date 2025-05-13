@@ -1,6 +1,15 @@
-
 import { useCallback, useEffect, useRef, useState } from "react";
-import { PrintTemplate, DeliveryLabelTemplate, DeliveryLabelField, PrintField } from "@/types";
+import { 
+  PrintTemplate, 
+  DeliveryLabelTemplate, 
+  DeliveryLabelField, 
+  PrintField, 
+  DeliveryLabelFieldType, 
+  PrintFieldType,
+  FontWeight,
+  FontStyle,
+  TextAlignment
+} from "@/types";
 import { SandboxTemplateType, SandboxState, ElementLibraryItem } from "@/types/template";
 import { PrintTemplateRenderer } from "../PrintTemplateRenderer";
 import DeliveryLabelTemplateRenderer from "../DeliveryLabelTemplateRenderer";
@@ -97,38 +106,75 @@ const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
           if (!section) return;
           
           // Create a new field based on the dragged element
-          const newField = {
-            id: uuidv4(),
-            type: draggedElement.type as DeliveryLabelFieldType, // Ensure correct type casting
-            label: draggedElement.defaultProps.label || '',
-            value: draggedElement.defaultProps.value || '',
-            fieldKey: draggedElement.defaultProps.fieldKey || '',
-            order: section.fields.length,
-            enabled: true,
-            fontSize: draggedElement.defaultProps.fontSize || 'base',
-            fontWeight: draggedElement.defaultProps.fontWeight || 'normal',
-            fontStyle: draggedElement.defaultProps.fontStyle || 'normal',
-            alignment: draggedElement.defaultProps.alignment || 'left',
-            size: draggedElement.defaultProps.size || 100,
-            height: draggedElement.defaultProps.height || 16, // Default height for spacers
-          };
-          
-          // Add the new field to the section
-          const updatedSections = template.sections.map(s => {
-            if (s.id === sectionId) {
-              return {
-                ...s,
-                fields: [...s.fields, newField]
-              };
-            }
-            return s;
-          });
-          
-          // Update the template
-          onTemplateChange({
-            ...template,
-            sections: updatedSections
-          });
+          if (templateType === 'delivery-label') {
+            // For delivery label templates
+            const newField: DeliveryLabelField = {
+              id: uuidv4(),
+              type: draggedElement.type as DeliveryLabelFieldType,
+              label: draggedElement.defaultProps.label || '',
+              value: draggedElement.defaultProps.value || '',
+              fieldKey: draggedElement.defaultProps.fieldKey || '',
+              order: section.fields.length,
+              enabled: true,
+              fontSize: draggedElement.defaultProps.fontSize,
+              fontWeight: draggedElement.defaultProps.fontWeight,
+              fontStyle: draggedElement.defaultProps.fontStyle,
+              alignment: draggedElement.defaultProps.alignment,
+              size: draggedElement.defaultProps.size || 100,
+              height: draggedElement.defaultProps.height || 16,
+            };
+            
+            // Add the new field to the section
+            const updatedSections = (template as DeliveryLabelTemplate).sections.map(s => {
+              if (s.id === sectionId) {
+                return {
+                  ...s,
+                  fields: [...s.fields, newField]
+                };
+              }
+              return s;
+            });
+            
+            // Update the template
+            onTemplateChange({
+              ...template as DeliveryLabelTemplate,
+              sections: updatedSections
+            });
+          } else {
+            // For order form templates
+            const newField: PrintField = {
+              id: uuidv4(),
+              type: draggedElement.type as PrintFieldType,
+              label: draggedElement.defaultProps.label || '',
+              value: draggedElement.defaultProps.value || '',
+              fieldKey: draggedElement.defaultProps.fieldKey || '',
+              order: section.fields.length,
+              enabled: true,
+              fontSize: draggedElement.defaultProps.fontSize,
+              fontWeight: draggedElement.defaultProps.fontWeight,
+              fontStyle: draggedElement.defaultProps.fontStyle,
+              alignment: draggedElement.defaultProps.alignment,
+              size: draggedElement.defaultProps.size || 100,
+              height: draggedElement.defaultProps.height || 16,
+            };
+            
+            // Add the new field to the section
+            const updatedSections = (template as PrintTemplate).sections.map(s => {
+              if (s.id === sectionId) {
+                return {
+                  ...s,
+                  fields: [...s.fields, newField]
+                };
+              }
+              return s;
+            });
+            
+            // Update the template
+            onTemplateChange({
+              ...template as PrintTemplate,
+              sections: updatedSections
+            });
+          }
           
           // Select the new element
           onElementSelect(newField.id);
@@ -146,35 +192,68 @@ const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
     
     const { id: elementId, sectionId } = selectedElement;
     
-    const updatedSections = template.sections.map(section => {
-      if (section.id === sectionId) {
-        const updatedFields = section.fields.map(field => {
-          if (field.id === elementId) {
-            switch (formatType) {
-              case 'bold':
-                return { ...field, fontWeight: field.fontWeight === 'bold' ? 'normal' : 'bold' };
-              case 'italic':
-                return { ...field, fontStyle: field.fontStyle === 'italic' ? 'normal' : 'italic' };
-              case 'align-left':
-              case 'align-center':
-              case 'align-right':
-                const alignment = formatType.replace('align-', '') as 'left' | 'center' | 'right';
-                return { ...field, alignment };
-              default:
-                return field;
+    if (templateType === 'delivery-label') {
+      const updatedSections = (template as DeliveryLabelTemplate).sections.map(section => {
+        if (section.id === sectionId) {
+          const updatedFields = section.fields.map(field => {
+            if (field.id === elementId) {
+              switch (formatType) {
+                case 'bold':
+                  return { ...field, fontWeight: field.fontWeight === 'bold' ? 'normal' : 'bold' as FontWeight };
+                case 'italic':
+                  return { ...field, fontStyle: field.fontStyle === 'italic' ? 'normal' : 'italic' as FontStyle };
+                case 'align-left':
+                case 'align-center':
+                case 'align-right':
+                  const alignment = formatType.replace('align-', '') as TextAlignment;
+                  return { ...field, alignment };
+                default:
+                  return field;
+              }
             }
-          }
-          return field;
-        });
-        return { ...section, fields: updatedFields };
-      }
-      return section;
-    });
-    
-    onTemplateChange({
-      ...template,
-      sections: updatedSections
-    });
+            return field;
+          });
+          return { ...section, fields: updatedFields };
+        }
+        return section;
+      });
+      
+      onTemplateChange({
+        ...template as DeliveryLabelTemplate,
+        sections: updatedSections
+      });
+    } else {
+      // Handle order form format changes
+      const updatedSections = (template as PrintTemplate).sections.map(section => {
+        if (section.id === sectionId) {
+          const updatedFields = section.fields.map(field => {
+            if (field.id === elementId) {
+              switch (formatType) {
+                case 'bold':
+                  return { ...field, fontWeight: field.fontWeight === 'bold' ? 'normal' : 'bold' as FontWeight };
+                case 'italic':
+                  return { ...field, fontStyle: field.fontStyle === 'italic' ? 'normal' : 'italic' as FontStyle };
+                case 'align-left':
+                case 'align-center':
+                case 'align-right':
+                  const alignment = formatType.replace('align-', '') as TextAlignment;
+                  return { ...field, alignment };
+                default:
+                  return field;
+              }
+            }
+            return field;
+          });
+          return { ...section, fields: updatedFields };
+        }
+        return section;
+      });
+      
+      onTemplateChange({
+        ...template as PrintTemplate,
+        sections: updatedSections
+      });
+    }
   };
   
   const findSectionAndFieldForElement = (elementId: string) => {
