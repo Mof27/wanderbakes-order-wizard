@@ -1,6 +1,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { PrintTemplate, DeliveryLabelTemplate } from "@/types";
+import { PrintTemplate, DeliveryLabelTemplate, DeliveryLabelField, PrintField } from "@/types";
 import { SandboxTemplateType, SandboxState, ElementLibraryItem } from "@/types/template";
 import { PrintTemplateRenderer } from "../PrintTemplateRenderer";
 import DeliveryLabelTemplateRenderer from "../DeliveryLabelTemplateRenderer";
@@ -99,7 +99,7 @@ const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
           // Create a new field based on the dragged element
           const newField = {
             id: uuidv4(),
-            type: draggedElement.type,
+            type: draggedElement.type as DeliveryLabelFieldType, // Ensure correct type casting
             label: draggedElement.defaultProps.label || '',
             value: draggedElement.defaultProps.value || '',
             fieldKey: draggedElement.defaultProps.fieldKey || '',
@@ -110,6 +110,7 @@ const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
             fontStyle: draggedElement.defaultProps.fontStyle || 'normal',
             alignment: draggedElement.defaultProps.alignment || 'left',
             size: draggedElement.defaultProps.size || 100,
+            height: draggedElement.defaultProps.height || 16, // Default height for spacers
           };
           
           // Add the new field to the section
@@ -157,7 +158,7 @@ const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
               case 'align-left':
               case 'align-center':
               case 'align-right':
-                const alignment = formatType.replace('align-', '');
+                const alignment = formatType.replace('align-', '') as 'left' | 'center' | 'right';
                 return { ...field, alignment };
               default:
                 return field;

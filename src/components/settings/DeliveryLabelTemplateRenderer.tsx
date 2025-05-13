@@ -1,6 +1,6 @@
 
 import React, { forwardRef } from "react";
-import { DeliveryLabelTemplate, Order, PrintSection, PrintField } from "@/types";
+import { DeliveryLabelTemplate, Order, DeliveryLabelSection, DeliveryLabelField } from "@/types";
 import { formatCurrency, formatDate, formatTimeSlot } from "@/lib/utils";
 import { get } from "lodash";
 import { QRCodeSVG } from "qrcode.react";
@@ -154,7 +154,6 @@ const DeliveryLabelTemplateRenderer = forwardRef<HTMLDivElement, DeliveryLabelTe
                             const value = getFieldValue(field.fieldKey);
                             if (!value && !isPreviewing) return null;
                             
-                            const alignmentClass = getAlignmentClass(field.alignment);
                             return (
                               <div key={field.id} className={`grid ${field.alignment === 'center' ? 'grid-cols-1 gap-1' : 'grid-cols-2 gap-1'} items-start`}>
                                 <div className={cn("font-medium", textClasses, field.alignment === 'center' && "col-span-1")}>

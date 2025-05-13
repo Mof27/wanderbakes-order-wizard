@@ -1,5 +1,5 @@
 
-import { PrintTemplate, DeliveryLabelTemplate } from "./index";
+import { PrintTemplate, DeliveryLabelTemplate, TextAlignment, FontWeight, FontStyle, FontSize } from "./index";
 
 // Type to represent both template types in the sandbox
 export type SandboxTemplateType = 'order-form' | 'delivery-label';
@@ -43,17 +43,15 @@ export interface ElementLibraryItem {
   icon: string;
   category: ElementCategory;
   type: string;
-  defaultProps: Record<string, any>;
+  defaultProps: {
+    label?: string;
+    value?: string;
+    fieldKey?: string;
+    fontSize?: FontSize;
+    fontWeight?: FontWeight;
+    fontStyle?: FontStyle;
+    alignment?: TextAlignment;
+    size?: number;
+    height?: number;
+  };
 }
-
-// Text alignment options
-export type TextAlignment = 'left' | 'center' | 'right';
-
-// Font weight options
-export type FontWeight = 'normal' | 'medium' | 'semibold' | 'bold';
-
-// Font style options
-export type FontStyle = 'normal' | 'italic';
-
-// Font size options
-export type FontSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl' | '2xl';
