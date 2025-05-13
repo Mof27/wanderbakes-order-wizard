@@ -4,15 +4,15 @@ import { SandboxTemplateType, ElementCategory, ElementLibraryItem } from "@/type
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Search } from "lucide-react";
+import { Search, Type, AlignCenter, LayoutGrid, QrCode } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 // Element library data
 const elementLibraryData: Record<SandboxTemplateType, ElementLibraryItem[]> = {
   'order-form': [
     // Text elements
-    { id: 'heading', name: 'Heading', icon: 'text', category: 'text', type: 'section-title', defaultProps: { label: 'New Heading' } },
-    { id: 'paragraph', name: 'Paragraph', icon: 'text', category: 'text', type: 'text', defaultProps: { value: 'New paragraph text' } },
+    { id: 'heading', name: 'Heading', icon: 'text', category: 'text', type: 'section-title', defaultProps: { label: 'New Heading', fontWeight: 'semibold', fontSize: 'lg' } },
+    { id: 'paragraph', name: 'Paragraph', icon: 'text', category: 'text', type: 'text', defaultProps: { value: 'New paragraph text', fontSize: 'base' } },
     
     // Field elements
     { id: 'order-id', name: 'Order ID', icon: 'field', category: 'fields', type: 'field', defaultProps: { label: 'Order ID', fieldKey: 'id' } },
@@ -29,8 +29,8 @@ const elementLibraryData: Record<SandboxTemplateType, ElementLibraryItem[]> = {
   ],
   'delivery-label': [
     // Text elements
-    { id: 'heading', name: 'Heading', icon: 'text', category: 'text', type: 'section-title', defaultProps: { label: 'New Heading' } },
-    { id: 'paragraph', name: 'Paragraph', icon: 'text', category: 'text', type: 'text', defaultProps: { value: 'New paragraph text' } },
+    { id: 'heading', name: 'Heading', icon: 'text', category: 'text', type: 'section-title', defaultProps: { label: 'New Heading', fontWeight: 'semibold', fontSize: 'lg' } },
+    { id: 'paragraph', name: 'Paragraph', icon: 'text', category: 'text', type: 'text', defaultProps: { value: 'New paragraph text', fontSize: 'base' } },
     
     // Field elements
     { id: 'recipient-name', name: 'Recipient Name', icon: 'field', category: 'fields', type: 'field', defaultProps: { label: 'Name', fieldKey: 'customer.name' } },
@@ -39,7 +39,7 @@ const elementLibraryData: Record<SandboxTemplateType, ElementLibraryItem[]> = {
     
     // Layout elements
     { id: 'separator', name: 'Separator', icon: 'layout', category: 'layout', type: 'separator', defaultProps: {} },
-    { id: 'spacer', name: 'Spacer', icon: 'layout', category: 'layout', type: 'spacer', defaultProps: {} },
+    { id: 'spacer', name: 'Spacer', icon: 'layout', category: 'layout', type: 'spacer', defaultProps: { height: 20 } },
     
     // Special elements
     { id: 'qr-code', name: 'QR Code', icon: 'special', category: 'special', type: 'qr-code', defaultProps: { label: 'Scan for Order', fieldKey: 'orderUrl', size: 100 } },
@@ -63,6 +63,11 @@ const ElementLibrary: React.FC<ElementLibraryProps> = ({ templateType, onAddElem
     return matchesSearch && matchesCategory;
   });
   
+  const handleDragStart = (e: React.DragEvent, element: ElementLibraryItem) => {
+    e.dataTransfer.setData('application/json', JSON.stringify(element));
+    e.dataTransfer.effectAllowed = 'move';
+  };
+  
   const handleAddElement = (element: ElementLibraryItem) => {
     onAddElement({
       ...element,
@@ -77,6 +82,16 @@ const ElementLibrary: React.FC<ElementLibraryProps> = ({ templateType, onAddElem
       case 'layout': return 'Layout';
       case 'special': return 'Special';
       default: return category;
+    }
+  };
+  
+  const getCategoryIcon = (category: ElementCategory) => {
+    switch (category) {
+      case 'text': return <Type className="h-4 w-4" />;
+      case 'fields': return <AlignCenter className="h-4 w-4" />;
+      case 'layout': return <LayoutGrid className="h-4 w-4" />;
+      case 'special': return <QrCode className="h-4 w-4" />;
+      default: return null;
     }
   };
   
@@ -101,7 +116,7 @@ const ElementLibrary: React.FC<ElementLibraryProps> = ({ templateType, onAddElem
         <TabsList className="w-full">
           {['text', 'fields', 'layout', 'special'].map((category) => (
             <TabsTrigger key={category} value={category} className="flex-1 text-xs">
-              {getCategoryName(category as ElementCategory)}
+              {getCategoryIcon(category as ElementCategory)}
             </TabsTrigger>
           ))}
         </TabsList>
@@ -112,15 +127,26 @@ const ElementLibrary: React.FC<ElementLibraryProps> = ({ templateType, onAddElem
             <div className="space-y-1.5 pr-3">
               {filteredElements.length > 0 ? (
                 filteredElements.map((element) => (
-                  <Button
+                  <div 
                     key={element.id}
-                    variant="outline"
-                    size="sm"
-                    className="w-full justify-start text-sm"
-                    onClick={() => handleAddElement(element)}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, element)}
+                    className="cursor-grab"
                   >
-                    {element.name}
-                  </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full justify-start text-sm group"
+                      onClick={() => handleAddElement(element)}
+                    >
+                      <span className="flex items-center gap-2">
+                        {element.name}
+                      </span>
+                      <span className="ml-auto text-xs text-muted-foreground opacity-0 group-hover:opacity-100">
+                        Drag
+                      </span>
+                    </Button>
+                  </div>
                 ))
               ) : (
                 <p className="text-sm text-muted-foreground p-2">No elements found.</p>
@@ -129,6 +155,10 @@ const ElementLibrary: React.FC<ElementLibraryProps> = ({ templateType, onAddElem
           </ScrollArea>
         </TabsContent>
       </Tabs>
+      
+      <div className="mt-4 text-xs text-muted-foreground">
+        Drag elements to a section on the canvas
+      </div>
     </div>
   );
 };

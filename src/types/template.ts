@@ -45,3 +45,15 @@ export interface ElementLibraryItem {
   type: string;
   defaultProps: Record<string, any>;
 }
+
+// Text alignment options
+export type TextAlignment = 'left' | 'center' | 'right';
+
+// Font weight options
+export type FontWeight = 'normal' | 'medium' | 'semibold' | 'bold';
+
+// Font style options
+export type FontStyle = 'normal' | 'italic';
+
+// Font size options
+export type FontSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl' | '2xl';

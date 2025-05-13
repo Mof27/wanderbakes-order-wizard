@@ -1,14 +1,16 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { dataService } from "@/services";
-import { SandboxTemplateType, SandboxState, TemplateVersion } from "@/types/template";
+import { SandboxTemplateType, SandboxState, TemplateVersion, ElementLibraryItem } from "@/types/template";
 import { PrintTemplate, DeliveryLabelTemplate } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "@/components/ui/sonner";
 import { Undo2, Redo2, Save, Copy, Eye, Download, Upload, ArrowLeft } from "lucide-react";
+import { v4 as uuidv4 } from 'uuid';
 
 import SandboxToolbar from "./SandboxToolbar";
 import ElementLibrary from "./ElementLibrary";
@@ -213,6 +215,62 @@ const TemplateSandbox = () => {
     navigate('/settings/printing-templates');
   };
   
+  // Handle adding element from library to template
+  const handleAddElement = (element: ElementLibraryItem) => {
+    if (!currentTemplate || !sandboxState.selectedSectionId) {
+      toast.error('Please select a section first');
+      return;
+    }
+    
+    // Find the section to add the element to
+    const section = currentTemplate.sections.find(s => s.id === sandboxState.selectedSectionId);
+    if (!section) {
+      toast.error('Selected section not found');
+      return;
+    }
+    
+    // Create a new field based on the element
+    const newField = {
+      id: uuidv4(),
+      type: element.type,
+      label: element.defaultProps.label || '',
+      value: element.defaultProps.value || '',
+      fieldKey: element.defaultProps.fieldKey || '',
+      order: section.fields.length,
+      enabled: true,
+      fontSize: element.defaultProps.fontSize || 'base',
+      fontWeight: element.defaultProps.fontWeight || 'normal',
+      fontStyle: element.defaultProps.fontStyle || 'normal',
+      alignment: element.defaultProps.alignment || 'left',
+      size: element.defaultProps.size || 100,
+    };
+    
+    // Add the new field to the section
+    const updatedSections = currentTemplate.sections.map(s => {
+      if (s.id === sandboxState.selectedSectionId) {
+        return {
+          ...s,
+          fields: [...s.fields, newField]
+        };
+      }
+      return s;
+    });
+    
+    // Update the template
+    handleTemplateChange({
+      ...currentTemplate,
+      sections: updatedSections
+    });
+    
+    // Select the new element
+    setSandboxState({
+      ...sandboxState,
+      selectedElementId: newField.id
+    });
+    
+    toast.success(`Added ${element.name} element`);
+  };
+  
   if (isLoadingActive || isLoadingVersions) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -301,10 +359,7 @@ const TemplateSandbox = () => {
         <div className="w-64 border-r bg-muted/20 overflow-y-auto flex flex-col">
           <ElementLibrary 
             templateType={templateType as SandboxTemplateType}
-            onAddElement={(element) => {
-              // Logic to add element to the canvas
-              console.log('Add element', element);
-            }}
+            onAddElement={handleAddElement}
           />
         </div>
         

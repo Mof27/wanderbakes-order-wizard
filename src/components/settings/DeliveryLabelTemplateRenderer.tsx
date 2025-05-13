@@ -1,3 +1,4 @@
+
 import React, { forwardRef } from "react";
 import { DeliveryLabelTemplate, Order, PrintSection, PrintField } from "@/types";
 import { formatCurrency, formatDate, formatTimeSlot } from "@/lib/utils";
@@ -83,6 +84,16 @@ const DeliveryLabelTemplateRenderer = forwardRef<HTMLDivElement, DeliveryLabelTe
       
       return value.toString();
     };
+    
+    // Helper to generate text alignment classes
+    const getAlignmentClass = (alignment?: string) => {
+      switch (alignment) {
+        case 'left': return 'text-left';
+        case 'center': return 'text-center';
+        case 'right': return 'text-right';
+        default: return 'text-left';
+      }
+    };
 
     return (
       <div 
@@ -117,28 +128,39 @@ const DeliveryLabelTemplateRenderer = forwardRef<HTMLDivElement, DeliveryLabelTe
                         const textClasses = cn(
                           field.fontSize ? `text-${field.fontSize}` : "text-sm",
                           field.fontWeight ? `font-${field.fontWeight}` : "",
-                          field.fontStyle === "italic" ? "italic" : ""
+                          field.fontStyle === "italic" ? "italic" : "",
+                          getAlignmentClass(field.alignment)
                         );
                         
                         switch (field.type) {
                           case 'section-title':
                             return (
-                              <h3 key={field.id} className={cn("font-semibold", textClasses)}>
+                              <h3 
+                                key={field.id} 
+                                className={cn("font-semibold", textClasses)}
+                              >
                                 {field.label || field.value}
                               </h3>
                             );
                             
                           case 'text':
-                            return <p key={field.id} className={textClasses}>{field.value}</p>;
+                            return (
+                              <p key={field.id} className={textClasses}>
+                                {field.value}
+                              </p>
+                            );
                             
                           case 'field': {
                             const value = getFieldValue(field.fieldKey);
                             if (!value && !isPreviewing) return null;
                             
+                            const alignmentClass = getAlignmentClass(field.alignment);
                             return (
-                              <div key={field.id} className="grid grid-cols-2 gap-1 items-start">
-                                <div className={cn("font-medium", textClasses)}>{field.label}:</div>
-                                <div className={textClasses}>
+                              <div key={field.id} className={`grid ${field.alignment === 'center' ? 'grid-cols-1 gap-1' : 'grid-cols-2 gap-1'} items-start`}>
+                                <div className={cn("font-medium", textClasses, field.alignment === 'center' && "col-span-1")}>
+                                  {field.label}:
+                                </div>
+                                <div className={cn(textClasses, field.alignment === 'center' && "col-span-1")}>
                                   {isPreviewing && !value ? "(No data)" : value}
                                 </div>
                               </div>
@@ -149,7 +171,7 @@ const DeliveryLabelTemplateRenderer = forwardRef<HTMLDivElement, DeliveryLabelTe
                             return <hr key={field.id} className="my-2 border-gray-200" />;
                             
                           case 'spacer':
-                            return <div key={field.id} className="h-4" />;
+                            return <div key={field.id} style={{ height: field.height || '1rem' }} />;
                             
                           case 'qr-code': {
                             const value = getFieldValue(field.fieldKey);
@@ -158,7 +180,13 @@ const DeliveryLabelTemplateRenderer = forwardRef<HTMLDivElement, DeliveryLabelTe
                             const size = field.size || 100; // Default size if not specified
                             
                             return (
-                              <div key={field.id} className="flex flex-col items-center gap-1 mt-2 mb-2">
+                              <div 
+                                key={field.id} 
+                                className={cn(
+                                  "flex flex-col items-center gap-1 mt-2 mb-2", 
+                                  getAlignmentClass(field.alignment)
+                                )}
+                              >
                                 {field.label && <div className={cn("font-medium", textClasses)}>{field.label}</div>}
                                 <div className="border p-2 bg-white inline-block">
                                   {isPreviewing && !value ? 
