@@ -108,7 +108,7 @@ const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
           // Create a new field based on the dragged element
           if (templateType === 'delivery-label') {
             // For delivery label templates
-            const newField: DeliveryLabelField = {
+            const newDeliveryField: DeliveryLabelField = {
               id: uuidv4(),
               type: draggedElement.type as DeliveryLabelFieldType,
               label: draggedElement.defaultProps.label || '',
@@ -129,7 +129,7 @@ const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
               if (s.id === sectionId) {
                 return {
                   ...s,
-                  fields: [...s.fields, newField]
+                  fields: [...s.fields, newDeliveryField]
                 };
               }
               return s;
@@ -140,9 +140,14 @@ const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
               ...template as DeliveryLabelTemplate,
               sections: updatedSections
             });
+            
+            // Select the new element
+            onElementSelect(newDeliveryField.id);
+            setSelectedElement({id: newDeliveryField.id, sectionId});
+            
           } else {
             // For order form templates
-            const newField: PrintField = {
+            const newPrintField: PrintField = {
               id: uuidv4(),
               type: draggedElement.type as PrintFieldType,
               label: draggedElement.defaultProps.label || '',
@@ -163,7 +168,7 @@ const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
               if (s.id === sectionId) {
                 return {
                   ...s,
-                  fields: [...s.fields, newField]
+                  fields: [...s.fields, newPrintField]
                 };
               }
               return s;
@@ -174,11 +179,11 @@ const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
               ...template as PrintTemplate,
               sections: updatedSections
             });
+            
+            // Select the new element
+            onElementSelect(newPrintField.id);
+            setSelectedElement({id: newPrintField.id, sectionId});
           }
-          
-          // Select the new element
-          onElementSelect(newField.id);
-          setSelectedElement({id: newField.id, sectionId});
         }
       } catch (error) {
         console.error('Error adding element:', error);

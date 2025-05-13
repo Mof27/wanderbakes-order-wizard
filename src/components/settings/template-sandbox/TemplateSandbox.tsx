@@ -13,7 +13,11 @@ import {
   PrintTemplate, 
   DeliveryLabelTemplate, 
   PrintFieldType, 
-  DeliveryLabelFieldType 
+  DeliveryLabelFieldType,
+  TextAlignment,
+  FontWeight,
+  FontStyle,
+  FontSize 
 } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -241,7 +245,7 @@ const TemplateSandbox = () => {
     // Create a new field based on the element
     if (templateType === 'delivery-label') {
       // For delivery label templates
-      const newField = {
+      const deliveryLabelField = {
         id: uuidv4(),
         type: element.type as DeliveryLabelFieldType,
         label: element.defaultProps.label || '',
@@ -262,7 +266,7 @@ const TemplateSandbox = () => {
         if (s.id === sandboxState.selectedSectionId) {
           return {
             ...s,
-            fields: [...s.fields, newField]
+            fields: [...s.fields, deliveryLabelField]
           };
         }
         return s;
@@ -273,9 +277,15 @@ const TemplateSandbox = () => {
         ...currentTemplate as DeliveryLabelTemplate,
         sections: updatedSections
       });
+      
+      // Select the new element
+      setSandboxState({
+        ...sandboxState,
+        selectedElementId: deliveryLabelField.id
+      });
     } else {
       // For order form templates
-      const newField = {
+      const printField = {
         id: uuidv4(),
         type: element.type as PrintFieldType,
         label: element.defaultProps.label || '',
@@ -296,7 +306,7 @@ const TemplateSandbox = () => {
         if (s.id === sandboxState.selectedSectionId) {
           return {
             ...s,
-            fields: [...s.fields, newField]
+            fields: [...s.fields, printField]
           };
         }
         return s;
@@ -307,13 +317,13 @@ const TemplateSandbox = () => {
         ...currentTemplate as PrintTemplate,
         sections: updatedSections
       });
+      
+      // Select the new element
+      setSandboxState({
+        ...sandboxState,
+        selectedElementId: printField.id
+      });
     }
-    
-    // Select the new element
-    setSandboxState({
-      ...sandboxState,
-      selectedElementId: newField.id
-    });
     
     toast.success(`Added ${element.name} element`);
   };
