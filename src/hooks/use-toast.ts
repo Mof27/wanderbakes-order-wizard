@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { toast as sonnerToast, ToastT } from 'sonner';
 
-type ToastProps = {
+export type ToastProps = {
   id?: string;
   title?: string;
   description?: string;
