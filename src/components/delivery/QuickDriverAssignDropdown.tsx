@@ -76,7 +76,7 @@ const QuickDriverAssignDropdown: React.FC<QuickDriverAssignDropdownProps> = ({
       await updateOrder(updatedOrder);
 
       // Show success notification
-      toast.toast({
+      toast({
         title: isPreliminaryOnly ? "Driver Pre-Assigned" : "Driver Assigned",
         description: `Order ${order.id} has been ${isPreliminaryOnly ? 'pre-assigned' : 'assigned'} to ${
           driverType === "3rd-party" ? "Lalamove" : 
@@ -90,7 +90,7 @@ const QuickDriverAssignDropdown: React.FC<QuickDriverAssignDropdownProps> = ({
       }
     } catch (error) {
       console.error("Error assigning driver:", error);
-      toast.toast({
+      toast({
         title: "Assignment Failed",
         description: "There was an error assigning the driver. Please try again.",
         variant: "destructive"

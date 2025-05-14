@@ -4,7 +4,6 @@ import { OrderRepository } from "./repositories/order.repository";
 import { SettingsRepository } from "./repositories/settings.repository";
 import { BakerRepository } from "./repositories/baker.repository";
 import { GalleryRepository } from "./repositories/gallery.repository";
-import { TemplateRepository } from "./repositories/template.repository";
 
 // Define the complete data service interface
 export interface DataService {
@@ -13,7 +12,6 @@ export interface DataService {
   settings: SettingsRepository;
   baker: BakerRepository;
   gallery: GalleryRepository;
-  templates: TemplateRepository;
   setMode: (mode: 'mock' | 'firebase', baseUrl?: string) => void;
 }
 
@@ -27,7 +25,6 @@ const dataService: DataService = {
   settings: null as any,
   baker: null as any,
   gallery: null as any,
-  templates: null as any,
   setMode: (mode: 'mock' | 'firebase', baseUrl?: string) => {
     currentMode = mode;
     currentBaseUrl = baseUrl;
@@ -41,7 +38,6 @@ const dataService: DataService = {
           dataService.settings = mock.mockDataService.settings;
           dataService.baker = mock.mockDataService.baker;
           dataService.gallery = mock.mockDataService.gallery;
-          dataService.templates = mock.mockDataService.templates;
         })
         .catch(err => console.error('Failed to load mock data service', err));
     } else if (mode === 'firebase') {
@@ -59,7 +55,6 @@ const dataService: DataService = {
           dataService.settings = mock.mockDataService.settings;
           dataService.baker = mock.mockDataService.baker;
           dataService.gallery = mock.mockDataService.gallery;
-          dataService.templates = mock.mockDataService.templates;
         })
         .catch(err => console.error('Failed to load mock data service', err));
     }

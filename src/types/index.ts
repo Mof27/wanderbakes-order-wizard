@@ -226,7 +226,6 @@ export type PrintFieldType = 'section-title' | 'text' | 'field' | 'separator' | 
 export type FontWeight = 'normal' | 'medium' | 'semibold' | 'bold';
 export type FontStyle = 'normal' | 'italic';
 export type FontSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl' | '2xl';
-export type TextAlignment = 'left' | 'center' | 'right';
 
 export interface PrintField {
   id: string;
@@ -237,12 +236,10 @@ export interface PrintField {
   enabled: boolean;
   order: number;
   size?: number; // For QR code size
-  // Styling properties
+  // New styling properties
   fontWeight?: FontWeight;
   fontStyle?: FontStyle;
   fontSize?: FontSize;
-  alignment?: TextAlignment;
-  height?: number; // Add height property for spacers
 }
 
 export interface PrintSection {
@@ -259,7 +256,7 @@ export interface PrintTemplate {
   sections: PrintSection[];
 }
 
-// Types for delivery label template
+// New types for delivery label template
 export type DeliveryLabelFieldType = 'section-title' | 'text' | 'field' | 'separator' | 'spacer' | 'qr-code';
 
 export interface DeliveryLabelField {
@@ -274,8 +271,6 @@ export interface DeliveryLabelField {
   fontWeight?: FontWeight;
   fontStyle?: FontStyle;
   fontSize?: FontSize;
-  alignment?: TextAlignment;
-  height?: number; // Add height property for spacers
 }
 
 export interface DeliveryLabelSection {

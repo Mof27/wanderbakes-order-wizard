@@ -19,9 +19,6 @@ import PrintSettings from "@/components/settings/PrintSettings";
 import DeliveryLabelSettings from "@/components/settings/DeliveryLabelSettings";
 import DeliverySettings from "@/components/settings/DeliverySettings";
 
-// Template Sandbox
-import TemplateSandbox from "@/components/settings/template-sandbox/TemplateSandbox";
-
 const SettingsDashboard = () => {
   const { data: settings } = useQuery({
     queryKey: ['settings'],
@@ -111,9 +108,6 @@ const SettingsPage = () => {
           <DeliverySettings />
         </SettingsDetailView>
       } />
-      
-      {/* Template Sandbox Routes */}
-      <Route path="/template-sandbox/:templateType" element={<TemplateSandbox />} />
     </Routes>
   );
 };

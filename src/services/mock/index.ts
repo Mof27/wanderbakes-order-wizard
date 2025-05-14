@@ -1,10 +1,8 @@
-
 import { MockCustomerRepository } from "../repositories/customer.repository";
 import { MockOrderRepository } from "../repositories/order.repository";
 import { MockSettingsRepository } from "../repositories/settings.repository";
 import { MockBakerRepository } from "../repositories/baker.repository";
 import { MockGalleryRepository } from "../repositories/gallery.repository";
-import { MockTemplateRepository } from "../repositories/template.repository";
 
 // Initialize the customer repository with some mock data
 const customerRepository = new MockCustomerRepository();
@@ -21,15 +19,11 @@ const bakerRepository = new MockBakerRepository();
 // Initialize the gallery repository
 const galleryRepository = new MockGalleryRepository();
 
-// Initialize the template repository
-const templateRepository = new MockTemplateRepository();
-
 // Export all repositories
 export const mockDataService = {
   customers: customerRepository,
   orders: orderRepository,
   settings: settingsRepository,
   baker: bakerRepository,
-  gallery: galleryRepository,
-  templates: templateRepository
+  gallery: galleryRepository
 };
