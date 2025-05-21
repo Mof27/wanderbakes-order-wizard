@@ -47,43 +47,43 @@ const SettingsLayout: React.FC = () => {
           <SettingsCategoryCard
             title="Cake Sizes"
             description="Manage available cake sizes"
-            to="cake-sizes"
+            category="cake-sizes"
             icon="cake"
           />
           <SettingsCategoryCard
             title="Cake Shapes"
             description="Manage available cake shapes"
-            to="cake-shapes"
+            category="cake-shapes"
             icon="square"
           />
           <SettingsCategoryCard
             title="Cake Flavors"
             description="Manage available cake flavors"
-            to="cake-flavors"
+            category="cake-flavors"
             icon="utensils"
           />
           <SettingsCategoryCard
             title="Colors"
             description="Manage color options"
-            to="colors"
+            category="colors"
             icon="palette"
           />
           <SettingsCategoryCard
             title="Print Templates"
             description="Customize order print templates"
-            to="print-templates"
+            category="print-templates"
             icon="printer"
           />
           <SettingsCategoryCard
             title="Delivery Labels"
             description="Customize delivery label templates"
-            to="delivery-labels"
+            category="delivery-labels"
             icon="tag"
           />
           <SettingsCategoryCard
             title="Delivery Settings"
             description="Configure delivery drivers and options"
-            to="delivery"
+            category="delivery"
             icon="truck"
           />
         </div>
@@ -96,7 +96,7 @@ const SettingsLayout: React.FC = () => {
             <SettingsCategoryCard
               title="Data Mode"
               description={`Current mode: ${isConfigured ? "Supabase" : "Mock"}`}
-              to="data-mode"
+              category="data-mode"
               icon="database"
               className="h-full"
             />

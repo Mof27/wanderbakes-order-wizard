@@ -4,7 +4,6 @@ import { Card } from "@/components/ui/card";
 import { ChevronLeft } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ReactNode } from "react";
-import SettingsLayout from "./SettingsLayout";
 
 interface SettingsDetailViewProps {
   children: ReactNode;
@@ -39,9 +38,7 @@ const SettingsDetailView = ({ children }: SettingsDetailViewProps) => {
       </div>
 
       <Card className="p-6">
-        <SettingsLayout>
-          {children}
-        </SettingsLayout>
+        {children}
       </Card>
     </div>
   );
