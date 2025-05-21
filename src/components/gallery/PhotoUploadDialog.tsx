@@ -1,15 +1,16 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { dataService } from '@/services';
 import { OrderTag } from '@/types';
-import { AlertCircle, Upload, Check, Loader2 } from 'lucide-react';
+import { AlertCircle, Upload, Check, Loader2, Lock } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 interface PhotoUploadDialogProps {
   open: boolean;
@@ -29,9 +30,27 @@ const PhotoUploadDialog = ({
   const [tags, setTags] = useState<OrderTag[]>([]);
   const [isTagInputActive, setIsTagInputActive] = useState(false);
   const [tagInputValue, setTagInputValue] = useState('');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Check authentication status
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const authStatus = await dataService.auth.isAuthenticated(); 
+        setIsAuthenticated(authStatus);
+      } catch (error) {
+        console.error("Error checking authentication:", error);
+        setIsAuthenticated(false);
+      }
+    };
+    
+    if (open) {
+      checkAuth();
+    }
+  }, [open]);
 
   // Reset state when dialog is opened/closed
-  React.useEffect(() => {
+  useEffect(() => {
     if (!open) {
       // Reset state after dialog closes with a small delay
       const timer = setTimeout(() => {
@@ -44,10 +63,40 @@ const PhotoUploadDialog = ({
     }
   }, [open]);
 
+  // Fetch available tags
+  const { data: availableTags = [] } = useQuery({
+    queryKey: ['galleryTags'],
+    queryFn: () => dataService.gallery.getAllTags(),
+    staleTime: 60000, // 1 minute
+    enabled: open, // Only fetch when dialog is open
+  });
+
   // Handle file selection
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (!selectedFile) return;
+
+    // Validate file size
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+    if (selectedFile.size > MAX_FILE_SIZE) {
+      toast({
+        title: "File too large",
+        description: "Please select an image under 10MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!validTypes.includes(selectedFile.type)) {
+      toast({
+        title: "Invalid file type",
+        description: "Please select a JPG, PNG, WebP or GIF image",
+        variant: "destructive",
+      });
+      return;
+    }
 
     // Create a preview
     const objectUrl = URL.createObjectURL(selectedFile);
@@ -90,6 +139,15 @@ const PhotoUploadDialog = ({
 
   const removeTag = (tagToRemove: string) => {
     setTags(tags.filter(tag => tag !== tagToRemove));
+  };
+
+  // Select a tag from available tags
+  const handleSelectTag = (tag: OrderTag) => {
+    if (!tags.includes(tag)) {
+      setTags([...tags, tag]);
+    } else {
+      removeTag(tag);
+    }
   };
 
   // Upload mutation
@@ -137,10 +195,28 @@ const PhotoUploadDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Upload Photo to Gallery</DialogTitle>
+          <DialogTitle className="flex items-center justify-between">
+            <span>Upload Photo to Gallery</span>
+            {!isAuthenticated && (
+              <Badge variant="outline" className="flex items-center gap-1 ml-2">
+                <Lock className="h-3 w-3" />
+                Limited Mode
+              </Badge>
+            )}
+          </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
+          {!isAuthenticated && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 text-sm text-yellow-800 flex items-start gap-2">
+              <AlertCircle className="h-5 w-5 flex-shrink-0 text-yellow-600" />
+              <div>
+                <p className="font-medium">Limited functionality</p>
+                <p>You're not signed in. Some gallery features may be restricted.</p>
+              </div>
+            </div>
+          )}
+
           {/* File upload section */}
           <div className="space-y-2">
             <Label htmlFor="photo" className="text-sm font-medium">
@@ -185,6 +261,28 @@ const PhotoUploadDialog = ({
               onChange={handleFileChange}
             />
           </div>
+
+          {/* Popular Tags section */}
+          {availableTags.length > 0 && (
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Popular Tags</Label>
+              <div className="flex flex-wrap gap-2">
+                {availableTags
+                  .sort((a, b) => b.count - a.count)
+                  .slice(0, 8)
+                  .map(tag => (
+                    <Badge 
+                      key={tag.id}
+                      variant={tags.includes(tag.value as OrderTag) ? "default" : "outline"}
+                      className="cursor-pointer"
+                      onClick={() => handleSelectTag(tag.value as OrderTag)}
+                    >
+                      {tag.label}
+                    </Badge>
+                  ))}
+              </div>
+            </div>
+          )}
 
           {/* Tags section */}
           <div className="space-y-2">

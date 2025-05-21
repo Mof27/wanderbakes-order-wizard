@@ -1,14 +1,16 @@
 
 import { useState } from "react";
 import { useApp } from "@/context/AppContext";
-import { CakeRevision, Order, OrderLogEvent } from "@/types";
+import { CakeRevision, Order, OrderLogEvent, OrderTag } from "@/types";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CheckCircle2, XCircle, Clock, History } from "lucide-react";
+import { CheckCircle2, XCircle, Clock, History, Gallery } from "lucide-react";
 import { toast } from "sonner";
 import { formatDate } from "@/lib/utils";
 import RevisionHistoryView from "./RevisionHistoryView";
+import { Checkbox } from "@/components/ui/checkbox";
+import { dataService } from "@/services";
 
 // Import Textarea from the correct location
 import { Textarea } from "@/components/ui/textarea";
@@ -25,10 +27,45 @@ const CakePhotoApprovalDialog = ({ order, open, onClose, onSuccess }: CakePhotoA
   const [activeTab, setActiveTab] = useState("review");
   const [revisionNotes, setRevisionNotes] = useState("");
   const [loading, setLoading] = useState(false);
+  const [addToGallery, setAddToGallery] = useState(true);
+  const [selectedTags, setSelectedTags] = useState<OrderTag[]>([]);
 
   const hasRevisionHistory = order.revisionHistory && order.revisionHistory.length > 0;
   const photos = order.finishedCakePhotos || [];
   const revisionCount = order.revisionCount || 0;
+
+  // Set initial tags based on order details
+  useState(() => {
+    const initialTags: OrderTag[] = [];
+    
+    // Add tags based on cake shape
+    if (order.cakeShape) {
+      const shapeTag = order.cakeShape.toLowerCase().replace(/\s+/g, '-') as OrderTag;
+      if (isValidOrderTag(shapeTag)) {
+        initialTags.push(shapeTag);
+      }
+    }
+    
+    // Check if it's a birthday cake from the design or text
+    if (
+      (order.cakeDesign && order.cakeDesign.toLowerCase().includes("birthday")) ||
+      (order.cakeText && order.cakeText.toLowerCase().includes("birthday"))
+    ) {
+      initialTags.push("birthday");
+    }
+    
+    setSelectedTags(initialTags);
+  });
+
+  // Helper function to check if a tag is a valid OrderTag
+  const isValidOrderTag = (tag: string): tag is OrderTag => {
+    const validTags: OrderTag[] = [
+      "for-kids", "for-man", "for-woman", "birthday", 
+      "anniversary", "wedding", "other", "round", 
+      "square", "rectangle", "heart", "custom"
+    ];
+    return validTags.includes(tag as OrderTag);
+  };
 
   const handleApprove = async () => {
     setLoading(true);
@@ -61,6 +98,33 @@ const CakePhotoApprovalDialog = ({ order, open, onClose, onSuccess }: CakePhotoA
       };
       
       await updateOrder(orderWithLogs);
+      
+      // Add approved photos to gallery if option is selected
+      if (addToGallery && order.finishedCakePhotos && order.finishedCakePhotos.length > 0) {
+        try {
+          // Add each photo to the gallery
+          const promises = order.finishedCakePhotos.map(photoUrl => {
+            return dataService.gallery.addPhoto({
+              imageUrl: photoUrl,
+              tags: selectedTags,
+              orderInfo: {
+                cakeShape: order.cakeShape,
+                cakeSize: order.cakeSize,
+                cakeFlavor: order.cakeFlavor,
+                cakeDesign: order.cakeDesign,
+                customerName: order.customer.name
+              }
+            });
+          });
+          
+          await Promise.all(promises);
+          toast.success(`Added ${order.finishedCakePhotos.length} photos to gallery`);
+        } catch (error) {
+          console.error("Failed to add photos to gallery", error);
+          // Don't block approval if gallery addition fails
+          toast.error("Failed to add photos to gallery, but order was approved");
+        }
+      }
       
       toast.success(`Cake photos approved. Order ${order.id} is now ready for delivery.`);
       if (onSuccess) onSuccess();
@@ -166,6 +230,22 @@ const CakePhotoApprovalDialog = ({ order, open, onClose, onSuccess }: CakePhotoA
                     <p><span className="font-medium">Text:</span> "{order.cakeText}"</p>
                   )}
                 </div>
+              </div>
+              
+              {/* Add to Gallery Option */}
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="add-to-gallery" 
+                  checked={addToGallery}
+                  onCheckedChange={(checked) => setAddToGallery(!!checked)}
+                />
+                <label 
+                  htmlFor="add-to-gallery" 
+                  className="text-sm font-medium flex items-center cursor-pointer"
+                >
+                  <Gallery className="h-4 w-4 mr-1" />
+                  Add to gallery when approved
+                </label>
               </div>
               
               <div className="space-y-2">

@@ -5,7 +5,7 @@ import { useApp } from "@/context/AppContext";
 import OrderForm from "@/components/orders/OrderForm";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Archive, RefreshCw } from "lucide-react";
+import { ArrowLeft, Archive, RefreshCw, Gallery } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { dataService } from "@/services";
 import { OrderStatus, SettingsData } from "@/types";
@@ -13,6 +13,7 @@ import OrderPrintButton from "@/components/orders/OrderPrintButton";
 import DeliveryLabelPrintButton from "@/components/orders/DeliveryLabelPrintButton";
 import { matchesStatus } from "@/lib/statusHelpers";
 import { toast } from "sonner";
+import AddToGalleryDialog from "@/components/gallery/AddToGalleryDialog";
 
 const EditOrderPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -23,6 +24,7 @@ const EditOrderPage = () => {
   const [order, setOrder] = useState(id ? orders.find(o => o.id === id) : null);
   const [settings, setSettings] = useState<SettingsData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAddToGalleryOpen, setIsAddToGalleryOpen] = useState(false);
   
   // Get the tab from query parameters
   const defaultTab = searchParams.get('tab') || 'required';
@@ -124,6 +126,9 @@ const EditOrderPage = () => {
     navigate(`/${referrer}`);
   };
 
+  // Check if photos can be added to gallery
+  const canAddToGallery = order?.finishedCakePhotos && order.finishedCakePhotos.length > 0;
+
   if (!order) {
     return (
       <div>
@@ -189,6 +194,16 @@ const EditOrderPage = () => {
               Restore from Archive
             </Button>
           )}
+          {canAddToGallery && (
+            <Button
+              variant="outline"
+              className="gap-2"
+              onClick={() => setIsAddToGalleryOpen(true)}
+            >
+              <Gallery className="h-4 w-4" />
+              Add to Gallery
+            </Button>
+          )}
           <OrderPrintButton order={order} />
           <DeliveryLabelPrintButton order={order} />
           <Button variant="outline" onClick={handleGoBack}>
@@ -219,6 +234,16 @@ const EditOrderPage = () => {
         referrer={referrer} // Pass referrer to OrderForm
         readOnly={isReadOnly} // Pass readOnly prop to OrderForm
       />
+
+      {/* Add to Gallery Dialog */}
+      {order && (
+        <AddToGalleryDialog
+          order={order}
+          open={isAddToGalleryOpen}
+          onOpenChange={setIsAddToGalleryOpen}
+          onSuccess={() => toast.success("Photos added to gallery successfully")}
+        />
+      )}
     </div>
   );
 };
