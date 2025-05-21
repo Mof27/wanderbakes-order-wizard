@@ -1,7 +1,4 @@
 
-// This file will be replaced with the actual types generated from Supabase
-// For now, we'll use a placeholder type definition
-
 export type Json =
   | string
   | number
@@ -13,18 +10,68 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
-      orders: {
-        Row: {}; // To be filled with actual order schema
-        Insert: {}; 
-        Update: {};
-      };
       customers: {
-        Row: {}; // To be filled with actual customer schema
+        Row: {
+          id: string;
+          name: string;
+          whatsappNumber: string;
+          email: string | null;
+          created_at: string;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          whatsappNumber: string;
+          email?: string | null;
+          created_at?: string;
+          updated_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          whatsappNumber?: string;
+          email?: string | null;
+          created_at?: string;
+          updated_at?: string | null;
+        };
+      };
+      addresses: {
+        Row: {
+          id: string;
+          customer_id: string;
+          text: string;
+          delivery_notes: string | null;
+          area: string;
+          created_at: string;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          customer_id: string;
+          text: string;
+          delivery_notes?: string | null;
+          area: string;
+          created_at?: string;
+          updated_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          customer_id?: string;
+          text?: string;
+          delivery_notes?: string | null;
+          area?: string;
+          created_at?: string;
+          updated_at?: string | null;
+        };
+      };
+      orders: {
+        Row: {}; // To be filled later
         Insert: {};
         Update: {};
       };
       settings: {
-        Row: {}; // To be filled with actual settings schema
+        Row: {}; // To be filled later
         Insert: {};
         Update: {};
       };

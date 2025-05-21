@@ -70,22 +70,25 @@ const dataService: DataService = {
         .catch(err => console.error('Failed to load mock data service', err));
     } else if (mode === 'supabase') {
       // For Supabase mode, we'll use a hybrid approach:
-      // 1. Use mock data repositories for repositories not yet migrated
-      // 2. Use Supabase repositories for those that are migrated
+      // 1. Use Supabase repositories for those that are implemented
+      // 2. Use mock data repositories for those not yet migrated
       
       Promise.all([
         import('./mock'),
-        import('./repositories/supabase/gallery.repository')
-      ]).then(([mock, { SupabaseGalleryRepository }]) => {
+        import('./repositories/supabase/gallery.repository'),
+        import('./repositories/supabase/customer.repository')  // Import our new Supabase Customer Repository
+      ]).then(([mock, { SupabaseGalleryRepository }, { SupabaseCustomerRepository }]) => {
+        // Use Supabase implementation for customer repository
+        dataService.customers = new SupabaseCustomerRepository();
+        
         // Use mock implementations for repositories not yet migrated
-        dataService.customers = mock.mockDataService.customers;
         dataService.orders = mock.mockDataService.orders;
         dataService.settings = mock.mockDataService.settings;
         dataService.baker = mock.mockDataService.baker;
         
         // Use Supabase implementation for gallery
-        if (baseUrl && apiKey) {
-          dataService.gallery = new SupabaseGalleryRepository(baseUrl, apiKey);
+        if (isSupabaseConfigured()) {
+          dataService.gallery = new SupabaseGalleryRepository();
         } else {
           // Fall back to mock if Supabase isn't configured
           dataService.gallery = mock.mockDataService.gallery;
