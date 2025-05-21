@@ -125,7 +125,7 @@ export default function DataMigrationTool() {
           </div>
           
           {progress === 100 && !isMigrating && (
-            <Alert variant="success" className="bg-green-50 border-green-200">
+            <Alert className="bg-green-50 border-green-200">
               <Check className="h-4 w-4 text-green-600" />
               <AlertTitle className="text-green-700">Migration Complete</AlertTitle>
               <AlertDescription className="text-green-600">
