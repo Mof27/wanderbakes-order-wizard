@@ -3,13 +3,14 @@ import { GalleryPhoto, CustomTag, GalleryFilter, GallerySort } from "@/types/gal
 import { Order, OrderTag } from "@/types";
 
 export interface GalleryRepository extends BaseRepository<GalleryPhoto> {
-  getPhotosByFilter(filter: GalleryFilter, sort: GallerySort): Promise<GalleryPhoto[]>;
+  getPhotosByFilter(filter: GalleryFilter, sort: GallerySort, page?: number, pageSize?: number): Promise<GalleryPhoto[]>;
   getPhotoDetail(photoId: string): Promise<GalleryPhoto | undefined>;
   getRelatedPhotos(photoId: string, limit?: number): Promise<GalleryPhoto[]>;
   getAllTags(): Promise<CustomTag[]>;
   createCustomTag(label: string): Promise<CustomTag>;
   addPhoto(photo: Omit<GalleryPhoto, 'id' | 'orderId' | 'createdAt'>): Promise<GalleryPhoto>;
   addPhotoFromOrder(order: Order, imageUrl: string, tags: OrderTag[]): Promise<GalleryPhoto>;
+  uploadImage?(file: File, progressCallback?: (progress: number) => void): Promise<string>;
 }
 
 export class MockGalleryRepository implements GalleryRepository {
@@ -59,7 +60,7 @@ export class MockGalleryRepository implements GalleryRepository {
     return initialLength !== this.photos.length;
   }
 
-  async getPhotosByFilter(filter: GalleryFilter, sort: GallerySort = 'newest'): Promise<GalleryPhoto[]> {
+  async getPhotosByFilter(filter: GalleryFilter, sort: GallerySort = 'newest', page = 1, pageSize = 20): Promise<GalleryPhoto[]> {
     let filteredPhotos = [...this.photos];
     
     // Apply tag filter
@@ -126,7 +127,11 @@ export class MockGalleryRepository implements GalleryRepository {
       filteredPhotos.sort((a, b) => b.tags.length - a.tags.length);
     }
     
-    return filteredPhotos;
+    // Apply pagination
+    const startIndex = (page - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    
+    return filteredPhotos.slice(startIndex, endIndex);
   }
 
   async getPhotoDetail(photoId: string): Promise<GalleryPhoto | undefined> {
@@ -262,5 +267,50 @@ export class MockGalleryRepository implements GalleryRepository {
     };
     
     return await this.create(newPhoto);
+  }
+
+  // Mock implementation of uploadImage with progress simulation
+  async uploadImage(file: File, progressCallback?: (progress: number) => void): Promise<string> {
+    // Validate file size and type
+    if (file.size > 10 * 1024 * 1024) { // 10MB limit
+      throw new Error('File size exceeds 10MB limit');
+    }
+    
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!validTypes.includes(file.type)) {
+      throw new Error('Invalid file type. Only JPEG, PNG, WebP, and GIF are supported');
+    }
+    
+    // Report initial progress
+    if (progressCallback) progressCallback(10);
+    
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+    if (progressCallback) progressCallback(30);
+    
+    // Create a data URL from the file
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (e.target?.result) {
+          resolve(e.target.result as string);
+        } else {
+          reject(new Error('Failed to read file'));
+        }
+      };
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsDataURL(file);
+    });
+    
+    // Report more progress
+    if (progressCallback) progressCallback(70);
+    
+    // More simulated delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Report completion
+    if (progressCallback) progressCallback(100);
+    
+    return dataUrl;
   }
 }

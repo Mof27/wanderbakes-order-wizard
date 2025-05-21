@@ -1,3 +1,4 @@
+
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { GalleryRepository } from '../gallery.repository';
 import { GalleryPhoto, CustomTag, GalleryFilter, GallerySort } from '@/types/gallery';
@@ -5,35 +6,66 @@ import { Order, OrderTag } from '@/types';
 
 export class SupabaseGalleryRepository implements GalleryRepository {
   private client: SupabaseClient;
+  private isAuthenticated: boolean = false;
   
   constructor(supabaseUrl: string, supabaseKey: string) {
     this.client = createClient(supabaseUrl, supabaseKey);
+    this.checkAuthentication();
+  }
+  
+  // Check if user is authenticated
+  private async checkAuthentication() {
+    const { data } = await this.client.auth.getSession();
+    this.isAuthenticated = !!data.session;
+    
+    // Set up auth change listener
+    this.client.auth.onAuthStateChange((event, session) => {
+      this.isAuthenticated = !!session;
+    });
+  }
+
+  // Helper method to catch errors consistently
+  private async handleQuery<T>(queryPromise: Promise<{ data: T | null; error: any }>): Promise<T> {
+    try {
+      const { data, error } = await queryPromise;
+      
+      if (error) {
+        console.error('Supabase query error:', error);
+        throw new Error(`Database operation failed: ${error.message || 'Unknown error'}`);
+      }
+      
+      return data as T;
+    } catch (err) {
+      console.error('Error executing query:', err);
+      throw err;
+    }
   }
 
   async getAll(): Promise<GalleryPhoto[]> {
-    const { data, error } = await this.client
-      .from('gallery_photos')
-      .select('*')
-      .order('created_at', { ascending: false });
-    
-    if (error) throw error;
+    const data = await this.handleQuery(
+      this.client
+        .from('gallery_photos')
+        .select('*')
+        .order('created_at', { ascending: false })
+    );
     
     return this.mapDbPhotosToGalleryPhotos(data || []);
   }
 
   async getById(id: string): Promise<GalleryPhoto | undefined> {
-    const { data, error } = await this.client
-      .from('gallery_photos')
-      .select(`
-        *,
-        gallery_photo_tags (
-          gallery_tags (*)
-        )
-      `)
-      .eq('id', id)
-      .single();
+    const data = await this.handleQuery(
+      this.client
+        .from('gallery_photos')
+        .select(`
+          *,
+          gallery_photo_tags (
+            gallery_tags (*)
+          )
+        `)
+        .eq('id', id)
+        .single()
+    );
     
-    if (error) throw error;
     if (!data) return undefined;
     
     return this.mapDbPhotoToGalleryPhoto(data);
@@ -49,13 +81,13 @@ export class SupabaseGalleryRepository implements GalleryRepository {
     };
     
     // Insert photo
-    const { data: photoRecord, error } = await this.client
-      .from('gallery_photos')
-      .insert(photoData)
-      .select()
-      .single();
-    
-    if (error) throw error;
+    const photoRecord = await this.handleQuery(
+      this.client
+        .from('gallery_photos')
+        .insert(photoData)
+        .select()
+        .single()
+    );
     
     // Associate tags with photo
     if (photo.tags && photo.tags.length > 0) {
@@ -69,11 +101,13 @@ export class SupabaseGalleryRepository implements GalleryRepository {
         tag_id: tag.id
       }));
       
-      const { error: associationError } = await this.client
-        .from('gallery_photo_tags')
-        .insert(photoTagAssociations);
-      
-      if (associationError) throw associationError;
+      if (photoTagAssociations.length > 0) {
+        await this.handleQuery(
+          this.client
+            .from('gallery_photo_tags')
+            .insert(photoTagAssociations)
+        );
+      }
     }
     
     // Return the complete photo object
@@ -90,22 +124,24 @@ export class SupabaseGalleryRepository implements GalleryRepository {
     if (photo.orderInfo) updateData.order_info = photo.orderInfo;
     
     // Update photo record
-    const { data: updatedPhoto, error } = await this.client
-      .from('gallery_photos')
-      .update(updateData)
-      .eq('id', id)
-      .select()
-      .single();
-    
-    if (error) throw error;
+    const updatedPhoto = await this.handleQuery(
+      this.client
+        .from('gallery_photos')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single()
+    );
     
     // If tags were updated, handle tag associations
     if (photo.tags) {
       // First delete existing associations
-      await this.client
-        .from('gallery_photo_tags')
-        .delete()
-        .eq('photo_id', id);
+      await this.handleQuery(
+        this.client
+          .from('gallery_photo_tags')
+          .delete()
+          .eq('photo_id', id)
+      );
       
       // Then ensure all tags exist
       const tagPromises = photo.tags.map(tagValue => this.ensureTagExists(tagValue));
@@ -118,11 +154,11 @@ export class SupabaseGalleryRepository implements GalleryRepository {
       }));
       
       if (photoTagAssociations.length > 0) {
-        const { error: associationError } = await this.client
-          .from('gallery_photo_tags')
-          .insert(photoTagAssociations);
-        
-        if (associationError) throw associationError;
+        await this.handleQuery(
+          this.client
+            .from('gallery_photo_tags')
+            .insert(photoTagAssociations)
+        );
       }
     }
     
@@ -131,46 +167,59 @@ export class SupabaseGalleryRepository implements GalleryRepository {
   }
 
   async delete(id: string): Promise<boolean> {
-    // First delete photo-tag associations
-    const { error: tagDeleteError } = await this.client
-      .from('gallery_photo_tags')
-      .delete()
-      .eq('photo_id', id);
-    
-    if (tagDeleteError) throw tagDeleteError;
-    
-    // Then delete the photo from storage if needed
     try {
-      const { data: photo } = await this.client
-        .from('gallery_photos')
-        .select('image_url')
-        .eq('id', id)
-        .single();
+      // First delete photo-tag associations
+      await this.handleQuery(
+        this.client
+          .from('gallery_photo_tags')
+          .delete()
+          .eq('photo_id', id)
+      );
       
-      if (photo && photo.image_url) {
-        // Extract path from URL if it's a Supabase storage URL
-        const url = new URL(photo.image_url);
-        const path = url.pathname.split('/').slice(2).join('/');
+      // Then delete the photo from storage if needed
+      try {
+        const photo = await this.handleQuery(
+          this.client
+            .from('gallery_photos')
+            .select('image_url')
+            .eq('id', id)
+            .single()
+        );
         
-        if (path) {
-          await this.client.storage.from('cake-photos').remove([path]);
+        if (photo && photo.image_url) {
+          // Extract path from URL if it's a Supabase storage URL
+          const url = new URL(photo.image_url);
+          const path = url.pathname.split('/').slice(2).join('/');
+          
+          if (path) {
+            await this.client.storage.from('cake-photos').remove([path]);
+          }
         }
+      } catch (error) {
+        console.error('Failed to delete photo from storage:', error);
+        // Continue with database deletion even if storage deletion fails
       }
+      
+      // Finally delete the photo record
+      await this.handleQuery(
+        this.client
+          .from('gallery_photos')
+          .delete()
+          .eq('id', id)
+      );
+      
+      return true;
     } catch (error) {
-      console.error('Failed to delete photo from storage:', error);
-      // Continue with database deletion even if storage deletion fails
+      console.error('Failed to delete photo:', error);
+      return false;
     }
-    
-    // Finally delete the photo record
-    const { error } = await this.client
-      .from('gallery_photos')
-      .delete()
-      .eq('id', id);
-    
-    return !error;
   }
 
-  async getPhotosByFilter(filter: GalleryFilter, sort: GallerySort = 'newest'): Promise<GalleryPhoto[]> {
+  async getPhotosByFilter(filter: GalleryFilter, sort: GallerySort = 'newest', page = 1, pageSize = 20): Promise<GalleryPhoto[]> {
+    // Calculate offset for pagination
+    const offset = (page - 1) * pageSize;
+    
+    // Start building the query
     let query = this.client
       .from('gallery_photos')
       .select(`
@@ -180,19 +229,24 @@ export class SupabaseGalleryRepository implements GalleryRepository {
         )
       `);
     
-    // Apply tag filter
+    // Apply tag filter using more efficient approach
     if (filter.tags && filter.tags.length > 0) {
+      // Get photos that have ANY of the selected tags (more inclusive)
       query = query.in('gallery_photo_tags.gallery_tags.value', filter.tags);
     }
     
-    // Apply shape filter
+    // Apply shape filter more efficiently
     if (filter.shapes && filter.shapes.length > 0) {
-      query = query.or(filter.shapes.map(shape => `order_info->>'cakeShape'.eq.${shape}`).join(','));
+      // Use containedBy for JSON comparison (better performance)
+      const shapeFilter = filter.shapes.map(shape => ({ "cakeShape": shape }));
+      query = query.containedBy('order_info', shapeFilter);
     }
     
-    // Apply flavor filter
+    // Apply flavor filter more efficiently
     if (filter.flavors && filter.flavors.length > 0) {
-      query = query.or(filter.flavors.map(flavor => `order_info->>'cakeFlavor'.eq.${flavor}`).join(','));
+      // Use containedBy for JSON comparison
+      const flavorFilter = filter.flavors.map(flavor => ({ "cakeFlavor": flavor }));
+      query = query.containedBy('order_info', flavorFilter);
     }
     
     // Apply date range filter
@@ -205,16 +259,13 @@ export class SupabaseGalleryRepository implements GalleryRepository {
       }
     }
     
-    // Apply search query
+    // Apply search query with improved performance
     if (filter.searchQuery) {
-      const searchTerm = `%${filter.searchQuery.toLowerCase()}%`;
-      query = query.or([
-        `order_info->>'cakeDesign'.ilike.${searchTerm}`,
-        `order_info->>'cakeShape'.ilike.${searchTerm}`,
-        `order_info->>'cakeFlavor'.ilike.${searchTerm}`,
-        `order_info->>'cakeSize'.ilike.${searchTerm}`,
-        `order_info->>'customerName'.ilike.${searchTerm}`
-      ].join(','));
+      // Use Postgres full-text search capability
+      query = query.textSearch('order_info', filter.searchQuery, {
+        config: 'english',
+        type: 'websearch'
+      });
     }
     
     // Apply sorting
@@ -232,9 +283,11 @@ export class SupabaseGalleryRepository implements GalleryRepository {
         break;
     }
     
-    const { data, error } = await query;
+    // Apply pagination
+    query = query.range(offset, offset + pageSize - 1);
     
-    if (error) throw error;
+    // Execute the query
+    const data = await this.handleQuery(query);
     
     return this.mapDbPhotosToGalleryPhotos(data || []);
   }
@@ -245,41 +298,41 @@ export class SupabaseGalleryRepository implements GalleryRepository {
 
   async getRelatedPhotos(photoId: string, limit: number = 4): Promise<GalleryPhoto[]> {
     // Get the tags for the source photo
-    const { data: photoTags, error: tagError } = await this.client
-      .from('gallery_photo_tags')
-      .select('tag_id')
-      .eq('photo_id', photoId);
-    
-    if (tagError) throw tagError;
+    const photoTags = await this.handleQuery(
+      this.client
+        .from('gallery_photo_tags')
+        .select('tag_id')
+        .eq('photo_id', photoId)
+    );
     
     if (!photoTags || photoTags.length === 0) {
       // If no tags, return random photos
-      const { data, error } = await this.client
-        .from('gallery_photos')
-        .select('*')
-        .neq('id', photoId)
-        .limit(limit);
+      const randomPhotos = await this.handleQuery(
+        this.client
+          .from('gallery_photos')
+          .select('*')
+          .neq('id', photoId)
+          .limit(limit)
+      );
       
-      if (error) throw error;
-      
-      return this.mapDbPhotosToGalleryPhotos(data || []);
+      return this.mapDbPhotosToGalleryPhotos(randomPhotos || []);
     }
     
     const tagIds = photoTags.map(pt => pt.tag_id);
     
     // Find photos that share tags with the source photo
-    const { data, error } = await this.client
-      .from('gallery_photo_tags')
-      .select(`
-        gallery_photos!inner (*),
-        tag_id
-      `)
-      .in('tag_id', tagIds)
-      .neq('gallery_photos.id', photoId)
-      .order('gallery_photos.created_at', { ascending: false })
-      .limit(limit * 2); // Get more than needed to allow for deduplication
-    
-    if (error) throw error;
+    const data = await this.handleQuery(
+      this.client
+        .from('gallery_photo_tags')
+        .select(`
+          gallery_photos!inner (*),
+          tag_id
+        `)
+        .in('tag_id', tagIds)
+        .neq('gallery_photos.id', photoId)
+        .order('gallery_photos.created_at', { ascending: false })
+        .limit(limit * 2) // Get more than needed to allow for deduplication
+    );
     
     // Group by photo and count matching tags for scoring
     const photoMap = new Map();
@@ -311,10 +364,8 @@ export class SupabaseGalleryRepository implements GalleryRepository {
   }
 
   async getAllTags(): Promise<CustomTag[]> {
-    // Get all tags with counts
-    const { data, error } = await this.client.rpc('get_tags_with_counts');
-    
-    if (error) throw error;
+    // Get all tags with counts using the optimized RPC function
+    const data = await this.handleQuery(this.client.rpc('get_tags_with_counts'));
     
     return (data || []).map((tag: any) => ({
       id: tag.id,
@@ -330,32 +381,39 @@ export class SupabaseGalleryRepository implements GalleryRepository {
     const value = label.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
     
     // Check if tag already exists
-    const { data: existingTag, error: lookupError } = await this.client
-      .from('gallery_tags')
-      .select('*')
-      .eq('value', value)
-      .maybeSingle();
-    
-    if (lookupError) throw lookupError;
-    
-    if (existingTag) {
-      return {
-        id: existingTag.id,
-        value: existingTag.value,
-        label: existingTag.label || this.formatTagLabel(existingTag.value),
-        count: 0,
-        createdAt: new Date(existingTag.created_at)
-      };
+    try {
+      const existingTag = await this.handleQuery(
+        this.client
+          .from('gallery_tags')
+          .select('*')
+          .eq('value', value)
+          .maybeSingle()
+      );
+      
+      if (existingTag) {
+        return {
+          id: existingTag.id,
+          value: existingTag.value,
+          label: existingTag.label || this.formatTagLabel(existingTag.value),
+          count: 0,
+          createdAt: new Date(existingTag.created_at)
+        };
+      }
+    } catch (error) {
+      // If error is not found, continue to create
+      if (!String(error).includes('not_found')) {
+        throw error;
+      }
     }
     
     // Create new tag
-    const { data: newTag, error } = await this.client
-      .from('gallery_tags')
-      .insert({ value, label, created_at: new Date().toISOString() })
-      .select()
-      .single();
-    
-    if (error) throw error;
+    const newTag = await this.handleQuery(
+      this.client
+        .from('gallery_tags')
+        .insert({ value, label, created_at: new Date().toISOString() })
+        .select()
+        .single()
+    );
     
     return {
       id: newTag.id,
@@ -400,52 +458,86 @@ export class SupabaseGalleryRepository implements GalleryRepository {
     return await this.create(newPhoto);
   }
   
-  // Helper method to upload an image to Supabase Storage
-  async uploadImage(file: File): Promise<string> {
-    const filename = `${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
-    const path = `cake-photos/${filename}`;
+  // Helper method to upload an image to Supabase Storage with progress tracking
+  async uploadImage(file: File, progressCallback?: (progress: number) => void): Promise<string> {
+    // Validate file size and type
+    if (file.size > 10 * 1024 * 1024) { // 10MB limit
+      throw new Error('File size exceeds 10MB limit');
+    }
     
-    const { data, error } = await this.client.storage
-      .from('cake-photos')
-      .upload(path, file, {
-        cacheControl: '3600',
-        upsert: false
-      });
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!validTypes.includes(file.type)) {
+      throw new Error('Invalid file type. Only JPEG, PNG, WebP, and GIF are supported');
+    }
     
-    if (error) throw error;
-    
-    // Get the public URL of the uploaded file
-    const { data: urlData } = this.client.storage
-      .from('cake-photos')
-      .getPublicUrl(data.path);
-    
-    return urlData.publicUrl;
+    try {
+      // Generate unique filename to prevent collisions
+      const fileExt = file.name.split('.').pop();
+      const filename = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
+      const path = `cake-photos/${filename}`;
+      
+      // Report initial progress
+      if (progressCallback) progressCallback(10);
+      
+      // Upload the file
+      const { data, error } = await this.client.storage
+        .from('cake-photos')
+        .upload(path, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+      
+      if (error) throw error;
+      
+      // Report progress
+      if (progressCallback) progressCallback(75);
+      
+      // Get the public URL of the uploaded file
+      const { data: urlData } = this.client.storage
+        .from('cake-photos')
+        .getPublicUrl(data.path);
+      
+      // Report completion
+      if (progressCallback) progressCallback(100);
+      
+      return urlData.publicUrl;
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      throw new Error(`Failed to upload image: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 
   // Helper method to ensure a tag exists or create it
   private async ensureTagExists(tagValue: string): Promise<{ id: string, value: string }> {
-    const { data: existingTag, error } = await this.client
-      .from('gallery_tags')
-      .select('*')
-      .eq('value', tagValue)
-      .maybeSingle();
-    
-    if (error) throw error;
-    
-    if (existingTag) return existingTag;
+    try {
+      const existingTag = await this.handleQuery(
+        this.client
+          .from('gallery_tags')
+          .select('*')
+          .eq('value', tagValue)
+          .maybeSingle()
+      );
+      
+      if (existingTag) return existingTag;
+    } catch (error) {
+      // If error is not found, continue to create
+      if (!String(error).includes('not_found')) {
+        throw error;
+      }
+    }
     
     // Tag doesn't exist, create it
-    const { data: newTag, error: createError } = await this.client
-      .from('gallery_tags')
-      .insert({
-        value: tagValue,
-        label: this.formatTagLabel(tagValue),
-        created_at: new Date().toISOString()
-      })
-      .select()
-      .single();
-    
-    if (createError) throw createError;
+    const newTag = await this.handleQuery(
+      this.client
+        .from('gallery_tags')
+        .insert({
+          value: tagValue,
+          label: this.formatTagLabel(tagValue),
+          created_at: new Date().toISOString()
+        })
+        .select()
+        .single()
+    );
     
     return newTag;
   }

@@ -16,6 +16,8 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { currentMode } from "@/services";
+import { Progress } from "@/components/ui/progress";
+import { Alert, AlertTitle } from "@/components/ui/alert";
 
 interface PhotoUploadDialogProps {
   open: boolean;
@@ -45,7 +47,8 @@ const PhotoUploadDialog = ({ open, onOpenChange, onPhotoUploaded }: PhotoUploadD
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  
   // Form definition
   const form = useForm<PhotoUploadFormValues>({
     resolver: zodResolver(photoUploadSchema),
@@ -81,6 +84,25 @@ const PhotoUploadDialog = ({ open, onOpenChange, onPhotoUploaded }: PhotoUploadD
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
+    
+    // Reset any previous errors
+    setUploadError(null);
+    
+    // Validate file size
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      setUploadError(`File is too large. Maximum size is ${maxSize / (1024 * 1024)}MB`);
+      event.target.value = '';
+      return;
+    }
+    
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!validTypes.includes(file.type)) {
+      setUploadError('Invalid file type. Only JPEG, PNG, WebP, and GIF are supported');
+      event.target.value = '';
+      return;
+    }
     
     // Store the file in the form
     form.setValue("imageFile", file);
@@ -144,28 +166,37 @@ const PhotoUploadDialog = ({ open, onOpenChange, onPhotoUploaded }: PhotoUploadD
   // Form submission handler
   const onSubmit = async (data: PhotoUploadFormValues) => {
     setIsUploading(true);
+    setUploadError(null);
     
     try {
       let finalImageUrl = data.imageUrl;
       
-      // If we're in Supabase mode and have a file, upload it first
-      if (currentMode !== 'mock' && data.imageFile) {
+      // If we have a file, upload it
+      if (data.imageFile) {
         const imageFile = data.imageFile;
         
-        // For Supabase mode, we need to cast to access the uploadImage method
-        // This is a bit of a hack, but it works for this specific case
-        const galleryRepo = dataService.gallery as any;
-        
-        if (galleryRepo.uploadImage) {
-          // Set up progress reporting if available
-          setUploadProgress(10); // Start progress
+        try {
+          // For Supabase mode, use the uploadImage method
+          const galleryRepo = dataService.gallery as any;
           
-          finalImageUrl = await galleryRepo.uploadImage(imageFile);
-          
-          setUploadProgress(100); // Complete progress
-        } else {
-          // Fallback to mock mode behavior
-          finalImageUrl = data.imageUrl;
+          if (galleryRepo.uploadImage) {
+            // Update progress as the upload proceeds
+            finalImageUrl = await galleryRepo.uploadImage(
+              imageFile, 
+              (progress) => {
+                setUploadProgress(progress);
+              }
+            );
+          } else {
+            // Fallback to mock mode behavior
+            finalImageUrl = data.imageUrl;
+            setUploadProgress(100);
+          }
+        } catch (error) {
+          setUploadError(error instanceof Error ? error.message : 'Failed to upload image');
+          console.error('Image upload error:', error);
+          setIsUploading(false);
+          return;
         }
       }
       
@@ -185,7 +216,6 @@ const PhotoUploadDialog = ({ open, onOpenChange, onPhotoUploaded }: PhotoUploadD
       // Send to service
       await dataService.gallery.addPhoto(photo);
       
-      // Use the toast object directly
       toast({
         title: "Photo uploaded successfully!",
         variant: "default",
@@ -194,14 +224,13 @@ const PhotoUploadDialog = ({ open, onOpenChange, onPhotoUploaded }: PhotoUploadD
       handleClose();
     } catch (error) {
       console.error("Error uploading photo:", error);
-      // Use the toast object directly
+      setUploadError(error instanceof Error ? error.message : 'Failed to upload photo');
       toast({
         title: "Failed to upload photo",
         variant: "destructive",
       });
     } finally {
       setIsUploading(false);
-      setUploadProgress(0);
     }
   };
 
@@ -211,11 +240,12 @@ const PhotoUploadDialog = ({ open, onOpenChange, onPhotoUploaded }: PhotoUploadD
     setSelectedTags([]);
     setPreviewImage(null);
     setUploadProgress(0);
+    setUploadError(null);
     onOpenChange(false);
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={open => open ? null : handleClose()}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Upload Cake Photo</DialogTitle>
@@ -243,12 +273,22 @@ const PhotoUploadDialog = ({ open, onOpenChange, onPhotoUploaded }: PhotoUploadD
                 <Input 
                   ref={imageInputRef}
                   type="file" 
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
                   onChange={handleImageUpload}
                   className="hidden"
                   disabled={isUploading}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Max 10MB (JPEG, PNG, WebP, GIF)
+                </p>
               </div>
+              
+              {uploadError && (
+                <Alert variant="destructive" className="mt-2">
+                  <AlertTitle>{uploadError}</AlertTitle>
+                </Alert>
+              )}
+              
               {previewImage && (
                 <div className="mt-2 relative">
                   <img 
@@ -259,12 +299,14 @@ const PhotoUploadDialog = ({ open, onOpenChange, onPhotoUploaded }: PhotoUploadD
                   <Button
                     type="button"
                     variant="destructive"
-                    size="icon-xs"
-                    className="absolute top-2 right-2"
+                    size="icon"
+                    className="absolute top-2 right-2 h-6 w-6"
                     onClick={() => {
                       setPreviewImage(null);
                       form.setValue("imageUrl", "");
                       form.unregister("imageFile");
+                      setUploadProgress(0);
+                      setUploadError(null);
                     }}
                     disabled={isUploading}
                   >
@@ -274,12 +316,16 @@ const PhotoUploadDialog = ({ open, onOpenChange, onPhotoUploaded }: PhotoUploadD
               )}
               
               {/* Upload Progress Bar */}
-              {uploadProgress > 0 && uploadProgress < 100 && (
-                <div className="w-full bg-muted rounded-full h-2 mt-2">
-                  <div 
-                    className="bg-primary h-2 rounded-full transition-all duration-300" 
-                    style={{ width: `${uploadProgress}%` }}
-                  ></div>
+              {uploadProgress > 0 && (
+                <div className="w-full space-y-1">
+                  <Progress 
+                    value={uploadProgress} 
+                    className="h-2" 
+                    aria-label="Upload progress"
+                  />
+                  <p className="text-xs text-right text-muted-foreground">
+                    {uploadProgress === 100 ? 'Upload complete' : `Uploading: ${uploadProgress}%`}
+                  </p>
                 </div>
               )}
             </div>
