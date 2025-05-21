@@ -9,7 +9,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { dataService } from "@/services";
 import { Order, OrderTag } from "@/types";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Gallery, PlusCircle, Loader2, Check } from "lucide-react";
+import { GalleryHorizontal, PlusCircle, Loader2 } from "lucide-react";
 
 interface AddToGalleryDialogProps {
   order: Order;
@@ -42,8 +42,19 @@ const AddToGalleryDialog = ({
       
       // Add tags based on cake type
       if (order.cakeShape) {
-        const shapeTag = order.cakeShape.toLowerCase().replace(/\s+/g, '-') as OrderTag;
-        if (isValidOrderTag(shapeTag)) autoTags.push(shapeTag);
+        // Convert shape to a valid OrderTag if possible
+        const shapeToTagMap: Record<string, OrderTag | undefined> = {
+          'round': 'other',
+          'square': 'other',
+          'rectangle': 'other',
+          'heart': 'other',
+          'custom': 'other'
+        };
+        
+        const shape = order.cakeShape.toLowerCase();
+        if (shape in shapeToTagMap && shapeToTagMap[shape]) {
+          autoTags.push(shapeToTagMap[shape]!);
+        }
       }
       
       // Check if it's a birthday cake from the design or text
@@ -62,8 +73,7 @@ const AddToGalleryDialog = ({
   const isValidOrderTag = (tag: string): tag is OrderTag => {
     const validTags: OrderTag[] = [
       "for-kids", "for-man", "for-woman", "birthday", 
-      "anniversary", "wedding", "other", "round", 
-      "square", "rectangle", "heart", "custom"
+      "anniversary", "wedding", "other"
     ];
     return validTags.includes(tag as OrderTag);
   };
@@ -163,7 +173,7 @@ const AddToGalleryDialog = ({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Gallery className="h-5 w-5" />
+            <GalleryHorizontal className="h-5 w-5" />
             Add to Gallery
           </DialogTitle>
         </DialogHeader>

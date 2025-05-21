@@ -5,7 +5,7 @@ import { CakeRevision, Order, OrderLogEvent, OrderTag } from "@/types";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CheckCircle2, XCircle, Clock, History, Gallery } from "lucide-react";
+import { CheckCircle2, XCircle, Clock, History, GalleryHorizontal } from "lucide-react";
 import { toast } from "sonner";
 import { formatDate } from "@/lib/utils";
 import RevisionHistoryView from "./RevisionHistoryView";
@@ -40,9 +40,18 @@ const CakePhotoApprovalDialog = ({ order, open, onClose, onSuccess }: CakePhotoA
     
     // Add tags based on cake shape
     if (order.cakeShape) {
-      const shapeTag = order.cakeShape.toLowerCase().replace(/\s+/g, '-') as OrderTag;
-      if (isValidOrderTag(shapeTag)) {
-        initialTags.push(shapeTag);
+      // Map shapes to valid OrderTag values
+      const shapeToTagMap: Record<string, OrderTag | undefined> = {
+        'round': 'other',
+        'square': 'other', 
+        'rectangle': 'other',
+        'heart': 'other',
+        'custom': 'other'
+      };
+      
+      const shape = order.cakeShape.toLowerCase();
+      if (shape in shapeToTagMap && shapeToTagMap[shape]) {
+        initialTags.push(shapeToTagMap[shape]!);
       }
     }
     
@@ -61,8 +70,7 @@ const CakePhotoApprovalDialog = ({ order, open, onClose, onSuccess }: CakePhotoA
   const isValidOrderTag = (tag: string): tag is OrderTag => {
     const validTags: OrderTag[] = [
       "for-kids", "for-man", "for-woman", "birthday", 
-      "anniversary", "wedding", "other", "round", 
-      "square", "rectangle", "heart", "custom"
+      "anniversary", "wedding", "other"
     ];
     return validTags.includes(tag as OrderTag);
   };
@@ -243,7 +251,7 @@ const CakePhotoApprovalDialog = ({ order, open, onClose, onSuccess }: CakePhotoA
                   htmlFor="add-to-gallery" 
                   className="text-sm font-medium flex items-center cursor-pointer"
                 >
-                  <Gallery className="h-4 w-4 mr-1" />
+                  <GalleryHorizontal className="h-4 w-4 mr-1" />
                   Add to gallery when approved
                 </label>
               </div>

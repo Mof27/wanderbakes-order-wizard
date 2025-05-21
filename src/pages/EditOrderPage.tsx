@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
 import OrderForm from "@/components/orders/OrderForm";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Archive, RefreshCw, Gallery } from "lucide-react";
+import { ArrowLeft, Archive, RefreshCw, GalleryHorizontal } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { dataService } from "@/services";
 import { OrderStatus, SettingsData } from "@/types";
@@ -200,7 +199,7 @@ const EditOrderPage = () => {
               className="gap-2"
               onClick={() => setIsAddToGalleryOpen(true)}
             >
-              <Gallery className="h-4 w-4" />
+              <GalleryHorizontal className="h-4 w-4" />
               Add to Gallery
             </Button>
           )}
