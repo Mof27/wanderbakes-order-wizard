@@ -8,12 +8,14 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 const AuthPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const { signIn, signUp, user } = useAuth();
+  const { signIn, signUp, user, isConfigured } = useAuth();
   const navigate = useNavigate();
 
   // Redirect if already authenticated
@@ -63,94 +65,126 @@ const AuthPage = () => {
     }
   };
 
+  const handleDemoLogin = () => {
+    toast.success("Demo login successful!");
+    navigate("/");
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
       <Helmet>
-        <title>Sign In | Cake Shop</title>
+        <title>Sign In | WanderBakes</title>
       </Helmet>
       
       <Card className="w-full max-w-md">
-        <Tabs defaultValue="sign-in">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="sign-in">Sign In</TabsTrigger>
-            <TabsTrigger value="sign-up">Sign Up</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="sign-in">
-            <form onSubmit={handleSignIn}>
-              <CardHeader>
-                <CardTitle>Sign In</CardTitle>
-                <CardDescription>
-                  Enter your credentials to access your account
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Input
-                    type="email"
-                    placeholder="Email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Input
-                    type="password"
-                    placeholder="Password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Signing in..." : "Sign In"}
-                </Button>
-              </CardFooter>
-            </form>
-          </TabsContent>
-          
-          <TabsContent value="sign-up">
-            <form onSubmit={handleSignUp}>
-              <CardHeader>
-                <CardTitle>Sign Up</CardTitle>
-                <CardDescription>
-                  Create a new account to get started
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Input
-                    type="email"
-                    placeholder="Email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Input
-                    type="password"
-                    placeholder="Password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Signing up..." : "Sign Up"}
-                </Button>
-              </CardFooter>
-            </form>
-          </TabsContent>
-        </Tabs>
+        {!isConfigured && (
+          <Alert className="mb-4" variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Supabase Not Configured</AlertTitle>
+            <AlertDescription>
+              The Supabase connection is not properly configured. You can use the demo login below for testing.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {!isConfigured ? (
+          <>
+            <CardHeader>
+              <CardTitle>Demo Login</CardTitle>
+              <CardDescription>
+                This is a demo version as Supabase is not configured
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button onClick={handleDemoLogin} className="w-full">
+                Continue as Demo User
+              </Button>
+            </CardContent>
+          </>
+        ) : (
+          <Tabs defaultValue="sign-in">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="sign-in">Sign In</TabsTrigger>
+              <TabsTrigger value="sign-up">Sign Up</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="sign-in">
+              <form onSubmit={handleSignIn}>
+                <CardHeader>
+                  <CardTitle>Sign In</CardTitle>
+                  <CardDescription>
+                    Enter your credentials to access your account
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Input
+                      type="email"
+                      placeholder="Email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Input
+                      type="password"
+                      placeholder="Password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                    />
+                  </div>
+                </CardContent>
+                <CardFooter>
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? "Signing in..." : "Sign In"}
+                  </Button>
+                </CardFooter>
+              </form>
+            </TabsContent>
+            
+            <TabsContent value="sign-up">
+              <form onSubmit={handleSignUp}>
+                <CardHeader>
+                  <CardTitle>Sign Up</CardTitle>
+                  <CardDescription>
+                    Create a new account to get started
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Input
+                      type="email"
+                      placeholder="Email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Input
+                      type="password"
+                      placeholder="Password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                    />
+                  </div>
+                </CardContent>
+                <CardFooter>
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? "Signing up..." : "Sign Up"}
+                  </Button>
+                </CardFooter>
+              </form>
+            </TabsContent>
+          </Tabs>
+        )}
       </Card>
     </div>
   );
 };
 
 export default AuthPage;
+

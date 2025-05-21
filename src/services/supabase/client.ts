@@ -1,15 +1,26 @@
 
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './database.types';
+import { config } from '@/config';
 
-// These will be replaced with actual values from the Supabase integration
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+// Use environment variables or fallback to values from config
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || config.supabase?.url || '';
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || config.supabase?.anonKey || '';
 
 // Create a single supabase client for the entire app
-export const supabase = createClient<Database>(supabaseUrl, supabaseKey);
+export const supabase = createClient<Database>(
+  supabaseUrl,
+  supabaseKey,
+  {
+    auth: {
+      persistSession: true,
+      storageKey: 'wanderbakes-auth-storage',
+    }
+  }
+);
 
 // Helper function to check if Supabase is properly configured
 export const isSupabaseConfigured = (): boolean => {
   return Boolean(supabaseUrl) && Boolean(supabaseKey);
 };
+
