@@ -9,6 +9,7 @@ import DataMigrationTool from "@/components/settings/DataMigrationTool";
 import DataModeIndicator from "@/components/settings/DataModeIndicator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, Info } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const DataModePage = () => {
   const { isConfigured } = useAuth();
@@ -38,7 +39,7 @@ const DataModePage = () => {
               </div>
               
               {!isConfigured && (
-                <Alert variant="warning" className="mt-4">
+                <Alert variant="destructive" className="mt-4">
                   <AlertCircle className="h-4 w-4" />
                   <AlertTitle>Supabase Not Configured</AlertTitle>
                   <AlertDescription>
