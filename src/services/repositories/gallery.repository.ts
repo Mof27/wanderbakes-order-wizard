@@ -1,4 +1,3 @@
-
 import { BaseRepository } from "./base.repository";
 import { GalleryPhoto, CustomTag, GalleryFilter, GallerySort } from "@/types/gallery";
 import { Order, OrderTag } from "@/types";
@@ -9,6 +8,7 @@ export interface GalleryRepository extends BaseRepository<GalleryPhoto> {
   getRelatedPhotos(photoId: string, limit?: number): Promise<GalleryPhoto[]>;
   getAllTags(): Promise<CustomTag[]>;
   createCustomTag(label: string): Promise<CustomTag>;
+  addPhoto(photo: Omit<GalleryPhoto, 'id' | 'orderId' | 'createdAt'>): Promise<GalleryPhoto>;
   addPhotoFromOrder(order: Order, imageUrl: string, tags: OrderTag[]): Promise<GalleryPhoto>;
 }
 
@@ -228,6 +228,21 @@ export class MockGalleryRepository implements GalleryRepository {
     
     this.customTags.push(newTag);
     return newTag;
+  }
+
+  async addPhoto(photo: Omit<GalleryPhoto, 'id' | 'orderId' | 'createdAt'>): Promise<GalleryPhoto> {
+    // Generate a placeholder orderId for standalone photos
+    const orderId = `standalone-${Date.now()}`;
+    
+    // Create the photo with required fields
+    const newPhoto: Omit<GalleryPhoto, 'id'> = {
+      ...photo,
+      orderId,
+      createdAt: new Date()
+    };
+    
+    // Use the existing create method to add to collection
+    return this.create(newPhoto);
   }
 
   async addPhotoFromOrder(order: Order, imageUrl: string, tags: OrderTag[]): Promise<GalleryPhoto> {

@@ -8,8 +8,9 @@ import PhotoGallery from "@/components/gallery/PhotoGallery";
 import GalleryFilters from "@/components/gallery/GalleryFilters";
 import PhotoDetailDialog from "@/components/gallery/PhotoDetailDialog";
 import TagManagementDialog from "@/components/gallery/TagManagementDialog";
+import PhotoUploadDialog from "@/components/gallery/PhotoUploadDialog";
 import { Button } from "@/components/ui/button";
-import { Settings } from "lucide-react";
+import { Settings, Upload } from "lucide-react";
 
 const GalleryPage = () => {
   // State for filters, sorting, and selected photo
@@ -21,6 +22,7 @@ const GalleryPage = () => {
   const [sort, setSort] = useState<GallerySort>('newest');
   const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(null);
   const [isManagingTags, setIsManagingTags] = useState(false);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   
   // Fetch gallery photos based on current filter and sort
   const { 
@@ -75,6 +77,11 @@ const GalleryPage = () => {
     setSort(newSort);
   };
   
+  // Handle photo upload completion
+  const handlePhotoUploaded = () => {
+    refetch();
+  };
+  
   return (
     <>
       <Helmet>
@@ -90,14 +97,25 @@ const GalleryPage = () => {
             </p>
           </div>
           
-          <Button 
-            variant="outline" 
-            className="flex items-center gap-2"
-            onClick={() => setIsManagingTags(true)}
-          >
-            <Settings className="h-4 w-4" />
-            Manage Tags
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="default" 
+              className="flex items-center gap-2"
+              onClick={() => setIsUploadingPhoto(true)}
+            >
+              <Upload className="h-4 w-4" />
+              Upload Photo
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              className="flex items-center gap-2"
+              onClick={() => setIsManagingTags(true)}
+            >
+              <Settings className="h-4 w-4" />
+              Manage Tags
+            </Button>
+          </div>
         </div>
         
         <GalleryFilters 
@@ -127,6 +145,12 @@ const GalleryPage = () => {
           open={isManagingTags}
           onOpenChange={setIsManagingTags}
           onTagsUpdated={() => refetch()}
+        />
+        
+        <PhotoUploadDialog
+          open={isUploadingPhoto}
+          onOpenChange={setIsUploadingPhoto}
+          onPhotoUploaded={handlePhotoUploaded}
         />
       </div>
     </>
