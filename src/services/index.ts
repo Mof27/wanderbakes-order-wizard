@@ -99,6 +99,7 @@ const dataService: DataService = {
 };
 
 // Initialize the data service with the detected mode
+// Make sure we explicitly pass all required arguments
 dataService.setMode(currentMode, currentBaseUrl, currentApiKey);
 
 export { dataService, currentMode, currentBaseUrl };
