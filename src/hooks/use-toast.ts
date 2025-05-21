@@ -1,18 +1,16 @@
 
 import * as React from "react"
-import { toast as sonnerToast, type ToasterToast } from "sonner"
-
-import type { ToastActionElement } from "@/components/ui/toast"
+import { toast as sonnerToast } from "sonner"
 
 export type ToastProps = {
   title?: React.ReactNode
   description?: React.ReactNode
-  action?: ToastActionElement
+  action?: React.ReactNode
   variant?: "default" | "destructive"
 }
 
 // Define a unified toast interface
-const toast = {
+export const toast = {
   toast: (props: ToastProps) => {
     return sonnerToast(props.title as string, {
       description: props.description,
@@ -42,11 +40,15 @@ const toast = {
   }
 }
 
-const useToast = () => {
+// This hook returns the toast functions
+export const useToast = () => {
   return {
-    toast,
+    toast: toast.toast,
+    success: toast.success,
+    error: toast.error,
+    warning: toast.warning,
+    info: toast.info,
+    custom: toast.custom,
     dismiss: toast.dismiss
   }
 }
-
-export { useToast, toast }
