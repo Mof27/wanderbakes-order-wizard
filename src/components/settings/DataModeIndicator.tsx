@@ -3,7 +3,7 @@ import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { dataService } from "@/services";
 import { useAuth } from "@/context/AuthContext";
-import { InfoCircle } from "lucide-react";
+import { Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export default function DataModeIndicator() {
@@ -14,7 +14,7 @@ export default function DataModeIndicator() {
     if (dataMode === 'supabase' && isConfigured) {
       return {
         label: "Supabase",
-        variant: "default",
+        variant: "default" as const,
         tooltip: "Your data is stored in Supabase database"
       };
     } else if (dataMode === 'supabase' && !isConfigured) {
@@ -46,7 +46,7 @@ export default function DataModeIndicator() {
         <TooltipTrigger asChild>
           <div className="flex items-center gap-2">
             <Badge variant={status.variant}>{status.label}</Badge>
-            <InfoCircle size={16} className="text-muted-foreground" />
+            <Info size={16} className="text-muted-foreground" />
           </div>
         </TooltipTrigger>
         <TooltipContent>
