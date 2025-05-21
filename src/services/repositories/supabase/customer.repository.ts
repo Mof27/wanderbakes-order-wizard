@@ -3,6 +3,7 @@ import { Customer } from "@/types";
 import { SupabaseBaseRepository } from "./base.repository";
 import { CustomerRepository } from "../customer.repository";
 import { supabase, isSupabaseConfigured } from "../../supabase/client";
+import { config } from "@/config";
 
 /**
  * Supabase implementation of the Customer Repository

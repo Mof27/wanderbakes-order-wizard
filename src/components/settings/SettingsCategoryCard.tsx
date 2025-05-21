@@ -7,11 +7,9 @@ import { ReactNode } from "react";
 interface SettingsCategoryCardProps {
   title: string;
   description: string;
-  icon: ReactNode | string;
-  category?: string;
-  to?: string;
+  icon: ReactNode;
+  category: string;
   itemCount?: number;
-  className?: string;
 }
 
 const SettingsCategoryCard = ({ 
@@ -19,26 +17,16 @@ const SettingsCategoryCard = ({
   description, 
   icon,
   category,
-  to,
-  itemCount,
-  className = ""
+  itemCount 
 }: SettingsCategoryCardProps) => {
   const navigate = useNavigate();
-  
-  const handleNavigate = () => {
-    if (to) {
-      navigate(`/settings/${to}`);
-    } else if (category) {
-      navigate(`/settings/${category}`);
-    }
-  };
 
   return (
-    <Card className={`hover:border-primary/50 transition-all ${className}`}>
+    <Card className="hover:border-primary/50 transition-all">
       <CardHeader>
         <div className="flex items-center gap-2">
           <div className="bg-muted p-2 rounded-md">
-            {typeof icon === 'string' ? icon : icon}
+            {icon}
           </div>
           <div>
             <CardTitle className="text-lg">{title}</CardTitle>
@@ -57,7 +45,7 @@ const SettingsCategoryCard = ({
         <Button 
           variant="outline" 
           className="w-full" 
-          onClick={handleNavigate}
+          onClick={() => navigate(`/settings/${category}`)}
         >
           Manage
         </Button>
