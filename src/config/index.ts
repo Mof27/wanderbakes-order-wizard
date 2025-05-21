@@ -39,12 +39,10 @@ export const config = {
    * In production, use environment variables
    */
   supabase: {
-    // These are placeholder values for development only
-    // Replace with your actual Supabase project URL and anon key for local testing
-    url: 'https://your-project-url.supabase.co',
-    anonKey: 'your-anon-key',
+    // Replace these with your Supabase project URL and anon key
+    url: import.meta.env.VITE_SUPABASE_URL || '',
+    anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || '',
     // Flag to indicate whether to use mock data when Supabase is not properly configured
     useMockWhenUnconfigured: true,
   },
 };
-

@@ -27,12 +27,12 @@ let currentApiKey: string | undefined = undefined;
 if (isSupabaseConfigured()) {
   currentMode = 'supabase';
   console.log('Supabase configuration detected! Using Supabase as data source.');
-  // Set the baseUrl and apiKey from environment variables
-  currentBaseUrl = import.meta.env.VITE_SUPABASE_URL || config.supabase?.url;
-  currentApiKey = import.meta.env.VITE_SUPABASE_ANON_KEY || config.supabase?.anonKey;
+  // Set the baseUrl and apiKey from environment variables or config
+  currentBaseUrl = config.supabase.url;
+  currentApiKey = config.supabase.anonKey;
 } else {
   console.log('Supabase not configured. Using mock data as fallback.');
-  if (config.supabase?.useMockWhenUnconfigured) {
+  if (config.supabase.useMockWhenUnconfigured) {
     currentMode = 'mock';
   }
 }
@@ -58,6 +58,7 @@ const dataService: DataService = {
           dataService.settings = mock.mockDataService.settings;
           dataService.baker = mock.mockDataService.baker;
           dataService.gallery = mock.mockDataService.gallery;
+          console.log('Mock data service loaded successfully');
         })
         .catch(err => console.error('Failed to load mock data service', err));
     } else if (mode === 'firebase') {
@@ -90,11 +91,13 @@ const dataService: DataService = {
         try {
           // Only use Supabase implementations if Supabase is properly configured
           if (isSupabaseConfigured()) {
+            console.log('Initializing Supabase repositories...');
             // Use Supabase implementation for customer repository
             dataService.customers = new SupabaseCustomerRepository();
             
             // Use Supabase implementation for gallery
             dataService.gallery = new SupabaseGalleryRepository();
+            console.log('Supabase repositories initialized successfully');
           } else {
             throw new Error('Supabase is not configured properly');
           }
