@@ -284,16 +284,18 @@ export class SupabaseGalleryRepository implements GalleryRepository {
     
     // Group by photo and count matching tags for scoring
     const photoMap = new Map();
-    for (const item of data || []) {
-      const photoId = item.gallery_photos.id;
-      if (!photoMap.has(photoId)) {
-        photoMap.set(photoId, {
-          photo: item.gallery_photos,
-          score: 1
-        });
-      } else {
-        const entry = photoMap.get(photoId);
-        entry.score += 1;
+    if (data) {
+      for (const item of data) {
+        const photoId = item.gallery_photos.id;
+        if (!photoMap.has(photoId)) {
+          photoMap.set(photoId, {
+            photo: item.gallery_photos,
+            score: 1
+          });
+        } else {
+          const entry = photoMap.get(photoId);
+          entry.score += 1;
+        }
       }
     }
     
