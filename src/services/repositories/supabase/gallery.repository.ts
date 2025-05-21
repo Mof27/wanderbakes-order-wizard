@@ -42,29 +42,29 @@ export class SupabaseGalleryRepository implements GalleryRepository {
   }
 
   async getAll(): Promise<GalleryPhoto[]> {
-    const data = await this.handleQuery(
-      this.client
-        .from('gallery_photos')
-        .select('*')
-        .order('created_at', { ascending: false })
-    );
+    const { data, error } = await this.client
+      .from('gallery_photos')
+      .select('*')
+      .order('created_at', { ascending: false });
+      
+    if (error) throw error;
     
     return this.mapDbPhotosToGalleryPhotos(data || []);
   }
 
   async getById(id: string): Promise<GalleryPhoto | undefined> {
-    const data = await this.handleQuery(
-      this.client
-        .from('gallery_photos')
-        .select(`
-          *,
-          gallery_photo_tags (
-            gallery_tags (*)
-          )
-        `)
-        .eq('id', id)
-        .single()
-    );
+    const { data, error } = await this.client
+      .from('gallery_photos')
+      .select(`
+        *,
+        gallery_photo_tags (
+          gallery_tags (*)
+        )
+      `)
+      .eq('id', id)
+      .single();
+    
+    if (error) throw error;
     
     if (!data) return undefined;
     
@@ -81,13 +81,14 @@ export class SupabaseGalleryRepository implements GalleryRepository {
     };
     
     // Insert photo
-    const photoRecord = await this.handleQuery(
-      this.client
-        .from('gallery_photos')
-        .insert(photoData)
-        .select()
-        .single()
-    );
+    const { data: photoRecord, error } = await this.client
+      .from('gallery_photos')
+      .insert(photoData)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    if (!photoRecord) throw new Error('Failed to create photo record');
     
     // Associate tags with photo
     if (photo.tags && photo.tags.length > 0) {
@@ -102,11 +103,11 @@ export class SupabaseGalleryRepository implements GalleryRepository {
       }));
       
       if (photoTagAssociations.length > 0) {
-        await this.handleQuery(
-          this.client
-            .from('gallery_photo_tags')
-            .insert(photoTagAssociations)
-        );
+        const { error: associationError } = await this.client
+          .from('gallery_photo_tags')
+          .insert(photoTagAssociations);
+        
+        if (associationError) throw associationError;
       }
     }
     
@@ -124,24 +125,25 @@ export class SupabaseGalleryRepository implements GalleryRepository {
     if (photo.orderInfo) updateData.order_info = photo.orderInfo;
     
     // Update photo record
-    const updatedPhoto = await this.handleQuery(
-      this.client
-        .from('gallery_photos')
-        .update(updateData)
-        .eq('id', id)
-        .select()
-        .single()
-    );
+    const { data: updatedPhoto, error } = await this.client
+      .from('gallery_photos')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    if (!updatedPhoto) throw new Error(`Photo with id ${id} not found`);
     
     // If tags were updated, handle tag associations
     if (photo.tags) {
       // First delete existing associations
-      await this.handleQuery(
-        this.client
-          .from('gallery_photo_tags')
-          .delete()
-          .eq('photo_id', id)
-      );
+      const { error: deleteError } = await this.client
+        .from('gallery_photo_tags')
+        .delete()
+        .eq('photo_id', id);
+      
+      if (deleteError) throw deleteError;
       
       // Then ensure all tags exist
       const tagPromises = photo.tags.map(tagValue => this.ensureTagExists(tagValue));
@@ -154,11 +156,11 @@ export class SupabaseGalleryRepository implements GalleryRepository {
       }));
       
       if (photoTagAssociations.length > 0) {
-        await this.handleQuery(
-          this.client
-            .from('gallery_photo_tags')
-            .insert(photoTagAssociations)
-        );
+        const { error: insertError } = await this.client
+          .from('gallery_photo_tags')
+          .insert(photoTagAssociations);
+          
+        if (insertError) throw insertError;
       }
     }
     
@@ -169,22 +171,22 @@ export class SupabaseGalleryRepository implements GalleryRepository {
   async delete(id: string): Promise<boolean> {
     try {
       // First delete photo-tag associations
-      await this.handleQuery(
-        this.client
-          .from('gallery_photo_tags')
-          .delete()
-          .eq('photo_id', id)
-      );
+      const { error: deleteTagsError } = await this.client
+        .from('gallery_photo_tags')
+        .delete()
+        .eq('photo_id', id);
+      
+      if (deleteTagsError) throw deleteTagsError;
       
       // Then delete the photo from storage if needed
       try {
-        const photo = await this.handleQuery(
-          this.client
-            .from('gallery_photos')
-            .select('image_url')
-            .eq('id', id)
-            .single()
-        );
+        const { data: photo, error: getPhotoError } = await this.client
+          .from('gallery_photos')
+          .select('image_url')
+          .eq('id', id)
+          .single();
+        
+        if (getPhotoError) throw getPhotoError;
         
         if (photo && photo.image_url) {
           // Extract path from URL if it's a Supabase storage URL
@@ -201,12 +203,12 @@ export class SupabaseGalleryRepository implements GalleryRepository {
       }
       
       // Finally delete the photo record
-      await this.handleQuery(
-        this.client
-          .from('gallery_photos')
-          .delete()
-          .eq('id', id)
-      );
+      const { error: deletePhotoError } = await this.client
+        .from('gallery_photos')
+        .delete()
+        .eq('id', id);
+      
+      if (deletePhotoError) throw deletePhotoError;
       
       return true;
     } catch (error) {
@@ -287,7 +289,9 @@ export class SupabaseGalleryRepository implements GalleryRepository {
     query = query.range(offset, offset + pageSize - 1);
     
     // Execute the query
-    const data = await this.handleQuery(query);
+    const { data, error } = await query;
+    
+    if (error) throw error;
     
     return this.mapDbPhotosToGalleryPhotos(data || []);
   }
@@ -298,22 +302,22 @@ export class SupabaseGalleryRepository implements GalleryRepository {
 
   async getRelatedPhotos(photoId: string, limit: number = 4): Promise<GalleryPhoto[]> {
     // Get the tags for the source photo
-    const photoTags = await this.handleQuery(
-      this.client
-        .from('gallery_photo_tags')
-        .select('tag_id')
-        .eq('photo_id', photoId)
-    );
+    const { data: photoTags, error: tagsError } = await this.client
+      .from('gallery_photo_tags')
+      .select('tag_id')
+      .eq('photo_id', photoId);
+    
+    if (tagsError) throw tagsError;
     
     if (!photoTags || photoTags.length === 0) {
       // If no tags, return random photos
-      const randomPhotos = await this.handleQuery(
-        this.client
-          .from('gallery_photos')
-          .select('*')
-          .neq('id', photoId)
-          .limit(limit)
-      );
+      const { data: randomPhotos, error: randomError } = await this.client
+        .from('gallery_photos')
+        .select('*')
+        .neq('id', photoId)
+        .limit(limit);
+      
+      if (randomError) throw randomError;
       
       return this.mapDbPhotosToGalleryPhotos(randomPhotos || []);
     }
@@ -321,18 +325,18 @@ export class SupabaseGalleryRepository implements GalleryRepository {
     const tagIds = photoTags.map(pt => pt.tag_id);
     
     // Find photos that share tags with the source photo
-    const data = await this.handleQuery(
-      this.client
-        .from('gallery_photo_tags')
-        .select(`
-          gallery_photos!inner (*),
-          tag_id
-        `)
-        .in('tag_id', tagIds)
-        .neq('gallery_photos.id', photoId)
-        .order('gallery_photos.created_at', { ascending: false })
-        .limit(limit * 2) // Get more than needed to allow for deduplication
-    );
+    const { data, error } = await this.client
+      .from('gallery_photo_tags')
+      .select(`
+        gallery_photos!inner (*),
+        tag_id
+      `)
+      .in('tag_id', tagIds)
+      .neq('gallery_photos.id', photoId)
+      .order('gallery_photos.created_at', { ascending: false })
+      .limit(limit * 2); // Get more than needed to allow for deduplication
+    
+    if (error) throw error;
     
     // Group by photo and count matching tags for scoring
     const photoMap = new Map();
@@ -365,7 +369,9 @@ export class SupabaseGalleryRepository implements GalleryRepository {
 
   async getAllTags(): Promise<CustomTag[]> {
     // Get all tags with counts using the optimized RPC function
-    const data = await this.handleQuery(this.client.rpc('get_tags_with_counts'));
+    const { data, error } = await this.client.rpc('get_tags_with_counts');
+    
+    if (error) throw error;
     
     return (data || []).map((tag: any) => ({
       id: tag.id,
@@ -382,13 +388,13 @@ export class SupabaseGalleryRepository implements GalleryRepository {
     
     // Check if tag already exists
     try {
-      const existingTag = await this.handleQuery(
-        this.client
-          .from('gallery_tags')
-          .select('*')
-          .eq('value', value)
-          .maybeSingle()
-      );
+      const { data: existingTag, error: existingError } = await this.client
+        .from('gallery_tags')
+        .select('*')
+        .eq('value', value)
+        .maybeSingle();
+      
+      if (existingError) throw existingError;
       
       if (existingTag) {
         return {
@@ -407,13 +413,14 @@ export class SupabaseGalleryRepository implements GalleryRepository {
     }
     
     // Create new tag
-    const newTag = await this.handleQuery(
-      this.client
-        .from('gallery_tags')
-        .insert({ value, label, created_at: new Date().toISOString() })
-        .select()
-        .single()
-    );
+    const { data: newTag, error: createError } = await this.client
+      .from('gallery_tags')
+      .insert({ value, label, created_at: new Date().toISOString() })
+      .select()
+      .single();
+    
+    if (createError) throw createError;
+    if (!newTag) throw new Error('Failed to create new tag');
     
     return {
       id: newTag.id,
@@ -510,13 +517,13 @@ export class SupabaseGalleryRepository implements GalleryRepository {
   // Helper method to ensure a tag exists or create it
   private async ensureTagExists(tagValue: string): Promise<{ id: string, value: string }> {
     try {
-      const existingTag = await this.handleQuery(
-        this.client
-          .from('gallery_tags')
-          .select('*')
-          .eq('value', tagValue)
-          .maybeSingle()
-      );
+      const { data: existingTag, error: existingError } = await this.client
+        .from('gallery_tags')
+        .select('*')
+        .eq('value', tagValue)
+        .maybeSingle();
+      
+      if (existingError) throw existingError;
       
       if (existingTag) return existingTag;
     } catch (error) {
@@ -527,17 +534,18 @@ export class SupabaseGalleryRepository implements GalleryRepository {
     }
     
     // Tag doesn't exist, create it
-    const newTag = await this.handleQuery(
-      this.client
-        .from('gallery_tags')
-        .insert({
-          value: tagValue,
-          label: this.formatTagLabel(tagValue),
-          created_at: new Date().toISOString()
-        })
-        .select()
-        .single()
-    );
+    const { data: newTag, error: createError } = await this.client
+      .from('gallery_tags')
+      .insert({
+        value: tagValue,
+        label: this.formatTagLabel(tagValue),
+        created_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+    
+    if (createError) throw createError;
+    if (!newTag) throw new Error(`Failed to create tag: ${tagValue}`);
     
     return newTag;
   }
