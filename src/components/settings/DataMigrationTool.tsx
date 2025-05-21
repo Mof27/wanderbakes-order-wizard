@@ -8,8 +8,9 @@ import { toast } from '@/components/ui/sonner';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Customer, Order } from '@/types';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/services/supabase/client';
 import { AlertCircle } from 'lucide-react';
+import { Json } from '@/services/supabase/database.types';
 
 type MigrationStatus = 'idle' | 'running' | 'completed' | 'failed';
 
@@ -37,7 +38,7 @@ const DataMigrationTool = () => {
   });
 
   // Function to check if table already has data
-  const checkIfTableHasData = async (tableName: string): Promise<boolean> => {
+  const checkIfTableHasData = async (tableName: 'customers' | 'orders' | 'order_cover_colors' | 'order_tier_details' | 'order_packing_items'): Promise<boolean> => {
     const { count, error } = await supabase
       .from(tableName)
       .select('*', { count: 'exact', head: true });
@@ -240,7 +241,7 @@ const DataMigrationTool = () => {
             // ID already exists, let the repository generate a new one
             createdOrder = await orderRepo.create(orderWithoutId);
           } else {
-            // We can use the existing ID - insert directly
+            // We can use the existing ID - insert directly with Supabase
             const { data: insertedOrder, error: insertError } = await supabase
               .from('orders')
               .insert({
@@ -248,8 +249,8 @@ const DataMigrationTool = () => {
                 customer_id: customerId,
                 status: order.status,
                 kitchen_status: order.kitchenStatus,
-                order_date: order.orderDate,
-                delivery_date: order.deliveryDate,
+                order_date: order.orderDate ? order.orderDate.toISOString() : null,
+                delivery_date: order.deliveryDate.toISOString(),
                 delivery_address: order.deliveryAddress,
                 delivery_address_notes: order.deliveryAddressNotes,
                 delivery_area: order.deliveryArea,
@@ -268,16 +269,16 @@ const DataMigrationTool = () => {
                 delivery_method: order.deliveryMethod,
                 delivery_time_slot: order.deliveryTimeSlot,
                 delivery_price: order.deliveryPrice,
-                actual_delivery_time: order.actualDeliveryTime,
+                actual_delivery_time: order.actualDeliveryTime ? order.actualDeliveryTime.toISOString() : null,
                 customer_feedback: order.customerFeedback,
-                archived_date: order.archivedDate,
-                created_at: order.createdAt,
-                updated_at: order.updatedAt,
+                archived_date: order.archivedDate ? order.archivedDate.toISOString() : null,
+                created_at: order.createdAt.toISOString(),
+                updated_at: order.updatedAt ? order.updatedAt.toISOString() : null,
                 cover_type: order.coverType,
                 revision_count: order.revisionCount || 0,
                 revision_notes: order.revisionNotes,
                 approved_by: order.approvedBy,
-                approval_date: order.approvalDate
+                approval_date: order.approvalDate ? order.approvalDate.toISOString() : null
               })
               .select('*')
               .single();
@@ -285,18 +286,17 @@ const DataMigrationTool = () => {
             if (insertError) throw insertError;
             
             // Now we insert all the related data
-            // Cover colors
-            if (order.coverColors && order.coverColors.length > 0) {
-              for (const color of order.coverColors) {
-                await supabase.from('order_cover_colors').insert({
-                  order_id: id,
-                  type: color.type,
-                  color: color.color,
-                  colors: color.colors,
-                  notes: color.notes,
-                  image_url: color.imageUrl
-                });
-              }
+            // Cover color
+            if (order.coverColor) {
+              const coverColor = order.coverColor;
+              await supabase.from('order_cover_colors').insert({
+                order_id: id,
+                type: coverColor.type,
+                color: coverColor.type === 'solid' ? coverColor.color : null,
+                colors: coverColor.type === 'gradient' ? coverColor.colors : null,
+                notes: coverColor.type === 'custom' ? coverColor.notes : null,
+                image_url: coverColor.type === 'custom' ? coverColor.imageUrl : null
+              });
             }
             
             // Tier details
@@ -317,17 +317,16 @@ const DataMigrationTool = () => {
                   .select('id')
                   .single();
                   
-                if (tierData && tier.coverColors && tier.coverColors.length > 0) {
-                  for (const color of tier.coverColors) {
-                    await supabase.from('tier_detail_cover_colors').insert({
-                      tier_detail_id: tierData.id,
-                      type: color.type,
-                      color: color.color,
-                      colors: color.colors,
-                      notes: color.notes,
-                      image_url: color.imageUrl
-                    });
-                  }
+                if (tierData && tier.coverColor) {
+                  const tierCoverColor = tier.coverColor;
+                  await supabase.from('tier_detail_cover_colors').insert({
+                    tier_detail_id: tierData.id,
+                    type: tierCoverColor.type,
+                    color: tierCoverColor.type === 'solid' ? tierCoverColor.color : null,
+                    colors: tierCoverColor.type === 'gradient' ? tierCoverColor.colors : null,
+                    notes: tierCoverColor.type === 'custom' ? tierCoverColor.notes : null,
+                    image_url: tierCoverColor.type === 'custom' ? tierCoverColor.imageUrl : null
+                  });
                 }
               }
             }
@@ -358,17 +357,19 @@ const DataMigrationTool = () => {
             // Order logs
             if (order.orderLogs && order.orderLogs.length > 0) {
               for (const log of order.orderLogs) {
-                await supabase.from('order_logs').insert({
+                const logInsert = {
                   id: log.id || `log_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
                   order_id: id,
-                  timestamp: log.timestamp,
+                  timestamp: log.timestamp.toISOString(),
                   type: log.type,
                   previous_status: log.previousStatus,
                   new_status: log.newStatus,
-                  user_name: log.userName,
+                  user_name: log.user,
                   note: log.note,
-                  metadata: log.metadata
-                });
+                  metadata: log.metadata as Json
+                };
+                
+                await supabase.from('order_logs').insert(logInsert);
               }
             }
             
@@ -378,8 +379,8 @@ const DataMigrationTool = () => {
                 await supabase.from('order_print_history').insert({
                   order_id: id,
                   type: print.type,
-                  timestamp: print.timestamp,
-                  user_name: print.userName
+                  timestamp: print.timestamp.toISOString(),
+                  user_name: print.user
                 });
               }
             }
@@ -390,8 +391,8 @@ const DataMigrationTool = () => {
                 await supabase.from('order_revision_history').insert({
                   id: revision.id || `rev_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
                   order_id: id,
-                  timestamp: revision.timestamp,
-                  photos: revision.photos,
+                  timestamp: revision.timestamp.toISOString(),
+                  photos: revision.photos as unknown as Json,
                   notes: revision.notes,
                   requested_by: revision.requestedBy
                 });
@@ -404,10 +405,12 @@ const DataMigrationTool = () => {
                 order_id: id,
                 driver_type: order.deliveryAssignment.driverType,
                 driver_name: order.deliveryAssignment.driverName,
-                assigned_at: order.deliveryAssignment.assignedAt,
+                assigned_at: order.deliveryAssignment.assignedAt.toISOString(),
+                assigned_by: order.deliveryAssignment.assignedBy,
                 is_preliminary: order.deliveryAssignment.isPreliminary,
                 notes: order.deliveryAssignment.notes,
-                vehicle_info: order.deliveryAssignment.vehicleInfo
+                vehicle_info: order.deliveryAssignment.vehicleInfo,
+                status: order.deliveryAssignment.status
               });
             }
             

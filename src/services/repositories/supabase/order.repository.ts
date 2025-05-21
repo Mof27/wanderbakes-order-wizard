@@ -7,9 +7,8 @@ import {
   CakeRevision, 
   DeliveryAssignment,
   TierDetail,
-  CakeIngredient,
-  PackingItem,
-  CoverColor
+  Ingredient,
+  PackingItem
 } from "@/types";
 import { OrderRepository } from "../order.repository";
 import { SupabaseBaseRepository } from "./base.repository";
@@ -109,10 +108,9 @@ export class SupabaseOrderRepository extends SupabaseBaseRepository implements O
     const { 
       customer, 
       packingItems, 
-      coverColors, 
+      coverColor, 
       ingredients, 
       orderLogs, 
-      printHistory, 
       revisionHistory, 
       deliveryAssignment, 
       tierDetails, 
@@ -125,8 +123,8 @@ export class SupabaseOrderRepository extends SupabaseBaseRepository implements O
       customer_id: customer.id,
       ...orderData,
       status: orderData.status || 'incomplete',
-      created_at: now,
-      updated_at: now
+      created_at: now.toISOString(),
+      updated_at: now.toISOString()
     };
 
     // Start a transaction
@@ -151,7 +149,7 @@ export class SupabaseOrderRepository extends SupabaseBaseRepository implements O
     const {
       customer,
       packingItems,
-      coverColors,
+      coverColor,
       ingredients,
       orderLogs,
       printHistory,
@@ -181,7 +179,7 @@ export class SupabaseOrderRepository extends SupabaseBaseRepository implements O
             type: 'status-change',
             previous_status: existingOrder.status,
             new_status: orderData.status,
-            timestamp: new Date()
+            timestamp: new Date().toISOString()
           });
       }
     }
@@ -192,7 +190,7 @@ export class SupabaseOrderRepository extends SupabaseBaseRepository implements O
         .from('orders')
         .update({
           ...orderData,
-          updated_at: new Date()
+          updated_at: new Date().toISOString()
         })
         .eq('id', id);
 
@@ -207,8 +205,8 @@ export class SupabaseOrderRepository extends SupabaseBaseRepository implements O
       await this.replacePackingItems(id, packingItems);
     }
 
-    if (coverColors) {
-      await this.replaceCoverColors(id, coverColors);
+    if (coverColor) {
+      await this.replaceCoverColor(id, coverColor);
     }
 
     if (ingredients) {
@@ -348,8 +346,8 @@ export class SupabaseOrderRepository extends SupabaseBaseRepository implements O
         .insert({
           order_id: orderId,
           type: printEvent.type,
-          timestamp: printEvent.timestamp,
-          user_name: printEvent.userName
+          timestamp: printEvent.timestamp.toISOString(),
+          user_name: printEvent.user
         });
 
       if (printError) {
@@ -367,7 +365,7 @@ export class SupabaseOrderRepository extends SupabaseBaseRepository implements O
           order_id: orderId,
           type: 'print',
           note: `Printed ${printEvent.type}`,
-          timestamp: new Date(),
+          timestamp: new Date().toISOString(),
           metadata: { printEvent }
         });
 
@@ -378,7 +376,7 @@ export class SupabaseOrderRepository extends SupabaseBaseRepository implements O
       // Update order's updated_at timestamp
       await this.getClient()
         .from('orders')
-        .update({ updated_at: new Date() })
+        .update({ updated_at: new Date().toISOString() })
         .eq('id', orderId);
 
       // Return the updated order
@@ -401,9 +399,9 @@ export class SupabaseOrderRepository extends SupabaseBaseRepository implements O
           id: logId,
           order_id: orderId,
           type: logEvent.type,
-          timestamp: logEvent.timestamp,
+          timestamp: logEvent.timestamp.toISOString(),
           note: logEvent.note,
-          user_name: logEvent.userName,
+          user_name: logEvent.user,
           previous_status: logEvent.previousStatus,
           new_status: logEvent.newStatus,
           metadata: logEvent.metadata
@@ -417,7 +415,7 @@ export class SupabaseOrderRepository extends SupabaseBaseRepository implements O
       // Update order's updated_at timestamp
       await this.getClient()
         .from('orders')
-        .update({ updated_at: new Date() })
+        .update({ updated_at: new Date().toISOString() })
         .eq('id', orderId);
 
       // Return the updated order
@@ -439,7 +437,7 @@ export class SupabaseOrderRepository extends SupabaseBaseRepository implements O
         .insert({
           id: revisionId,
           order_id: orderId,
-          timestamp: revision.timestamp,
+          timestamp: revision.timestamp.toISOString(),
           photos: revision.photos,
           notes: revision.notes,
           requested_by: revision.requestedBy
@@ -468,7 +466,7 @@ export class SupabaseOrderRepository extends SupabaseBaseRepository implements O
         .from('orders')
         .update({
           revision_count: revisionCount,
-          updated_at: new Date()
+          updated_at: new Date().toISOString()
         })
         .eq('id', orderId);
 
@@ -494,10 +492,11 @@ export class SupabaseOrderRepository extends SupabaseBaseRepository implements O
           order_id: orderId,
           driver_type: assignment.driverType,
           driver_name: assignment.driverName,
-          assigned_at: new Date(),
+          assigned_at: new Date().toISOString(),
           is_preliminary: assignment.isPreliminary,
           notes: assignment.notes,
-          vehicle_info: assignment.vehicleInfo
+          vehicle_info: assignment.vehicleInfo,
+          status: assignment.status
         });
 
       if (assignError) {
@@ -515,7 +514,7 @@ export class SupabaseOrderRepository extends SupabaseBaseRepository implements O
           order_id: orderId,
           type: 'driver-assigned',
           note: `${assignment.isPreliminary ? 'Pre-assigned' : 'Assigned'} to ${assignment.driverType}${assignment.driverName ? ` (${assignment.driverName})` : ''}`,
-          timestamp: new Date(),
+          timestamp: new Date().toISOString(),
           metadata: { assignment }
         });
 
@@ -526,7 +525,7 @@ export class SupabaseOrderRepository extends SupabaseBaseRepository implements O
       // Update order's updated_at timestamp
       await this.getClient()
         .from('orders')
-        .update({ updated_at: new Date() })
+        .update({ updated_at: new Date().toISOString() })
         .eq('id', orderId);
 
       // Return the updated order
@@ -539,11 +538,11 @@ export class SupabaseOrderRepository extends SupabaseBaseRepository implements O
 
   // Private helper methods for data manipulation
   
-  private async insertOrderRelatedData(orderId: string, order: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>) {
+  private async insertOrderRelatedData(orderId: string, order: Omit<Order, 'id' | 'createdAt' | 'updatedAt' | 'printHistory'>) {
     // These methods will handle inserting all the nested objects
     
-    if (order.coverColors && order.coverColors.length > 0) {
-      await this.insertCoverColors(orderId, order.coverColors);
+    if (order.coverColor) {
+      await this.insertCoverColor(orderId, order.coverColor);
     }
     
     if (order.tierDetails && order.tierDetails.length > 0) {
@@ -559,22 +558,22 @@ export class SupabaseOrderRepository extends SupabaseBaseRepository implements O
     }
   }
 
-  private async insertCoverColors(orderId: string, coverColors: CoverColor[]) {
-    const colorInserts = coverColors.map(color => ({
+  private async insertCoverColor(orderId: string, coverColor: any) {
+    const colorInsert = {
       order_id: orderId,
-      type: color.type,
-      color: color.color,
-      colors: color.colors ? JSON.stringify(color.colors) : null,
-      notes: color.notes,
-      image_url: color.imageUrl
-    }));
+      type: coverColor.type,
+      color: coverColor.type === 'solid' ? coverColor.color : null,
+      colors: coverColor.type === 'gradient' ? coverColor.colors : null,
+      notes: coverColor.type === 'custom' ? coverColor.notes : null,
+      image_url: coverColor.type === 'custom' ? coverColor.imageUrl : null
+    };
     
     const { error } = await this.getClient()
       .from('order_cover_colors')
-      .insert(colorInserts);
+      .insert(colorInsert);
       
     if (error) {
-      console.error(`Error inserting cover colors for order ${orderId}:`, error);
+      console.error(`Error inserting cover color for order ${orderId}:`, error);
       throw error;
     }
   }
@@ -602,23 +601,23 @@ export class SupabaseOrderRepository extends SupabaseBaseRepository implements O
         throw tierError;
       }
       
-      // Insert tier cover colors if any
-      if (tier.coverColors && tier.coverColors.length > 0 && tierData) {
-        const tierColorInserts = tier.coverColors.map(color => ({
+      // Insert tier cover color if any
+      if (tier.coverColor && tierData) {
+        const tierColorInsert = {
           tier_detail_id: tierData.id,
-          type: color.type,
-          color: color.color,
-          colors: color.colors ? JSON.stringify(color.colors) : null,
-          notes: color.notes,
-          image_url: color.imageUrl
-        }));
+          type: tier.coverColor.type,
+          color: tier.coverColor.type === 'solid' ? tier.coverColor.color : null,
+          colors: tier.coverColor.type === 'gradient' ? tier.coverColor.colors : null,
+          notes: tier.coverColor.type === 'custom' ? tier.coverColor.notes : null,
+          image_url: tier.coverColor.type === 'custom' ? tier.coverColor.imageUrl : null
+        };
         
         const { error: colorsError } = await this.getClient()
           .from('tier_detail_cover_colors')
-          .insert(tierColorInserts);
+          .insert(tierColorInsert);
           
         if (colorsError) {
-          console.error(`Error inserting tier cover colors for tier ${tierData.id}:`, colorsError);
+          console.error(`Error inserting tier cover color for tier ${tierData.id}:`, colorsError);
           throw colorsError;
         }
       }
@@ -642,7 +641,7 @@ export class SupabaseOrderRepository extends SupabaseBaseRepository implements O
     }
   }
 
-  private async insertIngredients(orderId: string, ingredients: CakeIngredient[]) {
+  private async insertIngredients(orderId: string, ingredients: Ingredient[]) {
     const ingredientInserts = ingredients.map(ingredient => ({
       order_id: orderId,
       name: ingredient.name,
@@ -673,20 +672,18 @@ export class SupabaseOrderRepository extends SupabaseBaseRepository implements O
     }
   }
   
-  private async replaceCoverColors(orderId: string, coverColors: CoverColor[]) {
+  private async replaceCoverColor(orderId: string, coverColor: any) {
     // Delete existing colors
     await this.getClient()
       .from('order_cover_colors')
       .delete()
       .eq('order_id', orderId);
       
-    // Insert new colors if any
-    if (coverColors.length > 0) {
-      await this.insertCoverColors(orderId, coverColors);
-    }
+    // Insert new color if any
+    await this.insertCoverColor(orderId, coverColor);
   }
   
-  private async replaceIngredients(orderId: string, ingredients: CakeIngredient[]) {
+  private async replaceIngredients(orderId: string, ingredients: Ingredient[]) {
     // Delete existing ingredients
     await this.getClient()
       .from('order_ingredients')
@@ -751,28 +748,34 @@ export class SupabaseOrderRepository extends SupabaseBaseRepository implements O
       createdAt: new Date() 
     };
 
-    // Map cover colors
-    const coverColors = dbOrder.order_cover_colors ? 
-      dbOrder.order_cover_colors.map((color: any) => ({
-        type: color.type,
-        color: color.color,
-        colors: color.colors,
-        notes: color.notes,
-        imageUrl: color.image_url
-      })) : [];
+    // Map cover color - pick the first one from order_cover_colors
+    let coverColor;
+    if (dbOrder.order_cover_colors && dbOrder.order_cover_colors.length > 0) {
+      const color = dbOrder.order_cover_colors[0];
+      if (color.type === 'solid') {
+        coverColor = { type: 'solid', color: color.color };
+      } else if (color.type === 'gradient') {
+        coverColor = { type: 'gradient', colors: color.colors || [] };
+      } else if (color.type === 'custom') {
+        coverColor = { type: 'custom', notes: color.notes, imageUrl: color.image_url };
+      }
+    }
 
     // Map tier details
     const tierDetails = dbOrder.order_tier_details ?
       dbOrder.order_tier_details.map((tier: any) => {
-        // Map tier cover colors if available
-        const coverColors = tier.tier_detail_cover_colors ? 
-          tier.tier_detail_cover_colors.map((color: any) => ({
-            type: color.type,
-            color: color.color,
-            colors: color.colors,
-            notes: color.notes,
-            imageUrl: color.image_url
-          })) : [];
+        // Map tier cover color if available
+        let coverColor;
+        if (tier.tier_detail_cover_colors && tier.tier_detail_cover_colors.length > 0) {
+          const color = tier.tier_detail_cover_colors[0];
+          if (color.type === 'solid') {
+            coverColor = { type: 'solid', color: color.color };
+          } else if (color.type === 'gradient') {
+            coverColor = { type: 'gradient', colors: color.colors || [] };
+          } else if (color.type === 'custom') {
+            coverColor = { type: 'custom', notes: color.notes, imageUrl: color.image_url };
+          }
+        }
           
         return {
           tier: tier.tier,
@@ -782,7 +785,7 @@ export class SupabaseOrderRepository extends SupabaseBaseRepository implements O
           flavor: tier.flavor,
           coverType: tier.cover_type,
           customShape: tier.custom_shape,
-          coverColors
+          coverColor
         };
       }) : [];
 
@@ -810,7 +813,7 @@ export class SupabaseOrderRepository extends SupabaseBaseRepository implements O
         type: log.type,
         timestamp: new Date(log.timestamp),
         note: log.note,
-        userName: log.user_name,
+        user: log.user_name,
         previousStatus: log.previous_status,
         newStatus: log.new_status,
         metadata: log.metadata
@@ -822,7 +825,7 @@ export class SupabaseOrderRepository extends SupabaseBaseRepository implements O
         id: print.id,
         type: print.type,
         timestamp: new Date(print.timestamp),
-        userName: print.user_name
+        user: print.user_name
       })) : [];
 
     // Map revision history
@@ -841,7 +844,7 @@ export class SupabaseOrderRepository extends SupabaseBaseRepository implements O
     if (dbOrder.order_delivery_assignments && dbOrder.order_delivery_assignments.length > 0) {
       // Sort by assigned_at descending to get the most recent
       const sortedAssignments = [...dbOrder.order_delivery_assignments].sort(
-        (a, b) => new Date(b.assigned_at).getTime() - new Date(a.assigned_at).getTime()
+        (a: any, b: any) => new Date(b.assigned_at).getTime() - new Date(a.assigned_at).getTime()
       );
       
       const latest = sortedAssignments[0];
@@ -850,8 +853,10 @@ export class SupabaseOrderRepository extends SupabaseBaseRepository implements O
         driverType: latest.driver_type,
         driverName: latest.driver_name,
         assignedAt: new Date(latest.assigned_at),
-        isPreliminary: latest.is_preliminary,
+        assignedBy: latest.assigned_by,
         notes: latest.notes,
+        status: latest.status,
+        isPreliminary: latest.is_preliminary,
         vehicleInfo: latest.vehicle_info,
       };
     }
@@ -894,7 +899,7 @@ export class SupabaseOrderRepository extends SupabaseBaseRepository implements O
       
       // Nested objects
       customer,
-      coverColors,
+      coverColor,
       tierDetails,
       packingItems,
       ingredients,
