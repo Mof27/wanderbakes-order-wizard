@@ -280,7 +280,6 @@ export class SupabaseBakerRepository extends SupabaseBaseRepository implements B
           cake_shape: entry.cakeShape,
           cake_size: entry.cakeSize,
           cake_flavor: entry.cakeFlavor,
-          height: entry.height,
           quantity: entry.quantity
         });
     }
