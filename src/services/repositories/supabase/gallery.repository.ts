@@ -1,4 +1,3 @@
-
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { GalleryRepository } from '../gallery.repository';
 import { GalleryPhoto, CustomTag, GalleryFilter, GallerySort } from '@/types/gallery';
@@ -284,17 +283,20 @@ export class SupabaseGalleryRepository implements GalleryRepository {
     
     // Group by photo and count matching tags for scoring
     const photoMap = new Map();
-    if (data) {
+    if (data && data.length > 0) {
       for (const item of data) {
-        const photoId = item.gallery_photos.id;
-        if (!photoMap.has(photoId)) {
-          photoMap.set(photoId, {
-            photo: item.gallery_photos,
-            score: 1
-          });
-        } else {
-          const entry = photoMap.get(photoId);
-          entry.score += 1;
+        // Check if item.gallery_photos exists and has an id property
+        if (item && item.gallery_photos && typeof item.gallery_photos === 'object' && 'id' in item.gallery_photos) {
+          const photoId = item.gallery_photos.id;
+          if (!photoMap.has(photoId)) {
+            photoMap.set(photoId, {
+              photo: item.gallery_photos,
+              score: 1
+            });
+          } else {
+            const entry = photoMap.get(photoId);
+            entry.score += 1;
+          }
         }
       }
     }
