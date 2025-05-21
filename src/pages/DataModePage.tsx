@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/context/AuthContext";
@@ -10,9 +10,32 @@ import DataModeIndicator from "@/components/settings/DataModeIndicator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { supabase } from "@/services/supabase/client";
 
 const DataModePage = () => {
   const { isConfigured } = useAuth();
+  const [customerCount, setCustomerCount] = useState<number | null>(null);
+  
+  useEffect(() => {
+    // Get customer count from Supabase if configured
+    const getCustomerCount = async () => {
+      if (isConfigured) {
+        try {
+          const { count, error } = await supabase
+            .from('customers')
+            .select('*', { count: 'exact', head: true });
+          
+          if (error) throw error;
+          setCustomerCount(count);
+        } catch (error) {
+          console.error("Failed to get customer count:", error);
+          setCustomerCount(null);
+        }
+      }
+    };
+    
+    getCustomerCount();
+  }, [isConfigured]);
   
   return (
     <>
@@ -58,7 +81,14 @@ const DataModePage = () => {
               
               <div className="grid gap-2">
                 <div className="flex items-center justify-between border p-3 rounded-md">
-                  <span>Customers Repository</span>
+                  <div className="flex items-center gap-2">
+                    <span>Customers Repository</span>
+                    {customerCount !== null && (
+                      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                        {customerCount} records
+                      </Badge>
+                    )}
+                  </div>
                   <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Implemented</Badge>
                 </div>
                 <div className="flex items-center justify-between border p-3 rounded-md">

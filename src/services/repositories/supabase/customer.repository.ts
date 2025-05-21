@@ -1,248 +1,234 @@
 
-import { Customer } from "@/types";
-import { SupabaseBaseRepository } from "./base.repository";
+import { Customer, Address } from "@/types";
 import { CustomerRepository } from "../customer.repository";
-import { supabase, isSupabaseConfigured } from "../../supabase/client";
+import { SupabaseBaseRepository } from "./base.repository";
+import { supabase } from "../../supabase/client";
 
-/**
- * Supabase implementation of the Customer Repository
- */
 export class SupabaseCustomerRepository extends SupabaseBaseRepository implements CustomerRepository {
   constructor() {
-    super('customers'); // Table name in Supabase
+    super('customers'); // Pass table name to base repository
   }
 
   async getAll(): Promise<Customer[]> {
-    try {
-      // Get customers with their addresses using Supabase's foreign key relationships
-      const { data, error } = await this.getClient()
-        .from(this.tableName)
-        .select(`
-          *,
-          addresses(*)
-        `);
+    const { data: customers, error } = await this.getClient()
+      .from('customers')
+      .select('*, addresses(*)');
 
-      if (error) {
-        throw error;
-      }
-
-      // Transform the data to match our Customer type
-      return data.map(this.mapCustomerFromSupabase);
-    } catch (error) {
-      console.error("Failed to get customers:", error);
+    if (error) {
+      console.error('Error fetching customers:', error);
       throw error;
     }
+
+    return this.mapDatabaseCustomers(customers || []);
   }
 
   async getById(id: string): Promise<Customer | undefined> {
-    try {
-      const { data, error } = await this.getClient()
-        .from(this.tableName)
-        .select(`
-          *,
-          addresses(*)
-        `)
-        .eq('id', id)
-        .single();
+    const { data, error } = await this.getClient()
+      .from('customers')
+      .select('*, addresses(*)')
+      .eq('id', id)
+      .single();
 
-      if (error) {
-        if (error.code === 'PGRST116') { // Record not found error
-          return undefined;
-        }
-        throw error;
+    if (error) {
+      if (error.code === 'PGRST116') {
+        // Not found
+        return undefined;
       }
-
-      return this.mapCustomerFromSupabase(data);
-    } catch (error) {
-      console.error(`Failed to get customer with id ${id}:`, error);
+      console.error(`Error fetching customer with ID ${id}:`, error);
       throw error;
     }
+
+    return this.mapDatabaseCustomer(data);
   }
 
   async create(customer: Omit<Customer, 'id' | 'createdAt'>): Promise<Customer> {
-    try {
-      // Extract addresses to handle separately
-      const { addresses, ...customerData } = customer;
-      
-      // Create customer record
-      const { data: newCustomer, error } = await this.getClient()
-        .from(this.tableName)
-        .insert([{
-          name: customerData.name,
-          whatsappNumber: customerData.whatsappNumber,
-          email: customerData.email || null,
-          // createdAt is handled by Supabase using NOW()
-        }])
-        .select()
-        .single();
+    const { addresses, ...customerData } = customer;
+    
+    // Insert customer
+    const { data, error } = await this.getClient()
+      .from('customers')
+      .insert({
+        name: customerData.name,
+        whatsappnumber: customerData.whatsappNumber,
+        email: customerData.email || null
+      })
+      .select('*')
+      .single();
 
-      if (error) {
-        throw error;
-      }
-
-      // Create address records if any
-      if (addresses && addresses.length > 0) {
-        const addressesToInsert = addresses.map(address => ({
-          customer_id: newCustomer.id,
-          text: address.text,
-          delivery_notes: address.deliveryNotes || null,
-          area: address.area,
-          // createdAt is handled by Supabase using NOW()
-        }));
-
-        const { error: addressError } = await this.getClient()
-          .from('addresses')
-          .insert(addressesToInsert);
-
-        if (addressError) {
-          throw addressError;
-        }
-      }
-
-      // Get the full customer with addresses
-      return await this.getById(newCustomer.id) as Customer;
-    } catch (error) {
-      console.error("Failed to create customer:", error);
+    if (error) {
+      console.error('Error creating customer:', error);
       throw error;
     }
+
+    const createdCustomer = data;
+    const mappedAddresses: Address[] = [];
+
+    // Insert addresses if they exist
+    if (addresses && addresses.length > 0) {
+      for (const address of addresses) {
+        const addressData = {
+          customer_id: createdCustomer.id,
+          text: address.text,
+          area: address.area,
+          delivery_notes: address.deliveryNotes || null
+        };
+
+        const { data: createdAddress, error: addressError } = await this.getClient()
+          .from('addresses')
+          .insert(addressData)
+          .select('*')
+          .single();
+
+        if (addressError) {
+          console.error('Error creating address:', addressError);
+          // Continue with other addresses even if one fails
+        } else if (createdAddress) {
+          mappedAddresses.push(this.mapDatabaseAddress(createdAddress));
+        }
+      }
+    }
+
+    // Return the created customer with addresses
+    return {
+      id: createdCustomer.id,
+      name: createdCustomer.name,
+      whatsappNumber: createdCustomer.whatsappnumber,
+      email: createdCustomer.email || undefined,
+      addresses: mappedAddresses,
+      createdAt: new Date(createdCustomer.created_at)
+    };
   }
 
   async update(id: string, customerUpdate: Partial<Customer>): Promise<Customer> {
-    try {
-      // Extract addresses to handle separately
-      const { addresses, ...customerData } = customerUpdate;
-      
-      // Update customer record
-      if (Object.keys(customerData).length > 0) {
-        const { error } = await this.getClient()
-          .from(this.tableName)
-          .update({
-            name: customerData.name,
-            whatsappNumber: customerData.whatsappNumber,
-            email: customerData.email,
-            // updatedAt is handled by Supabase using NOW()
-          })
-          .eq('id', id);
+    const { addresses, ...customerData } = customerUpdate;
+    
+    // Prepare customer data for update
+    const updateData: Record<string, any> = {};
+    
+    if (customerData.name !== undefined) updateData.name = customerData.name;
+    if (customerData.email !== undefined) updateData.email = customerData.email;
+    if (customerData.whatsappNumber !== undefined) updateData.whatsappnumber = customerData.whatsappNumber;
 
-        if (error) {
-          throw error;
-        }
+    // Only update customer if there are fields to update
+    if (Object.keys(updateData).length > 0) {
+      const { error } = await this.getClient()
+        .from('customers')
+        .update(updateData)
+        .eq('id', id);
+
+      if (error) {
+        console.error(`Error updating customer with ID ${id}:`, error);
+        throw error;
       }
-
-      // Handle address updates if provided
-      if (addresses) {
-        // In a real implementation, you'd need to handle address creation, updates, and deletion
-        // This is a simplified version that would replace all addresses
-        const { error: deleteError } = await this.getClient()
-          .from('addresses')
-          .delete()
-          .eq('customer_id', id);
-
-        if (deleteError) {
-          throw deleteError;
-        }
-
-        if (addresses.length > 0) {
-          const addressesToInsert = addresses.map(address => ({
-            customer_id: id,
-            text: address.text,
-            delivery_notes: address.deliveryNotes || null,
-            area: address.area,
-          }));
-
-          const { error: insertError } = await this.getClient()
-            .from('addresses')
-            .insert(addressesToInsert);
-
-          if (insertError) {
-            throw insertError;
-          }
-        }
-      }
-
-      // Get the updated customer with addresses
-      return await this.getById(id) as Customer;
-    } catch (error) {
-      console.error(`Failed to update customer with id ${id}:`, error);
-      throw error;
     }
-  }
 
-  async delete(id: string): Promise<boolean> {
-    try {
-      // Delete addresses first (cascading delete should handle this, but being explicit)
-      const { error: addressError } = await this.getClient()
+    // Handle address updates if provided
+    if (addresses) {
+      // Delete existing addresses for this customer and insert new ones
+      const { error: deleteError } = await this.getClient()
         .from('addresses')
         .delete()
         .eq('customer_id', id);
 
-      if (addressError) {
-        throw addressError;
+      if (deleteError) {
+        console.error(`Error deleting addresses for customer with ID ${id}:`, deleteError);
+        throw deleteError;
       }
 
-      // Delete the customer
-      const { error } = await this.getClient()
-        .from(this.tableName)
-        .delete()
-        .eq('id', id);
+      for (const address of addresses) {
+        const addressData = {
+          customer_id: id,
+          text: address.text,
+          area: address.area,
+          delivery_notes: address.deliveryNotes || null
+        };
 
-      if (error) {
-        throw error;
+        const { error: addressError } = await this.getClient()
+          .from('addresses')
+          .insert(addressData);
+
+        if (addressError) {
+          console.error('Error creating address during update:', addressError);
+          // Continue with other addresses even if one fails
+        }
       }
+    }
 
-      return true;
-    } catch (error) {
-      console.error(`Failed to delete customer with id ${id}:`, error);
+    // Fetch the updated customer
+    const { data, error } = await this.getClient()
+      .from('customers')
+      .select('*, addresses(*)')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      console.error(`Error fetching updated customer with ID ${id}:`, error);
       throw error;
     }
+
+    return this.mapDatabaseCustomer(data);
+  }
+
+  async delete(id: string): Promise<boolean> {
+    // Note: Addresses will be deleted automatically due to ON DELETE CASCADE constraint
+    const { error } = await this.getClient()
+      .from('customers')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error(`Error deleting customer with ID ${id}:`, error);
+      throw error;
+    }
+
+    return true;
   }
 
   async findByWhatsApp(whatsappNumber: string): Promise<Customer | undefined> {
-    try {
-      const { data, error } = await this.getClient()
-        .from(this.tableName)
-        .select(`
-          *,
-          addresses(*)
-        `)
-        .eq('whatsappNumber', whatsappNumber)
-        .single();
+    const { data, error } = await this.getClient()
+      .from('customers')
+      .select('*, addresses(*)')
+      .eq('whatsappnumber', whatsappNumber)
+      .maybeSingle();
 
-      if (error) {
-        if (error.code === 'PGRST116') { // Record not found error
-          return undefined;
-        }
-        throw error;
-      }
-
-      return this.mapCustomerFromSupabase(data);
-    } catch (error) {
-      console.error(`Failed to find customer with WhatsApp number ${whatsappNumber}:`, error);
+    if (error) {
+      console.error(`Error finding customer with WhatsApp number ${whatsappNumber}:`, error);
       throw error;
     }
+
+    if (!data) {
+      return undefined;
+    }
+
+    return this.mapDatabaseCustomer(data);
   }
 
-  /**
-   * Maps Supabase customer data to our Customer type
-   */
-  private mapCustomerFromSupabase(data: any): Customer {
+  // Helper methods for mapping database objects to domain objects
+  private mapDatabaseCustomers(customers: any[]): Customer[] {
+    return customers.map(customer => this.mapDatabaseCustomer(customer));
+  }
+
+  private mapDatabaseCustomer(customer: any): Customer {
     return {
-      id: data.id,
-      name: data.name,
-      whatsappNumber: data.whatsappNumber,
-      email: data.email || undefined,
-      addresses: Array.isArray(data.addresses) 
-        ? data.addresses.map((address: any) => ({
-            id: address.id,
-            text: address.text,
-            deliveryNotes: address.delivery_notes || undefined,
-            area: address.area,
-            createdAt: new Date(address.created_at),
-            updatedAt: address.updated_at ? new Date(address.updated_at) : undefined,
-          }))
+      id: customer.id,
+      name: customer.name,
+      whatsappNumber: customer.whatsappnumber,
+      email: customer.email || undefined,
+      addresses: Array.isArray(customer.addresses) 
+        ? customer.addresses.map((a: any) => this.mapDatabaseAddress(a))
         : [],
-      createdAt: new Date(data.created_at),
-      updatedAt: data.updated_at ? new Date(data.updated_at) : undefined,
+      createdAt: new Date(customer.created_at),
+      updatedAt: customer.updated_at ? new Date(customer.updated_at) : undefined
+    };
+  }
+
+  private mapDatabaseAddress(address: any): Address {
+    return {
+      id: address.id,
+      text: address.text,
+      area: address.area,
+      deliveryNotes: address.delivery_notes || undefined,
+      createdAt: new Date(address.created_at)
     };
   }
 }
