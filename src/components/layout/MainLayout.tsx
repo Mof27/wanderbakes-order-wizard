@@ -9,6 +9,7 @@ import Clock from "./Clock";
 
 interface MainLayoutProps {
   children: React.ReactNode;
+  extraHeaderContent?: React.ReactNode;
 }
 
 const SidebarMenu = () => {
@@ -76,7 +77,8 @@ const SidebarMenu = () => {
 };
 
 const MainLayout: React.FC<MainLayoutProps> = ({
-  children
+  children,
+  extraHeaderContent
 }) => {
   return (
     <SidebarProvider>
@@ -104,6 +106,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
               <h1 className="text-lg font-medium sm:block hidden">WanderBakes</h1>
             </div>
             <div className="flex items-center gap-3">
+              {extraHeaderContent}
               <OnlineStatusIndicator />
               <Clock />
             </div>
