@@ -15,6 +15,7 @@ import { supabase } from "@/services/supabase/client";
 const DataModePage = () => {
   const { isConfigured } = useAuth();
   const [customerCount, setCustomerCount] = useState<number | null>(null);
+  const [orderCount, setOrderCount] = useState<number | null>(null);
   
   useEffect(() => {
     // Get customer count from Supabase if configured
@@ -34,7 +35,25 @@ const DataModePage = () => {
       }
     };
     
+    // Get order count from Supabase if configured
+    const getOrderCount = async () => {
+      if (isConfigured) {
+        try {
+          const { count, error } = await supabase
+            .from('orders')
+            .select('*', { count: 'exact', head: true });
+          
+          if (error) throw error;
+          setOrderCount(count);
+        } catch (error) {
+          console.error("Failed to get order count:", error);
+          setOrderCount(null);
+        }
+      }
+    };
+    
     getCustomerCount();
+    getOrderCount();
   }, [isConfigured]);
   
   return (
@@ -92,12 +111,19 @@ const DataModePage = () => {
                   <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Implemented</Badge>
                 </div>
                 <div className="flex items-center justify-between border p-3 rounded-md">
-                  <span>Gallery Repository</span>
+                  <div className="flex items-center gap-2">
+                    <span>Orders Repository</span>
+                    {orderCount !== null && (
+                      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                        {orderCount} records
+                      </Badge>
+                    )}
+                  </div>
                   <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Implemented</Badge>
                 </div>
                 <div className="flex items-center justify-between border p-3 rounded-md">
-                  <span>Orders Repository</span>
-                  <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">Pending</Badge>
+                  <span>Gallery Repository</span>
+                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Implemented</Badge>
                 </div>
                 <div className="flex items-center justify-between border p-3 rounded-md">
                   <span>Settings Repository</span>
