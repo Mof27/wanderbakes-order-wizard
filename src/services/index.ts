@@ -87,8 +87,10 @@ const dataService: DataService = {
         import('./mock'),
         import('./repositories/supabase/gallery.repository'),
         import('./repositories/supabase/customer.repository'), 
-        import('./repositories/supabase/order.repository')  // Import our new Supabase Order Repository
-      ]).then(([mock, { SupabaseGalleryRepository }, { SupabaseCustomerRepository }, { SupabaseOrderRepository }]) => {
+        import('./repositories/supabase/order.repository'),
+        import('./repositories/supabase/settings.repository')
+      ]).then(([mock, { SupabaseGalleryRepository }, { SupabaseCustomerRepository }, 
+              { SupabaseOrderRepository }, { SupabaseSettingsRepository }]) => {
         try {
           // Only use Supabase implementations if Supabase is properly configured
           if (isSupabaseConfigured()) {
@@ -102,13 +104,15 @@ const dataService: DataService = {
             // Use Supabase implementation for orders
             dataService.orders = new SupabaseOrderRepository();
             
+            // Use Supabase implementation for settings
+            dataService.settings = new SupabaseSettingsRepository();
+            
             console.log('Supabase repositories initialized successfully');
           } else {
             throw new Error('Supabase is not configured properly');
           }
           
           // Use mock implementations for repositories not yet migrated
-          dataService.settings = mock.mockDataService.settings;
           dataService.baker = mock.mockDataService.baker;
         } catch (error) {
           console.error('Failed to initialize Supabase repositories:', error);
