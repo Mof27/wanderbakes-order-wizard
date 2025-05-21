@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { GalleryPhoto, CustomTag } from "@/types/gallery";
+import { OrderTag, SettingItem } from "@/types";
 import { dataService } from "@/services";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
@@ -58,20 +59,15 @@ const PhotoUploadDialog = ({ open, onOpenChange, onPhotoUploaded }: PhotoUploadD
   });
 
   // Fetch available cake options from settings
-  const { data: cakeShapes = [] } = useQuery({
-    queryKey: ['cakeShapes'],
-    queryFn: () => dataService.settings.getShapes()
+  const { data: settingsData } = useQuery({
+    queryKey: ['settings'],
+    queryFn: () => dataService.settings.getAll()
   });
 
-  const { data: cakeSizes = [] } = useQuery({
-    queryKey: ['cakeSizes'],
-    queryFn: () => dataService.settings.getSizes()
-  });
-
-  const { data: cakeFlavors = [] } = useQuery({
-    queryKey: ['cakeFlavors'],
-    queryFn: () => dataService.settings.getFlavors()
-  });
+  // Extract shape, size, and flavor settings from the settings data
+  const cakeShapes = settingsData?.cakeShapes || [];
+  const cakeSizes = settingsData?.cakeSizes || [];
+  const cakeFlavors = settingsData?.cakeFlavors || [];
 
   // Fetch all available tags
   const { data: allTags = [] } = useQuery({
@@ -129,10 +125,10 @@ const PhotoUploadDialog = ({ open, onOpenChange, onPhotoUploaded }: PhotoUploadD
     setIsUploading(true);
     
     try {
-      // Create gallery photo object
+      // Create gallery photo object and convert string tags to OrderTag type
       const photo: Omit<GalleryPhoto, 'id' | 'orderId' | 'createdAt'> = {
         imageUrl: data.imageUrl,
-        tags: data.tags,
+        tags: data.tags as OrderTag[], // Type assertion since OrderTag is a string literal type
         orderInfo: {
           cakeShape: data.cakeShape,
           cakeSize: data.cakeSize,
@@ -237,9 +233,9 @@ const PhotoUploadDialog = ({ open, onOpenChange, onPhotoUploaded }: PhotoUploadD
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {cakeShapes.map(shape => (
-                        <SelectItem key={shape.value} value={shape.value}>
-                          {shape.label}
+                      {cakeShapes.map((shape: SettingItem) => (
+                        <SelectItem key={shape.id} value={shape.value}>
+                          {shape.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -266,9 +262,9 @@ const PhotoUploadDialog = ({ open, onOpenChange, onPhotoUploaded }: PhotoUploadD
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {cakeSizes.map(size => (
-                        <SelectItem key={size.value} value={size.value}>
-                          {size.label}
+                      {cakeSizes.map((size: SettingItem) => (
+                        <SelectItem key={size.id} value={size.value}>
+                          {size.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -295,9 +291,9 @@ const PhotoUploadDialog = ({ open, onOpenChange, onPhotoUploaded }: PhotoUploadD
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {cakeFlavors.map(flavor => (
-                        <SelectItem key={flavor.value} value={flavor.value}>
-                          {flavor.label}
+                      {cakeFlavors.map((flavor: SettingItem) => (
+                        <SelectItem key={flavor.id} value={flavor.value}>
+                          {flavor.name}
                         </SelectItem>
                       ))}
                     </SelectContent>

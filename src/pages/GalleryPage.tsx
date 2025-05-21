@@ -11,8 +11,10 @@ import TagManagementDialog from "@/components/gallery/TagManagementDialog";
 import PhotoUploadDialog from "@/components/gallery/PhotoUploadDialog";
 import { Button } from "@/components/ui/button";
 import { Settings, Upload } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const GalleryPage = () => {
+  const { toast } = useToast();
   // State for filters, sorting, and selected photo
   const [filter, setFilter] = useState<GalleryFilter>({
     tags: [],
@@ -79,6 +81,7 @@ const GalleryPage = () => {
   
   // Handle photo upload completion
   const handlePhotoUploaded = () => {
+    toast.success("Photo was successfully added to the gallery!");
     refetch();
   };
   
