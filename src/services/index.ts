@@ -12,12 +12,13 @@ export interface DataService {
   settings: SettingsRepository;
   baker: BakerRepository;
   gallery: GalleryRepository;
-  setMode: (mode: 'mock' | 'firebase', baseUrl?: string) => void;
+  setMode: (mode: 'mock' | 'firebase' | 'supabase', baseUrl?: string, apiKey?: string) => void;
 }
 
 // Function to set the data source mode
-let currentMode: 'mock' | 'firebase' = 'mock';
+let currentMode: 'mock' | 'firebase' | 'supabase' = 'mock';
 let currentBaseUrl: string | undefined = undefined;
+let currentApiKey: string | undefined = undefined;
 
 const dataService: DataService = {
   customers: null as any,
@@ -25,9 +26,10 @@ const dataService: DataService = {
   settings: null as any,
   baker: null as any,
   gallery: null as any,
-  setMode: (mode: 'mock' | 'firebase', baseUrl?: string) => {
+  setMode: (mode: 'mock' | 'firebase' | 'supabase', baseUrl?: string, apiKey?: string) => {
     currentMode = mode;
     currentBaseUrl = baseUrl;
+    currentApiKey = apiKey;
     
     // Dynamically import the data service based on the mode
     if (mode === 'mock') {
@@ -57,6 +59,28 @@ const dataService: DataService = {
           dataService.gallery = mock.mockDataService.gallery;
         })
         .catch(err => console.error('Failed to load mock data service', err));
+    } else if (mode === 'supabase') {
+      if (!baseUrl || !apiKey) {
+        throw new Error('Base URL and API key are required for Supabase mode');
+      }
+      
+      // Import Supabase implementation
+      import('./repositories/supabase/gallery.repository')
+        .then(({ SupabaseGalleryRepository }) => {
+          import('./mock')
+            .then(mock => {
+              // Use mock implementations for other repositories
+              dataService.customers = mock.mockDataService.customers;
+              dataService.orders = mock.mockDataService.orders;
+              dataService.settings = mock.mockDataService.settings;
+              dataService.baker = mock.mockDataService.baker;
+              
+              // Use Supabase implementation for gallery
+              dataService.gallery = new SupabaseGalleryRepository(baseUrl, apiKey);
+            })
+            .catch(err => console.error('Failed to load mock data service', err));
+        })
+        .catch(err => console.error('Failed to load Supabase gallery repository', err));
     }
   }
 };

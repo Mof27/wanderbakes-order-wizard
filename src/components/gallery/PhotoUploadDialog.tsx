@@ -12,10 +12,11 @@ import { OrderTag, SettingItem } from "@/types";
 import { dataService } from "@/services";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
-import { X, Upload } from "lucide-react";
+import { X, Upload, Loader } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { currentMode } from "@/services";
 
 interface PhotoUploadDialogProps {
   open: boolean;
@@ -25,7 +26,8 @@ interface PhotoUploadDialogProps {
 
 // Form schema for validation
 const photoUploadSchema = z.object({
-  imageUrl: z.string().min(1, "Image URL is required"),
+  imageFile: z.instanceof(File).optional(),
+  imageUrl: z.string().min(1, "Image is required"),
   cakeShape: z.string().min(1, "Cake shape is required"),
   cakeSize: z.string().min(1, "Cake size is required"),
   cakeFlavor: z.string().min(1, "Cake flavor is required"),
@@ -43,6 +45,7 @@ const PhotoUploadDialog = ({ open, onOpenChange, onPhotoUploaded }: PhotoUploadD
   const imageInputRef = useRef<HTMLInputElement>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   // Form definition
   const form = useForm<PhotoUploadFormValues>({
@@ -79,16 +82,27 @@ const PhotoUploadDialog = ({ open, onOpenChange, onPhotoUploaded }: PhotoUploadD
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-
-    // Here we would typically upload to a storage service
-    // But for this demo, we'll create a data URL
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const dataUrl = e.target?.result as string;
-      setPreviewImage(dataUrl);
-      form.setValue("imageUrl", dataUrl);
-    };
-    reader.readAsDataURL(file);
+    
+    // Store the file in the form
+    form.setValue("imageFile", file);
+    
+    // Generate preview using object URL
+    const objectUrl = URL.createObjectURL(file);
+    setPreviewImage(objectUrl);
+    
+    // In mock mode, we'll create a data URL as before
+    // In Supabase mode, we'll upload the file only on form submission
+    if (currentMode === 'mock') {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUrl = e.target?.result as string;
+        form.setValue("imageUrl", dataUrl);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      // Just set a temporary value here, real URL will be set after upload
+      form.setValue("imageUrl", "pending-upload");
+    }
   };
 
   // Handle tag selection
@@ -133,9 +147,32 @@ const PhotoUploadDialog = ({ open, onOpenChange, onPhotoUploaded }: PhotoUploadD
     setIsUploading(true);
     
     try {
+      let finalImageUrl = data.imageUrl;
+      
+      // If we're in Supabase mode and have a file, upload it first
+      if (currentMode !== 'mock' && data.imageFile) {
+        const imageFile = data.imageFile;
+        
+        // For Supabase mode, we need to cast to access the uploadImage method
+        // This is a bit of a hack, but it works for this specific case
+        const galleryRepo = dataService.gallery as any;
+        
+        if (galleryRepo.uploadImage) {
+          // Set up progress reporting if available
+          setUploadProgress(10); // Start progress
+          
+          finalImageUrl = await galleryRepo.uploadImage(imageFile);
+          
+          setUploadProgress(100); // Complete progress
+        } else {
+          // Fallback to mock mode behavior
+          finalImageUrl = data.imageUrl;
+        }
+      }
+      
       // Create gallery photo object and convert string tags to OrderTag type
       const photo: Omit<GalleryPhoto, 'id' | 'orderId' | 'createdAt'> = {
-        imageUrl: data.imageUrl,
+        imageUrl: finalImageUrl,
         tags: data.tags as OrderTag[], // Type assertion since OrderTag is a string literal type
         orderInfo: {
           cakeShape: data.cakeShape,
@@ -165,6 +202,7 @@ const PhotoUploadDialog = ({ open, onOpenChange, onPhotoUploaded }: PhotoUploadD
       });
     } finally {
       setIsUploading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -173,6 +211,7 @@ const PhotoUploadDialog = ({ open, onOpenChange, onPhotoUploaded }: PhotoUploadD
     form.reset();
     setSelectedTags([]);
     setPreviewImage(null);
+    setUploadProgress(0);
     onOpenChange(false);
   };
 
@@ -197,6 +236,7 @@ const PhotoUploadDialog = ({ open, onOpenChange, onPhotoUploaded }: PhotoUploadD
                   variant="outline" 
                   onClick={() => imageInputRef.current?.click()}
                   className="flex items-center gap-2"
+                  disabled={isUploading}
                 >
                   <Upload className="h-4 w-4" />
                   Choose Image
@@ -207,6 +247,7 @@ const PhotoUploadDialog = ({ open, onOpenChange, onPhotoUploaded }: PhotoUploadD
                   accept="image/*"
                   onChange={handleImageUpload}
                   className="hidden"
+                  disabled={isUploading}
                 />
               </div>
               {previewImage && (
@@ -224,10 +265,22 @@ const PhotoUploadDialog = ({ open, onOpenChange, onPhotoUploaded }: PhotoUploadD
                     onClick={() => {
                       setPreviewImage(null);
                       form.setValue("imageUrl", "");
+                      form.unregister("imageFile");
                     }}
+                    disabled={isUploading}
                   >
                     <X className="h-3 w-3" />
                   </Button>
+                </div>
+              )}
+              
+              {/* Upload Progress Bar */}
+              {uploadProgress > 0 && uploadProgress < 100 && (
+                <div className="w-full bg-muted rounded-full h-2 mt-2">
+                  <div 
+                    className="bg-primary h-2 rounded-full transition-all duration-300" 
+                    style={{ width: `${uploadProgress}%` }}
+                  ></div>
                 </div>
               )}
             </div>
@@ -242,6 +295,7 @@ const PhotoUploadDialog = ({ open, onOpenChange, onPhotoUploaded }: PhotoUploadD
                   <Select 
                     onValueChange={field.onChange} 
                     defaultValue={field.value}
+                    disabled={isUploading}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -271,6 +325,7 @@ const PhotoUploadDialog = ({ open, onOpenChange, onPhotoUploaded }: PhotoUploadD
                   <Select 
                     onValueChange={field.onChange} 
                     defaultValue={field.value}
+                    disabled={isUploading}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -300,6 +355,7 @@ const PhotoUploadDialog = ({ open, onOpenChange, onPhotoUploaded }: PhotoUploadD
                   <Select 
                     onValueChange={field.onChange} 
                     defaultValue={field.value}
+                    disabled={isUploading}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -330,6 +386,7 @@ const PhotoUploadDialog = ({ open, onOpenChange, onPhotoUploaded }: PhotoUploadD
                     <Textarea 
                       placeholder="Describe the cake design" 
                       {...field}
+                      disabled={isUploading}
                     />
                   </FormControl>
                   <FormMessage />
@@ -348,6 +405,7 @@ const PhotoUploadDialog = ({ open, onOpenChange, onPhotoUploaded }: PhotoUploadD
                     <Input 
                       placeholder="Customer name" 
                       {...field}
+                      disabled={isUploading}
                     />
                   </FormControl>
                   <FormDescription>
@@ -375,6 +433,7 @@ const PhotoUploadDialog = ({ open, onOpenChange, onPhotoUploaded }: PhotoUploadD
                       type="button"
                       className="ml-1 rounded-full hover:bg-muted"
                       onClick={() => removeTag(tag)}
+                      disabled={isUploading}
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -394,6 +453,7 @@ const PhotoUploadDialog = ({ open, onOpenChange, onPhotoUploaded }: PhotoUploadD
                         variant="outline"
                         className="cursor-pointer hover:bg-secondary"
                         onClick={() => addTag(tag.value)}
+                        disabled={isUploading}
                       >
                         {tag.label}
                       </Badge>
@@ -409,13 +469,14 @@ const PhotoUploadDialog = ({ open, onOpenChange, onPhotoUploaded }: PhotoUploadD
                   value={newTagInput}
                   onChange={(e) => setNewTagInput(e.target.value)}
                   className="flex-1"
+                  disabled={isUploading}
                 />
                 <Button 
                   type="button" 
                   variant="outline" 
                   size="sm"
                   onClick={handleCreateTag}
-                  disabled={!newTagInput.trim()}
+                  disabled={!newTagInput.trim() || isUploading}
                 >
                   Add
                 </Button>
@@ -427,14 +488,21 @@ const PhotoUploadDialog = ({ open, onOpenChange, onPhotoUploaded }: PhotoUploadD
                 type="button" 
                 variant="outline" 
                 onClick={handleClose}
+                disabled={isUploading}
               >
                 Cancel
               </Button>
               <Button 
                 type="submit" 
                 disabled={isUploading || !form.formState.isValid || !previewImage}
+                className="flex items-center gap-2"
               >
-                {isUploading ? "Uploading..." : "Upload Photo"}
+                {isUploading ? (
+                  <>
+                    <Loader className="h-4 w-4 animate-spin" />
+                    Uploading...
+                  </>
+                ) : "Upload Photo"}
               </Button>
             </DialogFooter>
           </form>
