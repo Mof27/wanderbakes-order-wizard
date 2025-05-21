@@ -1,4 +1,3 @@
-
 export type Json =
   | string
   | number
@@ -6,6 +5,8 @@ export type Json =
   | null
   | { [key: string]: Json | undefined }
   | Json[];
+
+export type AppRole = 'admin' | 'kitchen' | 'baker' | 'delivery' | 'sales';
 
 export interface Database {
   public: {
@@ -65,6 +66,55 @@ export interface Database {
           updated_at?: string | null;
         };
       };
+      profiles: {
+        Row: {
+          id: string;
+          first_name: string | null;
+          last_name: string | null;
+          display_name: string | null;
+          avatar_url: string | null;
+          created_at: string;
+          updated_at: string | null;
+        };
+        Insert: {
+          id: string;
+          first_name?: string | null;
+          last_name?: string | null;
+          display_name?: string | null;
+          avatar_url?: string | null;
+          created_at?: string;
+          updated_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          first_name?: string | null;
+          last_name?: string | null;
+          display_name?: string | null;
+          avatar_url?: string | null;
+          created_at?: string;
+          updated_at?: string | null;
+        };
+      };
+      user_roles: {
+        Row: {
+          id: string;
+          user_id: string;
+          role: AppRole;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          role: AppRole;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          role?: AppRole;
+          created_at?: string;
+        };
+      };
       orders: {
         Row: {}; // To be filled later
         Insert: {};
@@ -79,6 +129,17 @@ export interface Database {
         Row: {}; // To be filled with actual gallery schema
         Insert: {};
         Update: {};
+      };
+    };
+    Functions: {
+      get_user_roles: {
+        Returns: AppRole[];
+      };
+      has_role: {
+        Args: {
+          role_to_check: AppRole;
+        };
+        Returns: boolean;
       };
     };
   };

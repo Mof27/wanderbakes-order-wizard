@@ -1,65 +1,104 @@
 
 import React from "react";
 import { Sidebar, SidebarContent, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { Home, CakeIcon, Users, Settings, ChefHat, Truck, BeakerIcon, ImagesIcon } from "lucide-react";
+import { Home, CakeIcon, Users, Settings, ChefHat, Truck, BeakerIcon, ImagesIcon, ShieldCheck, UserCog } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import OnlineStatusIndicator from "./OnlineStatusIndicator";
 import Clock from "./Clock";
+import { useAuth } from "@/context/AuthContext";
+import { Separator } from "@/components/ui/separator";
+import { AppRole } from "@/services/supabase/database.types";
 
 interface MainLayoutProps {
   children: React.ReactNode;
   extraHeaderContent?: React.ReactNode;
 }
 
+interface MenuItem {
+  name: string;
+  path: string;
+  icon: React.ElementType;
+  allowedRoles?: AppRole[];
+}
+
 const SidebarMenu = () => {
   const location = useLocation();
-  const menuItems = [
+  const { hasRole } = useAuth();
+  
+  const menuItems: MenuItem[] = [
     {
       name: "Dashboard",
       path: "/",
-      icon: Home
+      icon: Home,
+      allowedRoles: ['admin', 'sales', 'kitchen', 'baker', 'delivery']
     }, 
     {
       name: "Orders",
       path: "/orders",
-      icon: CakeIcon
+      icon: CakeIcon,
+      allowedRoles: ['admin', 'sales']
     },
     {
       name: "Kitchen",
       path: "/kitchen",
-      icon: ChefHat
+      icon: ChefHat,
+      allowedRoles: ['admin', 'kitchen']
     },
     {
       name: "Baker",
       path: "/baker",
-      icon: BeakerIcon
+      icon: BeakerIcon,
+      allowedRoles: ['admin', 'baker']
     },
     {
       name: "Delivery",
       path: "/delivery",
-      icon: Truck
+      icon: Truck,
+      allowedRoles: ['admin', 'delivery']
     },
     {
       name: "Gallery",
       path: "/gallery",
-      icon: ImagesIcon
+      icon: ImagesIcon,
+      allowedRoles: ['admin', 'sales', 'kitchen', 'baker']
     },
     {
       name: "Customers",
       path: "/customers",
-      icon: Users
-    }, 
+      icon: Users,
+      allowedRoles: ['admin', 'sales']
+    }
+  ];
+  
+  // Admin-only menu items
+  const adminMenuItems: MenuItem[] = [
+    {
+      name: "User Management",
+      path: "/admin/users",
+      icon: UserCog,
+      allowedRoles: ['admin']
+    },
     {
       name: "Settings",
       path: "/settings",
-      icon: Settings
+      icon: Settings,
+      allowedRoles: ['admin']
     }
   ];
 
+  // Filter menu items based on user roles
+  const visibleMenuItems = menuItems.filter(
+    item => !item.allowedRoles || item.allowedRoles.some(role => hasRole(role))
+  );
+  
+  const visibleAdminItems = adminMenuItems.filter(
+    item => !item.allowedRoles || item.allowedRoles.some(role => hasRole(role))
+  );
+
   return (
     <div className="space-y-2 px-4 py-2">
-      {menuItems.map(item => (
+      {visibleMenuItems.map(item => (
         <Link 
           key={item.name} 
           to={item.path} 
@@ -72,6 +111,25 @@ const SidebarMenu = () => {
           <span className="text-gray-950">{item.name}</span>
         </Link>
       ))}
+      
+      {visibleAdminItems.length > 0 && (
+        <>
+          <Separator className="my-4" />
+          {visibleAdminItems.map(item => (
+            <Link 
+              key={item.name} 
+              to={item.path} 
+              className={cn(
+                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-all hover:bg-cake-primary", 
+                location.pathname === item.path ? "bg-cake-primary" : "text-muted-foreground"
+              )}
+            >
+              <item.icon className="h-5 w-5" />
+              <span className="text-gray-950">{item.name}</span>
+            </Link>
+          ))}
+        </>
+      )}
     </div>
   );
 };
