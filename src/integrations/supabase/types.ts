@@ -47,6 +47,96 @@ export type Database = {
           },
         ]
       }
+      baking_tasks: {
+        Row: {
+          cake_flavor: string
+          cake_shape: string
+          cake_size: string
+          cancellation_reason: string | null
+          created_at: string
+          due_date: string
+          height: string | null
+          id: string
+          is_manual: boolean | null
+          is_priority: boolean | null
+          notes: string | null
+          order_ids: Json | null
+          quality_checks: Json | null
+          quantity: number
+          quantity_completed: number
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          cake_flavor: string
+          cake_shape: string
+          cake_size: string
+          cancellation_reason?: string | null
+          created_at?: string
+          due_date: string
+          height?: string | null
+          id?: string
+          is_manual?: boolean | null
+          is_priority?: boolean | null
+          notes?: string | null
+          order_ids?: Json | null
+          quality_checks?: Json | null
+          quantity: number
+          quantity_completed?: number
+          status: string
+          updated_at?: string | null
+        }
+        Update: {
+          cake_flavor?: string
+          cake_shape?: string
+          cake_size?: string
+          cancellation_reason?: string | null
+          created_at?: string
+          due_date?: string
+          height?: string | null
+          id?: string
+          is_manual?: boolean | null
+          is_priority?: boolean | null
+          notes?: string | null
+          order_ids?: Json | null
+          quality_checks?: Json | null
+          quantity?: number
+          quantity_completed?: number
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      cake_inventory: {
+        Row: {
+          cake_flavor: string
+          cake_shape: string
+          cake_size: string
+          height: string | null
+          id: string
+          last_updated: string
+          quantity: number
+        }
+        Insert: {
+          cake_flavor: string
+          cake_shape: string
+          cake_size: string
+          height?: string | null
+          id?: string
+          last_updated?: string
+          quantity?: number
+        }
+        Update: {
+          cake_flavor?: string
+          cake_shape?: string
+          cake_size?: string
+          height?: string | null
+          id?: string
+          last_updated?: string
+          quantity?: number
+        }
+        Relationships: []
+      }
       customers: {
         Row: {
           created_at: string
@@ -572,6 +662,62 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      production_log: {
+        Row: {
+          baker: string | null
+          cake_flavor: string
+          cake_shape: string
+          cake_size: string
+          cancellation_reason: string | null
+          cancelled: boolean | null
+          completed_at: string
+          id: string
+          is_manual: boolean | null
+          notes: string | null
+          quality_checks: Json | null
+          quantity: number
+          task_id: string | null
+        }
+        Insert: {
+          baker?: string | null
+          cake_flavor: string
+          cake_shape: string
+          cake_size: string
+          cancellation_reason?: string | null
+          cancelled?: boolean | null
+          completed_at?: string
+          id?: string
+          is_manual?: boolean | null
+          notes?: string | null
+          quality_checks?: Json | null
+          quantity: number
+          task_id?: string | null
+        }
+        Update: {
+          baker?: string | null
+          cake_flavor?: string
+          cake_shape?: string
+          cake_size?: string
+          cancellation_reason?: string | null
+          cancelled?: boolean | null
+          completed_at?: string
+          id?: string
+          is_manual?: boolean | null
+          notes?: string | null
+          quality_checks?: Json | null
+          quantity?: number
+          task_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_log_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "baking_tasks"
             referencedColumns: ["id"]
           },
         ]

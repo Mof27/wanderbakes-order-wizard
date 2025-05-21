@@ -88,9 +88,11 @@ const dataService: DataService = {
         import('./repositories/supabase/gallery.repository'),
         import('./repositories/supabase/customer.repository'), 
         import('./repositories/supabase/order.repository'),
-        import('./repositories/supabase/settings.repository')
+        import('./repositories/supabase/settings.repository'),
+        import('./repositories/supabase/baker.repository') // Import our new baker repository
       ]).then(([mock, { SupabaseGalleryRepository }, { SupabaseCustomerRepository }, 
-              { SupabaseOrderRepository }, { SupabaseSettingsRepository }]) => {
+              { SupabaseOrderRepository }, { SupabaseSettingsRepository }, 
+              { SupabaseBakerRepository }]) => { // Add SupabaseBakerRepository to destructuring
         try {
           // Only use Supabase implementations if Supabase is properly configured
           if (isSupabaseConfigured()) {
@@ -107,13 +109,13 @@ const dataService: DataService = {
             // Use Supabase implementation for settings
             dataService.settings = new SupabaseSettingsRepository();
             
+            // Use Supabase implementation for baker
+            dataService.baker = new SupabaseBakerRepository();
+            
             console.log('Supabase repositories initialized successfully');
           } else {
             throw new Error('Supabase is not configured properly');
           }
-          
-          // Use mock implementations for repositories not yet migrated
-          dataService.baker = mock.mockDataService.baker;
         } catch (error) {
           console.error('Failed to initialize Supabase repositories:', error);
           console.warn('Falling back to mock data for all repositories');
