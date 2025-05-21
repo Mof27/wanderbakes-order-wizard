@@ -1,5 +1,4 @@
 
-
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './database.types';
 import { config } from '@/config';
@@ -22,8 +21,10 @@ export const supabase = createClient<Database>(
 
 // Helper function to check if Supabase is properly configured with real values
 export const isSupabaseConfigured = (): boolean => {
+  const placeholderUrl = "placeholder-url.supabase.co";
+  const placeholderKey = "placeholder-key";
+  
   return Boolean(config.supabase.url) && Boolean(config.supabase.anonKey) && 
-         config.supabase.url !== 'https://placeholder-url.supabase.co' &&
-         config.supabase.anonKey !== 'placeholder-key';
+         !config.supabase.url.includes(placeholderUrl) &&
+         !config.supabase.anonKey.includes(placeholderKey);
 };
-

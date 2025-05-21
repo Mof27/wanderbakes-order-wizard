@@ -13,7 +13,12 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
 
 // Helper function to check if Supabase is properly configured with real values
 export const isSupabaseConfigured = (): boolean => {
+  // Use string includes to check if URLs are not placeholder values
+  // instead of direct comparison which causes TypeScript errors
+  const placeholderUrl = "placeholder-url.supabase.co";
+  const placeholderKey = "placeholder-key";
+  
   return Boolean(SUPABASE_URL) && Boolean(SUPABASE_PUBLISHABLE_KEY) && 
-         SUPABASE_URL !== 'https://placeholder-url.supabase.co' &&
-         SUPABASE_PUBLISHABLE_KEY !== 'placeholder-key';
+         !SUPABASE_URL.includes(placeholderUrl) &&
+         !SUPABASE_PUBLISHABLE_KEY.includes(placeholderKey);
 };
