@@ -1,4 +1,5 @@
 
+import React, { useEffect } from "react";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -27,7 +28,6 @@ import UnauthorizedPage from "./pages/UnauthorizedPage";
 import NotFound from "./pages/NotFound";
 import { AppProvider } from "./context/AppContext";
 import { AuthProvider } from "./context/AuthContext";
-import { useEffect } from "react";
 import { config } from "./config";
 import { dataService } from "./services";
 import RoleGuard from "./components/layout/RoleGuard";
