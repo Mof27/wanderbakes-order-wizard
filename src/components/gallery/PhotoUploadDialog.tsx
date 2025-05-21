@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from "@/components/ui/form";
@@ -451,9 +450,8 @@ const PhotoUploadDialog = ({ open, onOpenChange, onPhotoUploaded }: PhotoUploadD
                       <Badge 
                         key={tag.id} 
                         variant="outline"
-                        className="cursor-pointer hover:bg-secondary"
-                        onClick={() => addTag(tag.value)}
-                        disabled={isUploading}
+                        className={`cursor-pointer hover:bg-secondary ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}
+                        onClick={() => !isUploading && addTag(tag.value)}
                       >
                         {tag.label}
                       </Badge>
