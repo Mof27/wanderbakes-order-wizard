@@ -1,4 +1,5 @@
 
+
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { dataService } from "@/services";
@@ -65,6 +66,8 @@ export default function DataMigrationTool() {
       toast.error("Migration failed");
     } finally {
       setIsMigrating(false);
+      // Force refresh data service to use the newly migrated data
+      dataService.setMode('supabase');
     }
   };
   
