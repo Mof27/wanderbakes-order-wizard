@@ -114,9 +114,17 @@ const PhotoUploadDialog = ({ open, onOpenChange, onPhotoUploaded }: PhotoUploadD
       const createdTag = await dataService.gallery.createCustomTag(newTagInput.trim());
       addTag(createdTag.value);
       setNewTagInput("");
-      toast.success("Tag created successfully");
+      // Use the toast object directly
+      toast({
+        title: "Tag created successfully",
+        variant: "default",
+      });
     } catch (error) {
-      toast.error("Failed to create tag");
+      // Use the toast object directly
+      toast({
+        title: "Failed to create tag",
+        variant: "destructive",
+      });
     }
   };
 
@@ -141,12 +149,20 @@ const PhotoUploadDialog = ({ open, onOpenChange, onPhotoUploaded }: PhotoUploadD
       // Send to service
       await dataService.gallery.addPhoto(photo);
       
-      toast.success("Photo uploaded successfully!");
+      // Use the toast object directly
+      toast({
+        title: "Photo uploaded successfully!",
+        variant: "default",
+      });
       onPhotoUploaded();
       handleClose();
     } catch (error) {
       console.error("Error uploading photo:", error);
-      toast.error("Failed to upload photo");
+      // Use the toast object directly
+      toast({
+        title: "Failed to upload photo",
+        variant: "destructive",
+      });
     } finally {
       setIsUploading(false);
     }

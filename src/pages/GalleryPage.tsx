@@ -81,7 +81,10 @@ const GalleryPage = () => {
   
   // Handle photo upload completion
   const handlePhotoUploaded = () => {
-    toast.success("Photo was successfully added to the gallery!");
+    toast({
+      title: "Photo was successfully added to the gallery!",
+      variant: "default",
+    });
     refetch();
   };
   
