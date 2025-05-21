@@ -1,4 +1,3 @@
-
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { GalleryRepository } from '../gallery.repository';
 import { GalleryPhoto, CustomTag, GalleryFilter, GallerySort } from '@/types/gallery';
@@ -7,10 +6,13 @@ import { Order, OrderTag } from '@/types';
 export class SupabaseGalleryRepository implements GalleryRepository {
   private client: SupabaseClient;
   private isAuthenticated: boolean = false;
+  private storageBucketInitialized: boolean = false;
+  private readonly BUCKET_NAME = 'cake-photos';
   
   constructor(supabaseUrl: string, supabaseKey: string) {
     this.client = createClient(supabaseUrl, supabaseKey);
     this.checkAuthentication();
+    this.initializeStorage();
   }
   
   // Check if user is authenticated
@@ -22,6 +24,42 @@ export class SupabaseGalleryRepository implements GalleryRepository {
     this.client.auth.onAuthStateChange((event, session) => {
       this.isAuthenticated = !!session;
     });
+  }
+
+  // Initialize storage bucket for cake photos if it doesn't exist
+  private async initializeStorage() {
+    try {
+      // Check if the bucket exists
+      const { data: buckets, error } = await this.client.storage.listBuckets();
+      
+      if (error) {
+        console.error('Error checking storage buckets:', error);
+        return;
+      }
+      
+      // Check if our bucket exists
+      const bucketExists = buckets?.some(bucket => bucket.name === this.BUCKET_NAME);
+      this.storageBucketInitialized = bucketExists || false;
+      
+      if (!this.storageBucketInitialized && this.isAuthenticated) {
+        console.log(`Creating storage bucket: ${this.BUCKET_NAME}`);
+        // Try to create the bucket if authenticated
+        const { error: createError } = await this.client.storage.createBucket(this.BUCKET_NAME, {
+          public: true, // Make the bucket publicly accessible
+          fileSizeLimit: 10485760, // 10MB in bytes
+          allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+        });
+        
+        if (createError) {
+          console.error('Error creating storage bucket:', createError);
+        } else {
+          this.storageBucketInitialized = true;
+          console.log(`Storage bucket '${this.BUCKET_NAME}' created successfully`);
+        }
+      }
+    } catch (error) {
+      console.error('Error initializing storage:', error);
+    }
   }
 
   // Helper method to catch errors consistently
@@ -194,7 +232,7 @@ export class SupabaseGalleryRepository implements GalleryRepository {
           const path = url.pathname.split('/').slice(2).join('/');
           
           if (path) {
-            await this.client.storage.from('cake-photos').remove([path]);
+            await this.client.storage.from(this.BUCKET_NAME).remove([path]);
           }
         }
       } catch (error) {
@@ -467,6 +505,20 @@ export class SupabaseGalleryRepository implements GalleryRepository {
   
   // Helper method to upload an image to Supabase Storage with progress tracking
   async uploadImage(file: File, progressCallback?: (progress: number) => void): Promise<string> {
+    // Check if storage is initialized
+    if (!this.storageBucketInitialized) {
+      await this.initializeStorage();
+      
+      if (!this.storageBucketInitialized) {
+        throw new Error('Storage not available. Please try again later.');
+      }
+    }
+    
+    // Check authentication for upload
+    if (!this.isAuthenticated) {
+      throw new Error('Authentication required to upload images');
+    }
+    
     // Validate file size and type
     if (file.size > 10 * 1024 * 1024) { // 10MB limit
       throw new Error('File size exceeds 10MB limit');
@@ -481,28 +533,31 @@ export class SupabaseGalleryRepository implements GalleryRepository {
       // Generate unique filename to prevent collisions
       const fileExt = file.name.split('.').pop();
       const filename = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
-      const path = `cake-photos/${filename}`;
+      const path = `${filename}`;
       
       // Report initial progress
       if (progressCallback) progressCallback(10);
       
       // Upload the file
       const { data, error } = await this.client.storage
-        .from('cake-photos')
+        .from(this.BUCKET_NAME)
         .upload(path, file, {
           cacheControl: '3600',
           upsert: false
         });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error uploading file:', error);
+        throw new Error(`Upload failed: ${error.message}`);
+      }
       
       // Report progress
       if (progressCallback) progressCallback(75);
       
       // Get the public URL of the uploaded file
       const { data: urlData } = this.client.storage
-        .from('cake-photos')
-        .getPublicUrl(data.path);
+        .from(this.BUCKET_NAME)
+        .getPublicUrl(data!.path);
       
       // Report completion
       if (progressCallback) progressCallback(100);
