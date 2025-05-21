@@ -1,7 +1,9 @@
+
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { GalleryRepository } from '../gallery.repository';
 import { GalleryPhoto, CustomTag, GalleryFilter, GallerySort } from '@/types/gallery';
 import { Order, OrderTag } from '@/types';
+import { supabase } from '@/services/supabase/client';
 
 export class SupabaseGalleryRepository implements GalleryRepository {
   private client: SupabaseClient;
@@ -9,8 +11,9 @@ export class SupabaseGalleryRepository implements GalleryRepository {
   private storageBucketInitialized: boolean = false;
   private readonly BUCKET_NAME = 'cake-photos';
   
-  constructor(supabaseUrl: string, supabaseKey: string) {
-    this.client = createClient(supabaseUrl, supabaseKey);
+  constructor() {
+    // Use the already configured Supabase client
+    this.client = supabase;
     this.checkAuthentication();
     this.initializeStorage();
   }

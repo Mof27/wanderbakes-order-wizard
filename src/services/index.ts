@@ -5,6 +5,7 @@ import { SettingsRepository } from "./repositories/settings.repository";
 import { BakerRepository } from "./repositories/baker.repository";
 import { GalleryRepository } from "./repositories/gallery.repository";
 import { isSupabaseConfigured } from "./supabase/client";
+import { config } from "@/config";
 
 // Define the complete data service interface
 export interface DataService {
@@ -26,6 +27,14 @@ let currentApiKey: string | undefined = undefined;
 if (isSupabaseConfigured()) {
   currentMode = 'supabase';
   console.log('Supabase configuration detected! Using Supabase as data source.');
+  // Set the baseUrl and apiKey from environment variables
+  currentBaseUrl = import.meta.env.VITE_SUPABASE_URL || config.supabase?.url;
+  currentApiKey = import.meta.env.VITE_SUPABASE_ANON_KEY || config.supabase?.anonKey;
+} else {
+  console.log('Supabase not configured. Using mock data as fallback.');
+  if (config.supabase?.useMockWhenUnconfigured) {
+    currentMode = 'mock';
+  }
 }
 
 const dataService: DataService = {
@@ -78,22 +87,47 @@ const dataService: DataService = {
         import('./repositories/supabase/gallery.repository'),
         import('./repositories/supabase/customer.repository')  // Import our new Supabase Customer Repository
       ]).then(([mock, { SupabaseGalleryRepository }, { SupabaseCustomerRepository }]) => {
-        // Use Supabase implementation for customer repository
-        dataService.customers = new SupabaseCustomerRepository();
-        
-        // Use mock implementations for repositories not yet migrated
-        dataService.orders = mock.mockDataService.orders;
-        dataService.settings = mock.mockDataService.settings;
-        dataService.baker = mock.mockDataService.baker;
-        
-        // Use Supabase implementation for gallery
-        if (isSupabaseConfigured()) {
-          dataService.gallery = new SupabaseGalleryRepository();
-        } else {
-          // Fall back to mock if Supabase isn't configured
+        try {
+          // Only use Supabase implementations if Supabase is properly configured
+          if (isSupabaseConfigured()) {
+            // Use Supabase implementation for customer repository
+            dataService.customers = new SupabaseCustomerRepository();
+            
+            // Use Supabase implementation for gallery
+            dataService.gallery = new SupabaseGalleryRepository();
+          } else {
+            throw new Error('Supabase is not configured properly');
+          }
+          
+          // Use mock implementations for repositories not yet migrated
+          dataService.orders = mock.mockDataService.orders;
+          dataService.settings = mock.mockDataService.settings;
+          dataService.baker = mock.mockDataService.baker;
+        } catch (error) {
+          console.error('Failed to initialize Supabase repositories:', error);
+          console.warn('Falling back to mock data for all repositories');
+          
+          // Fall back to mock data for all repositories
+          dataService.customers = mock.mockDataService.customers;
+          dataService.orders = mock.mockDataService.orders;
+          dataService.settings = mock.mockDataService.settings;
+          dataService.baker = mock.mockDataService.baker;
           dataService.gallery = mock.mockDataService.gallery;
         }
-      }).catch(err => console.error('Failed to load repositories', err));
+      }).catch(err => {
+        console.error('Failed to load repositories:', err);
+        
+        // Handle the error by falling back to mock data
+        import('./mock')
+          .then(mock => {
+            dataService.customers = mock.mockDataService.customers;
+            dataService.orders = mock.mockDataService.orders;
+            dataService.settings = mock.mockDataService.settings;
+            dataService.baker = mock.mockDataService.baker;
+            dataService.gallery = mock.mockDataService.gallery;
+          })
+          .catch(err => console.error('Failed to load mock data service as fallback', err));
+      });
     }
   }
 };

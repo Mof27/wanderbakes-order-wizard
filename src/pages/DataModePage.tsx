@@ -6,6 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { dataService } from "@/services";
 import { Badge } from "@/components/ui/badge";
 import DataMigrationTool from "@/components/settings/DataMigrationTool";
+import DataModeIndicator from "@/components/settings/DataModeIndicator";
 
 const DataModePage = () => {
   const { isConfigured } = useAuth();
@@ -28,14 +29,7 @@ const DataModePage = () => {
             <div>
               <h3 className="text-lg font-medium mb-2">Current Data Mode</h3>
               <div className="flex items-center gap-2">
-                <Badge variant={isConfigured ? "default" : "outline"}>
-                  {isConfigured ? "Supabase" : "Mock Data"}
-                </Badge>
-                <span className="text-sm text-muted-foreground">
-                  {isConfigured 
-                    ? "Your data is stored in Supabase database" 
-                    : "Your data is stored locally in memory and will be lost when you refresh the page"}
-                </span>
+                <DataModeIndicator />
               </div>
             </div>
             
