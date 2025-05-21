@@ -1,6 +1,7 @@
+
 import React from "react";
 import { Sidebar, SidebarContent, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { Home, CakeIcon, Users, Settings, ChefHat, Truck, BeakerIcon } from "lucide-react";
+import { Home, CakeIcon, Users, Settings, ChefHat, Truck, BeakerIcon, ImagesIcon } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import OnlineStatusIndicator from "./OnlineStatusIndicator";
@@ -37,6 +38,11 @@ const SidebarMenu = () => {
       name: "Delivery",
       path: "/delivery",
       icon: Truck
+    },
+    {
+      name: "Gallery",
+      path: "/gallery",
+      icon: ImagesIcon
     },
     {
       name: "Customers",
