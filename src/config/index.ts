@@ -39,7 +39,7 @@ export const config = {
    * In production, use environment variables
    */
   supabase: {
-    // Replace these with your Supabase project URL and anon key
+    // Get values from environment variables with fallbacks
     url: import.meta.env.VITE_SUPABASE_URL || '',
     anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || '',
     // Flag to indicate whether to use mock data when Supabase is not properly configured
