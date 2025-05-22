@@ -36,6 +36,8 @@ interface AuthContextType {
   isAdmin: () => boolean;
   refreshProfile: () => Promise<void>;
   updateProfile: (updates: Partial<UserProfile>) => Promise<{ error: Error | null }>;
+  verifyPin: (userId: string, pin: string) => Promise<boolean>;
+  setUserSession: (userId: string) => Promise<{ success: boolean, error: Error | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -130,6 +132,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       subscription.unsubscribe();
     };
   }, [isConfigured]);
+
+  // Verify PIN for user
+  const verifyPin = async (userId: string, pin: string): Promise<boolean> => {
+    if (!isConfigured) {
+      return false;
+    }
+
+    try {
+      const { data, error } = await supabase.rpc('verify_pin', {
+        user_id: userId,
+        pin
+      });
+
+      if (error) {
+        console.error('Error verifying PIN:', error);
+        return false;
+      }
+
+      return !!data;
+    } catch (error) {
+      console.error('Error in PIN verification:', error);
+      return false;
+    }
+  };
+
+  // Set a user session manually (for PIN-based auth)
+  const setUserSession = async (userId: string) => {
+    // This is a simplified version for demo purposes
+    // In a production app, you'd use a proper token-based system
+    if (!isConfigured) {
+      return { success: false, error: new Error('Supabase is not configured') };
+    }
+
+    try {
+      // Fetch user data
+      await fetchUserData(userId);
+      
+      // For demo, we'll simulate a successful login
+      // In a real app, you'd use supabase.auth.setSession() with a valid token
+      
+      return { success: true, error: null };
+    } catch (error) {
+      console.error('Error setting user session:', error);
+      return { success: false, error: error as Error };
+    }
+  };
 
   const refreshProfile = async () => {
     if (user) {
@@ -248,6 +296,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAdmin,
     refreshProfile,
     updateProfile,
+    verifyPin,
+    setUserSession
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

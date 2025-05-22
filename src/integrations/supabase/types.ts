@@ -727,27 +727,36 @@ export type Database = {
           avatar_url: string | null
           created_at: string
           display_name: string | null
+          failed_pin_attempts: number | null
           first_name: string | null
           id: string
           last_name: string | null
+          locked_until: string | null
+          pin_hash: string | null
           updated_at: string | null
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string
           display_name?: string | null
+          failed_pin_attempts?: number | null
           first_name?: string | null
           id: string
           last_name?: string | null
+          locked_until?: string | null
+          pin_hash?: string | null
           updated_at?: string | null
         }
         Update: {
           avatar_url?: string | null
           created_at?: string
           display_name?: string | null
+          failed_pin_attempts?: number | null
           first_name?: string | null
           id?: string
           last_name?: string | null
+          locked_until?: string | null
+          pin_hash?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -849,6 +858,14 @@ export type Database = {
       }
       has_role: {
         Args: { role_to_check: Database["public"]["Enums"]["app_role"] }
+        Returns: boolean
+      }
+      hash_pin: {
+        Args: { pin: string }
+        Returns: string
+      }
+      verify_pin: {
+        Args: { user_id: string; pin: string }
         Returns: boolean
       }
     }

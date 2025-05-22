@@ -22,8 +22,10 @@ import WorkflowPage from "./pages/WorkflowPage";
 import ArchivedOrdersPage from "./pages/ArchivedOrdersPage";
 import GalleryPage from "./pages/GalleryPage";
 import AuthPage from "./pages/AuthPage";
+import PinAuthPage from "./pages/PinAuthPage";
 import ProfilePage from "./pages/ProfilePage";
 import AdminUsersPage from "./pages/AdminUsersPage";
+import UserManagementPage from "./pages/UserManagementPage";
 import UnauthorizedPage from "./pages/UnauthorizedPage";
 import NotFound from "./pages/NotFound";
 import { AppProvider } from "./context/AppContext";
@@ -80,10 +82,17 @@ const App = () => {
               <Sonner />
               <BrowserRouter>
                 <Routes>
-                  {/* Authentication route - no auth required */}
+                  {/* Authentication routes - no auth required */}
                   <Route path="/auth" element={
                     <AuthWrapper requireAuth={false}>
                       <AuthPage />
+                    </AuthWrapper>
+                  } />
+                  
+                  {/* PIN-based authentication route */}
+                  <Route path="/pin-login" element={
+                    <AuthWrapper requireAuth={false}>
+                      <PinAuthPage />
                     </AuthWrapper>
                   } />
                   
@@ -114,6 +123,17 @@ const App = () => {
                       <RoleGuard allowedRoles={['admin']}>
                         <AuthMainLayout>
                           <AdminUsersPage />
+                        </AuthMainLayout>
+                      </RoleGuard>
+                    </AuthWrapper>
+                  } />
+                  
+                  {/* User Management */}
+                  <Route path="/admin/user-management" element={
+                    <AuthWrapper>
+                      <RoleGuard allowedRoles={['admin']}>
+                        <AuthMainLayout>
+                          <UserManagementPage />
                         </AuthMainLayout>
                       </RoleGuard>
                     </AuthWrapper>

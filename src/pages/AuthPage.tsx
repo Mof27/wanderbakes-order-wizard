@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -155,168 +155,180 @@ const AuthPage = () => {
             </CardContent>
           </>
         ) : (
-          <Tabs defaultValue="sign-in">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="sign-in">Sign In</TabsTrigger>
-              <TabsTrigger value="sign-up">Sign Up</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="sign-in">
-              <Form {...loginForm}>
-                <form onSubmit={loginForm.handleSubmit(handleSignIn)}>
-                  <CardHeader>
-                    <CardTitle>Sign In</CardTitle>
-                    <CardDescription>
-                      Enter your credentials to access your account
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <FormField
-                      control={loginForm.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email</FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="email" 
-                              placeholder="Email" 
-                              {...field} 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={loginForm.control}
-                      name="password"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Password</FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="password" 
-                              placeholder="Password" 
-                              {...field} 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </CardContent>
-                  <CardFooter>
-                    <Button type="submit" className="w-full" disabled={loading}>
-                      {loading ? "Signing in..." : "Sign In"}
-                    </Button>
-                  </CardFooter>
-                </form>
-              </Form>
-            </TabsContent>
-            
-            <TabsContent value="sign-up">
-              <Form {...signupForm}>
-                <form onSubmit={signupForm.handleSubmit(handleSignUp)}>
-                  <CardHeader>
-                    <CardTitle>Sign Up</CardTitle>
-                    <CardDescription>
-                      Create a new account to get started
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+          <>
+            <Tabs defaultValue="sign-in">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="sign-in">Sign In</TabsTrigger>
+                <TabsTrigger value="sign-up">Sign Up</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="sign-in">
+                <Form {...loginForm}>
+                  <form onSubmit={loginForm.handleSubmit(handleSignIn)}>
+                    <CardHeader>
+                      <CardTitle>Sign In</CardTitle>
+                      <CardDescription>
+                        Enter your credentials to access your account
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
                       <FormField
-                        control={signupForm.control}
-                        name="first_name"
+                        control={loginForm.control}
+                        name="email"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>First Name</FormLabel>
+                            <FormLabel>Email</FormLabel>
                             <FormControl>
-                              <Input placeholder="First Name" {...field} />
+                              <Input 
+                                type="email" 
+                                placeholder="Email" 
+                                {...field} 
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
                       <FormField
-                        control={signupForm.control}
-                        name="last_name"
+                        control={loginForm.control}
+                        name="password"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Last Name</FormLabel>
+                            <FormLabel>Password</FormLabel>
                             <FormControl>
-                              <Input placeholder="Last Name" {...field} />
+                              <Input 
+                                type="password" 
+                                placeholder="Password" 
+                                {...field} 
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
-                    </div>
-                    
-                    <FormField
-                      control={signupForm.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email</FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="email" 
-                              placeholder="Email" 
-                              {...field} 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={signupForm.control}
-                      name="password"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Password</FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="password" 
-                              placeholder="Password" 
-                              {...field} 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={signupForm.control}
-                      name="confirmPassword"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Confirm Password</FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="password" 
-                              placeholder="Confirm Password" 
-                              {...field} 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </CardContent>
-                  <CardFooter>
-                    <Button type="submit" className="w-full" disabled={loading}>
-                      {loading ? "Signing up..." : "Sign Up"}
-                    </Button>
-                  </CardFooter>
-                </form>
-              </Form>
-            </TabsContent>
-          </Tabs>
+                    </CardContent>
+                    <CardFooter className="flex flex-col space-y-4">
+                      <Button type="submit" className="w-full" disabled={loading}>
+                        {loading ? "Signing in..." : "Sign In"}
+                      </Button>
+                      <div className="text-center text-sm">
+                        <Link to="/pin-login" className="text-primary hover:underline">
+                          Use PIN Login Instead
+                        </Link>
+                      </div>
+                    </CardFooter>
+                  </form>
+                </Form>
+              </TabsContent>
+              
+              <TabsContent value="sign-up">
+                <Form {...signupForm}>
+                  <form onSubmit={signupForm.handleSubmit(handleSignUp)}>
+                    <CardHeader>
+                      <CardTitle>Sign Up</CardTitle>
+                      <CardDescription>
+                        Create a new account to get started
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={signupForm.control}
+                          name="first_name"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>First Name</FormLabel>
+                              <FormControl>
+                                <Input placeholder="First Name" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={signupForm.control}
+                          name="last_name"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Last Name</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Last Name" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      
+                      <FormField
+                        control={signupForm.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="email" 
+                                placeholder="Email" 
+                                {...field} 
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={signupForm.control}
+                        name="password"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Password</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="password" 
+                                placeholder="Password" 
+                                {...field} 
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={signupForm.control}
+                        name="confirmPassword"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Confirm Password</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="password" 
+                                placeholder="Confirm Password" 
+                                {...field} 
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </CardContent>
+                    <CardFooter className="flex flex-col space-y-4">
+                      <Button type="submit" className="w-full" disabled={loading}>
+                        {loading ? "Signing up..." : "Sign Up"}
+                      </Button>
+                      <div className="text-center text-sm">
+                        <Link to="/pin-login" className="text-primary hover:underline">
+                          Use PIN Login Instead
+                        </Link>
+                      </div>
+                    </CardFooter>
+                  </form>
+                </Form>
+              </TabsContent>
+            </Tabs>
+          </>
         )}
       </Card>
     </div>
