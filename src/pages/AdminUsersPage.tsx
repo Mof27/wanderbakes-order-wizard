@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import { useAuth } from "@/context/AuthContext";
@@ -303,18 +304,30 @@ const AdminUsersPage = () => {
       // Convert roles to proper AppRole array
       const roles = data.roles as AppRole[];
       
-      // Call our updated create_pin_user function
-      const { data: userId, error } = await supabase.rpc('create_pin_user', {
-        first_name: data.first_name,
-        last_name: data.last_name,
-        display_name: data.display_name || `${data.first_name} ${data.last_name}`,
-        pin: data.pin,
-        roles
+      // Use the admin-users edge function with createPinUser action instead of RPC
+      const { data: response, error } = await supabase.functions.invoke('admin-users', {
+        body: { 
+          userId: user?.id,
+          action: 'createPinUser',
+          userData: {
+            first_name: data.first_name,
+            last_name: data.last_name,
+            display_name: data.display_name || `${data.first_name} ${data.last_name}`,
+            pin: data.pin,
+            roles
+          }
+        }
       });
       
       if (error) {
         console.error("Error creating PIN user:", error);
         toast.error(`Failed to create user: ${error.message}`);
+        return;
+      }
+      
+      if (response.error) {
+        console.error("Error in response:", response.error);
+        toast.error(`Failed to create user: ${response.error}`);
         return;
       }
       
