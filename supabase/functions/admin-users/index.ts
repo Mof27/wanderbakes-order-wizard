@@ -65,8 +65,8 @@ serve(async (req) => {
     if (action === 'getUsers') {
       // Get all auth users directly with the service role
       const { data: authUsers, error: authError } = await supabaseAdmin
-        .from('auth')
-        .select('users');
+        .from('auth.users')
+        .select('*');
 
       if (authError) {
         console.error("Error fetching auth users:", authError);
@@ -158,87 +158,25 @@ serve(async (req) => {
           roles
         });
         
-        // Generate a unique email and random password for the auth user
-        const uniqueId = crypto.randomUUID();
-        const email = `${first_name.toLowerCase()}.${last_name.toLowerCase()}.${uniqueId.substring(0, 8)}@pin-user.local`;
-        const password = crypto.randomUUID().replace(/-/g, '');
-        
-        // Step 1: Create the auth user first
-        const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
-          email,
-          password,
-          email_confirm: true,  // Skip email verification
-          user_metadata: {
-            first_name,
-            last_name,
+        // Instead of using auth.admin.createUser which might be having issues,
+        // we'll use the database create_pin_user function to create the user directly
+        const { data: newUserId, error: createUserError } = await supabaseAdmin.rpc(
+          "create_pin_user",
+          { 
+            first_name, 
+            last_name, 
             display_name: display_name || `${first_name} ${last_name}`,
-            is_pin_only: true
-          },
-          app_metadata: {
-            provider: 'pin'
+            pin,
+            roles
           }
-        });
-
-        if (authError) {
-          console.error("Error creating auth user:", authError);
-          return new Response(
-            JSON.stringify({ error: `Failed to create user: ${authError.message}` }),
-            { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
-          );
-        }
-        
-        const newUserId = authUser.user.id;
-        
-        // Step 2: Hash the PIN using our database function
-        const { data: pinHash, error: hashError } = await supabaseAdmin.rpc(
-          "hash_pin",
-          { pin }
         );
 
-        if (hashError) {
-          console.error("Error hashing PIN:", hashError);
+        if (createUserError) {
+          console.error("Error creating PIN user:", createUserError);
           return new Response(
-            JSON.stringify({ error: "Failed to hash PIN" }),
+            JSON.stringify({ error: `Failed to create PIN user: ${createUserError.message}` }),
             { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
           );
-        }
-        
-        // Step 3: Update the profile with PIN information
-        // Note: The profile may already exist from the auth trigger, but we need to update it with PIN info
-        const { error: profileError } = await supabaseAdmin
-          .from("profiles")
-          .upsert({
-            id: newUserId,
-            first_name,
-            last_name,
-            display_name: display_name || `${first_name} ${last_name}`,
-            pin_hash: pinHash,
-            failed_pin_attempts: 0
-          });
-          
-        if (profileError) {
-          console.error("Error updating user profile:", profileError);
-          return new Response(
-            JSON.stringify({ error: `Failed to update user profile: ${profileError.message}` }),
-            { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
-          );
-        }
-        
-        // Step 4: Assign roles
-        const rolePromises = roles.map(role => 
-          supabaseAdmin
-            .from('user_roles')
-            .insert({
-              user_id: newUserId,
-              role
-            })
-        );
-        
-        const roleResults = await Promise.all(rolePromises);
-        const roleErrors = roleResults.filter(r => r.error).map(r => r.error);
-        
-        if (roleErrors.length > 0) {
-          console.warn("Some roles could not be assigned:", roleErrors);
         }
         
         return new Response(
