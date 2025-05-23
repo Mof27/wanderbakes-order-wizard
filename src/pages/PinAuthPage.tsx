@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/services/supabase/client";
+import { config } from "@/config";
 
 interface Profile {
   id: string;
@@ -79,11 +80,14 @@ const PinAuthPage = () => {
 
     try {
       // Call our edge function to verify PIN and get a session token
-      const response = await fetch(`${supabase.supabaseUrl}/functions/v1/pin-auth`, {
+      const supabaseUrl = config.supabase.url;
+      const supabaseKey = config.supabase.anonKey;
+      
+      const response = await fetch(`${supabaseUrl}/functions/v1/pin-auth`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${supabase.supabaseKey}`
+          "Authorization": `Bearer ${supabaseKey}`
         },
         body: JSON.stringify({
           userId: selectedUserId,

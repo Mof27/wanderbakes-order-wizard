@@ -165,11 +165,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     try {
       // Call our pin-auth function to create a proper session
-      const response = await fetch(`${supabase.supabaseUrl}/functions/v1/pin-auth`, {
+      const supabaseUrl = config.supabase.url;
+      const supabaseKey = config.supabase.anonKey;
+      
+      const response = await fetch(`${supabaseUrl}/functions/v1/pin-auth`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${supabase.supabaseKey}`
+          "Authorization": `Bearer ${supabaseKey}`
         },
         body: JSON.stringify({
           userId,
