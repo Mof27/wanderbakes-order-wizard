@@ -159,18 +159,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Set a user session manually (for PIN-based auth)
   const setUserSession = async (userId: string) => {
-    // This is a simplified version for demo purposes
-    // In a production app, you'd use a proper token-based system
     if (!isConfigured) {
       return { success: false, error: new Error('Supabase is not configured') };
     }
 
     try {
-      // Fetch user data
-      await fetchUserData(userId);
+      // Call our pin-auth function to create a proper session
+      const response = await fetch(`${supabase.supabaseUrl}/functions/v1/pin-auth`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${supabase.supabaseKey}`
+        },
+        body: JSON.stringify({
+          userId,
+          pin: "123456" // Note: In a real app, this would come from user input
+        })
+      });
       
-      // For demo, we'll simulate a successful login
-      // In a real app, you'd use supabase.auth.setSession() with a valid token
+      const result = await response.json();
+      
+      if (!response.ok || !result.success) {
+        console.error("Error establishing session:", result.error || result.message);
+        return { success: false, error: new Error(result.error || result.message || "Authentication failed") };
+      }
+      
+      // Set the session in Supabase client
+      const { session } = result;
+      
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: session.access_token,
+        refresh_token: session.refresh_token
+      });
+      
+      if (sessionError) {
+        console.error("Error setting session:", sessionError);
+        return { success: false, error: sessionError };
+      }
+      
+      // Fetch user data for the profile
+      await fetchUserData(userId);
       
       return { success: true, error: null };
     } catch (error) {

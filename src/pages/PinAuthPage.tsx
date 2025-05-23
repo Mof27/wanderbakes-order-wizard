@@ -78,49 +78,47 @@ const PinAuthPage = () => {
     setError("");
 
     try {
-      // Call our custom API to verify PIN
-      const { data, error } = await supabase.rpc('verify_pin', {
-        user_id: selectedUserId,
-        pin: pin
+      // Call our edge function to verify PIN and get a session token
+      const response = await fetch(`${supabase.supabaseUrl}/functions/v1/pin-auth`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${supabase.supabaseKey}`
+        },
+        body: JSON.stringify({
+          userId: selectedUserId,
+          pin: pin
+        })
       });
-
-      if (error) {
-        console.error("PIN verification error:", error);
-        setError("Error verifying PIN: " + error.message);
-        setLoading(false);
-        return;
+      
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.error || result.message || "Authentication failed");
       }
-
-      if (data === true) {
-        // PIN is correct, now log in with a custom auth method
-        // This requires a custom server function, for now we'll simulate with an admin login
-        try {
-          // Get user email from the selected profile 
-          const { data: userData } = await supabase
-            .from('auth.users')
-            .select('email')
-            .eq('id', selectedUserId)
-            .single();
-            
-          if (userData && userData.email) {
-            // For now, we'll use a temp solution to sign in as the selected user
-            // Later this should be replaced with a proper token-based auth
-            toast.success("PIN verified successfully! Logging you in...");
-            navigate("/");
-          } else {
-            setError("Could not find user information");
-          }
-        } catch (authError) {
-          console.error("Authentication error:", authError);
-          setError("Authentication error");
+      
+      if (result.success) {
+        // Set the session in Supabase client
+        const { session } = result;
+        
+        const { error: sessionError } = await supabase.auth.setSession({
+          access_token: session.access_token,
+          refresh_token: session.refresh_token
+        });
+        
+        if (sessionError) {
+          console.error("Error setting session:", sessionError);
+          throw new Error("Failed to establish session");
         }
+        
+        toast.success("PIN verified successfully! Logging you in...");
+        navigate("/");
       } else {
-        // PIN is incorrect
-        setError("Invalid PIN. Please try again.");
+        setError(result.message || "Authentication failed");
       }
     } catch (err) {
       console.error("Login error:", err);
-      setError("An unexpected error occurred");
+      setError(err instanceof Error ? err.message : "An unexpected error occurred");
     } finally {
       setLoading(false);
     }

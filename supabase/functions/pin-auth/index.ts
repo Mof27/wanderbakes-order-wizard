@@ -57,7 +57,7 @@ serve(async (req) => {
       );
     }
 
-    // If PIN is valid, get user details and create a session
+    // If PIN is valid, get user details
     const { data: userData, error: userError } = await supabaseClient
       .from("profiles")
       .select("id, first_name, last_name, display_name")
@@ -72,14 +72,27 @@ serve(async (req) => {
       );
     }
 
-    // Generate a custom token for the user (in a real app, you'd use proper JWT)
-    // Since we don't have easy access to create auth sessions with service role,
-    // we'll return user info and the client will handle the session management
+    // Create a custom admin signed JWT token using the admin API
+    const { data: sessionData, error: sessionError } = await supabaseClient.auth.admin.createSession({
+      userId: userId,
+      // Set the session to expire in 24 hours
+      expiresIn: 60 * 60 * 24
+    });
 
+    if (sessionError) {
+      console.error("Error creating session:", sessionError);
+      return new Response(
+        JSON.stringify({ error: "Error creating authentication session" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+      );
+    }
+
+    // Return the session data along with the user profile
     return new Response(
       JSON.stringify({ 
         success: true, 
         user: userData,
+        session: sessionData,
         message: "PIN verified successfully" 
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }

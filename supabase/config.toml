@@ -80,3 +80,7 @@ vector_port = 54328
 # Disable JWT verification for the set-admin function
 [functions.set-admin]
 verify_jwt = false
+
+# Disable JWT verification for the pin-auth function
+[functions.pin-auth]
+verify_jwt = false
