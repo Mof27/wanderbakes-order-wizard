@@ -263,8 +263,8 @@ const AdminUsersPage = () => {
       // Convert roles to proper AppRole array
       const roles = data.roles as AppRole[];
       
-      // Call the create_pin_user function
-      const { data: newUserId, error } = await supabase.rpc('create_pin_user', {
+      // Call the create_pin_user function with our updated approach
+      const { data: result, error } = await supabase.rpc('create_pin_user', {
         first_name: data.first_name,
         last_name: data.last_name,
         display_name: data.display_name || `${data.first_name} ${data.last_name}`,
@@ -353,7 +353,7 @@ const AdminUsersPage = () => {
         return;
       }
 
-      // Hash and store new PIN
+      // Call our updated hash_pin function and set the pin hash
       const { error } = await supabase.rpc("hash_pin", {
         pin: newPin
       }).then(result => {
@@ -376,7 +376,7 @@ const AdminUsersPage = () => {
         return;
       }
 
-      // Fix: Use the profile's display_name property instead of accessing it directly
+      // Use the profile's display_name property instead of accessing it directly
       toast.success(`PIN reset for ${selectedUser.profile?.display_name || selectedUser.email}`);
       setNewPin("");
     } catch (error) {
