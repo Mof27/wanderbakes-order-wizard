@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from '../services/supabase/client';
@@ -76,7 +77,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (rolesError) {
         console.error('Error fetching user roles:', rolesError);
       } else if (rolesData) {
-        setRoles(rolesData.map(r => r.role));
+        const userRoles = rolesData.map(r => r.role);
+        setRoles(userRoles);
+        
+        // Store roles in localStorage as a backup method
+        localStorage.setItem("user_roles", JSON.stringify(userRoles));
+      } else {
+        // Try to get roles from localStorage as fallback
+        const storedRoles = localStorage.getItem("user_roles");
+        if (storedRoles) {
+          try {
+            setRoles(JSON.parse(storedRoles));
+          } catch (e) {
+            console.error("Error parsing stored roles:", e);
+          }
+        }
       }
     } catch (error) {
       console.error('Error fetching user data:', error);
@@ -95,6 +110,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Get initial session and set up subscription
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("Initial session:", session);
       setSession(session);
       setUser(session?.user ?? null);
       
@@ -108,6 +124,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log("Auth state change:", event, session?.user?.id);
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -121,6 +138,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // Clear profile and roles when logged out
           setProfile(null);
           setRoles([]);
+          localStorage.removeItem("user_roles");
         }
         
         setLoading(false);
@@ -163,7 +181,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      // Fetch the user profile and roles directly
+      // Fetch the user profile directly
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
@@ -185,14 +203,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error('Error fetching roles:', rolesError);
       }
       
+      const userRoles = rolesData?.map(r => r.role) || [];
+      
       // Set the local state
       setProfile(profile);
-      setRoles(rolesData?.map(r => r.role) || []);
+      setRoles(userRoles);
+      
+      // Store roles in localStorage as a backup
+      localStorage.setItem("user_roles", JSON.stringify(userRoles));
       
       // Create a temporary user object
       const tempUser = {
         id: userId,
-        app_metadata: { provider: 'pin' },
+        app_metadata: { provider: 'pin', roles: userRoles },
         user_metadata: {
           first_name: profile.first_name,
           last_name: profile.last_name,
@@ -217,6 +240,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Store in localStorage to persist "session"
       localStorage.setItem('pin_auth_user_id', userId);
       localStorage.setItem('pin_auth_timestamp', Date.now().toString());
+      localStorage.setItem('pin_auth_roles', JSON.stringify(userRoles));
       
       return { success: true, error: null };
     } catch (error) {
@@ -232,10 +256,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       const storedUserId = localStorage.getItem('pin_auth_user_id');
       const timestamp = parseInt(localStorage.getItem('pin_auth_timestamp') || '0');
+      const storedRoles = localStorage.getItem('pin_auth_roles');
       
       // Check if PIN auth exists and is not expired (24 hours)
       if (storedUserId && (Date.now() - timestamp) < 24 * 60 * 60 * 1000) {
         await setUserSession(storedUserId);
+        
+        // Also load roles from localStorage if available
+        if (storedRoles) {
+          try {
+            setRoles(JSON.parse(storedRoles));
+          } catch (e) {
+            console.error("Error parsing stored roles:", e);
+          }
+        }
       }
     };
     
@@ -315,6 +349,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Clear PIN auth if it exists
       localStorage.removeItem('pin_auth_user_id');
       localStorage.removeItem('pin_auth_timestamp');
+      localStorage.removeItem('pin_auth_roles');
+      localStorage.removeItem('user_roles');
       
       // Standard Supabase signout
       await supabase.auth.signOut();

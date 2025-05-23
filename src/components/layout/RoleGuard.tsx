@@ -15,7 +15,7 @@ const RoleGuard: React.FC<RoleGuardProps> = ({
   allowedRoles,
   redirectTo = "/unauthorized"
 }) => {
-  const { user, loading, hasRole } = useAuth();
+  const { user, loading, hasRole, roles } = useAuth();
   const location = useLocation();
 
   // Show loading indicator while checking authentication
@@ -32,11 +32,22 @@ const RoleGuard: React.FC<RoleGuardProps> = ({
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
+  console.log("RoleGuard checking roles:", {
+    allowedRoles,
+    userRoles: roles,
+    user: user.id
+  });
+
   // Check if user has any of the allowed roles
   const hasPermission = allowedRoles.some(role => hasRole(role));
 
   // If user doesn't have required role, redirect to unauthorized page
   if (!hasPermission) {
+    console.warn("User lacks permission:", {
+      userId: user.id,
+      userRoles: roles,
+      requiredRoles: allowedRoles
+    });
     return <Navigate to={redirectTo} replace />;
   }
 

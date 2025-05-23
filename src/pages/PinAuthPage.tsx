@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { useNavigate } from "react-router-dom";
@@ -35,7 +36,7 @@ const PinAuthPage = () => {
   useEffect(() => {
     const fetchProfiles = async () => {
       try {
-        // Load profiles from Supabase with join to auth.users to find PIN-only users
+        // Load profiles from Supabase
         const { data: profiles, error: profilesError } = await supabase
           .from("profiles")
           .select("id, first_name, last_name, display_name");
@@ -45,24 +46,34 @@ const PinAuthPage = () => {
           return;
         }
         
-        // Get user metadata to identify PIN-only users
-        const { data: usersData, error: usersError } = await supabase.rpc('admin_get_users');
+        // Get user metadata from user_roles to identify users with roles
+        const { data: userRoles, error: rolesError } = await supabase
+          .from("user_roles")
+          .select("user_id, role");
         
-        if (usersError) {
-          console.error("Error fetching users:", usersError);
+        if (rolesError) {
+          console.error("Error fetching user roles:", rolesError);
         }
         
-        // Combine data to identify PIN-only users
-        if (profiles && usersData) {
+        // Map user IDs to their roles
+        const userRolesMap = new Map();
+        userRoles?.forEach(ur => {
+          if (!userRolesMap.has(ur.user_id)) {
+            userRolesMap.set(ur.user_id, []);
+          }
+          userRolesMap.get(ur.user_id).push(ur.role);
+        });
+        
+        // Combine data to identify users with roles
+        if (profiles) {
           const enrichedProfiles = profiles.map(profile => {
-            const userData = usersData.find(u => u.id === profile.id);
-            const isPinOnly = userData?.raw_user_meta_data?.is_pin_only === true || 
-                              userData?.raw_app_meta_data?.provider === 'pin' ||
-                              userData?.email?.endsWith('@pin-user.local');
+            const hasRoles = userRolesMap.has(profile.id);
+            const isPinOnly = !profile.id.startsWith('auth0|') && hasRoles;
             
             return {
               ...profile,
-              is_pin_only: isPinOnly
+              is_pin_only: isPinOnly,
+              roles: userRolesMap.get(profile.id) || []
             };
           });
           
@@ -124,6 +135,7 @@ const PinAuthPage = () => {
       });
       
       const result = await response.json();
+      console.log("Pin auth response:", result);
       
       if (!response.ok) {
         throw new Error(result.error || result.message || "Authentication failed");
@@ -131,7 +143,7 @@ const PinAuthPage = () => {
       
       if (result.success) {
         // Set the session in Supabase client
-        const { session } = result;
+        const { session, roles } = result;
         
         const { error: sessionError } = await supabase.auth.setSession({
           access_token: session.access_token,
@@ -142,6 +154,9 @@ const PinAuthPage = () => {
           console.error("Error setting session:", sessionError);
           throw new Error("Failed to establish session");
         }
+        
+        // Store roles in localStorage as a backup method
+        localStorage.setItem("user_roles", JSON.stringify(roles || []));
         
         toast.success("PIN verified successfully! Logging you in...");
         navigate("/");

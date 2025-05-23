@@ -57,7 +57,7 @@ serve(async (req) => {
       );
     }
 
-    // If PIN is valid, get user details
+    // If PIN is valid, get user details and roles
     const { data: userData, error: userError } = await supabaseClient
       .from("profiles")
       .select("id, first_name, last_name, display_name")
@@ -72,11 +72,36 @@ serve(async (req) => {
       );
     }
 
+    // Get user roles
+    const { data: userRoles, error: rolesError } = await supabaseClient
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId);
+
+    if (rolesError) {
+      console.error("Error fetching user roles:", rolesError);
+      return new Response(
+        JSON.stringify({ error: "Error fetching user roles" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+      );
+    }
+
+    const roles = userRoles?.map(r => r.role) || [];
+
+    // Add extra metadata to help with PIN authentication
+    const customClaims = {
+      is_pin_user: true,
+      roles: roles
+    };
+
     // Create a custom admin signed JWT token using the admin API
     const { data: sessionData, error: sessionError } = await supabaseClient.auth.admin.createSession({
       userId: userId,
       // Set the session to expire in 24 hours
-      expiresIn: 60 * 60 * 24
+      expiresIn: 60 * 60 * 24,
+      attributes: {
+        ...customClaims
+      }
     });
 
     if (sessionError) {
@@ -87,12 +112,13 @@ serve(async (req) => {
       );
     }
 
-    // Return the session data along with the user profile
+    // Return the session data along with the user profile and roles
     return new Response(
       JSON.stringify({ 
         success: true, 
         user: userData,
         session: sessionData,
+        roles: roles,
         message: "PIN verified successfully" 
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
