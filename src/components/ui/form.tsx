@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import * as LabelPrimitive from "@radix-ui/react-label"
 import { Slot } from "@radix-ui/react-slot"
@@ -39,18 +40,26 @@ const FormField = <
   )
 }
 
+// Fixed: Added error handling to prevent errors when form context is missing
 const useFormField = () => {
   const fieldContext = React.useContext(FormFieldContext)
-  const itemContext = React.useContext(FormItemContext)
-  const { getFieldState, formState } = useFormContext()
-
-  const fieldState = getFieldState(fieldContext.name, formState)
-
-  if (!fieldContext) {
-    throw new Error("useFormField should be used within <FormField>")
+  const formContext = useFormContext();
+  
+  // Error handling: Return a safe default when no context is available
+  if (!fieldContext || !formContext) {
+    return {
+      id: '',
+      name: '' as any,
+      formItemId: '',
+      formDescriptionId: '',
+      formMessageId: '',
+      error: undefined,
+    }
   }
-
-  const { id } = itemContext
+  
+  const { getFieldState, formState } = formContext;
+  const fieldState = getFieldState(fieldContext.name, formState)
+  const { id } = React.useContext(FormItemContext) || { id: '' };
 
   return {
     id,

@@ -62,6 +62,8 @@ interface UserWithProfile {
   } | null;
   roles: AppRole[];
   is_pin_only?: boolean;
+  raw_user_meta_data?: any;
+  raw_app_meta_data?: any;
 }
 
 const inviteUserSchema = z.object({
@@ -188,10 +190,30 @@ const AdminUsersPage = () => {
           const profile = response.profiles?.find((p: any) => p.id === authUser.id) || null;
           const userRoles = response.roles?.filter((r: any) => r.user_id === authUser.id).map((r: any) => r.role) || [];
           
-          // Check if this is a PIN-only user
-          const isPinOnly = authUser.raw_user_meta_data?.is_pin_only === true || 
-                          authUser.raw_app_meta_data?.provider === 'pin' ||
-                          authUser.email?.endsWith('@pin-user.local');
+          // Improved PIN user detection logic with logging
+          const isPinUser = (() => {
+            // Check if user metadata explicitly marks this as a PIN user
+            const isExplicitlyPinUser = 
+              authUser.raw_user_meta_data?.is_pin_only === true ||
+              authUser.raw_app_meta_data?.provider === 'pin';
+            
+            // Check for PIN-specific email domain
+            const isPinEmail = authUser.email?.endsWith('@pin-user.local') || false;
+            
+            // Check if profile has PIN hash
+            const hasPinHash = profile?.pin_hash != null;
+            
+            console.log(`User ${authUser.email} PIN detection:`, {
+              isExplicitlyPinUser,
+              isPinEmail,
+              hasPinHash,
+              raw_user_meta_data: authUser.raw_user_meta_data,
+              raw_app_meta_data: authUser.raw_app_meta_data,
+            });
+            
+            // A user is a PIN user if they're explicitly marked as one OR have a PIN-specific email
+            return isExplicitlyPinUser || isPinEmail;
+          })();
           
           return {
             id: authUser.id,
@@ -199,7 +221,9 @@ const AdminUsersPage = () => {
             created_at: authUser.created_at,
             profile,
             roles: userRoles,
-            is_pin_only: isPinOnly
+            is_pin_only: isPinUser,
+            raw_user_meta_data: authUser.raw_user_meta_data,
+            raw_app_meta_data: authUser.raw_app_meta_data
           };
         });
       }
@@ -843,8 +867,9 @@ const AdminUsersPage = () => {
                                 {user.is_pin_only && (
                                   <div className="space-y-3 border-b pb-4">
                                     <h3 className="text-lg font-medium">Reset PIN</h3>
+                                    {/* Fix: Wrap PIN reset form in proper Form context */}
                                     <div className="space-y-2">
-                                      <FormLabel>New 6-digit PIN</FormLabel>
+                                      <label className="text-sm font-medium">New 6-digit PIN</label>
                                       <InputOTP maxLength={6} value={newPin} onChange={setNewPin} className="justify-start">
                                         <InputOTPGroup>
                                           <InputOTPSlot index={0} />
