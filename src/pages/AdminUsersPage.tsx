@@ -161,9 +161,12 @@ const AdminUsersPage = () => {
         return;
       }
       
-      // Call our new edge function instead of RPC
+      // Call our updated edge function with the getUsers action
       const { data: response, error } = await supabase.functions.invoke('admin-users', {
-        body: { userId: user.id }
+        body: { 
+          userId: user.id,
+          action: 'getUsers'
+        }
       });
       
       if (error) {

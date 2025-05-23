@@ -45,7 +45,6 @@ verify_jwt = false
 name = "pin-auth"
 verify_jwt = false
 
-# Add our new admin-users function
 [[functions]]
 name = "admin-users"
 verify_jwt = true
