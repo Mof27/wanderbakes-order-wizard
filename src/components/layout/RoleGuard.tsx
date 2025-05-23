@@ -33,30 +33,29 @@ const RoleGuard: React.FC<RoleGuardProps> = ({
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
-  // Detailed logging for debugging
-  console.log("RoleGuard checking roles:", {
+  // Enhanced logging for debugging
+  console.log("RoleGuard checking authorization:", {
     allowedRoles,
     userRoles: roles,
-    userMeta: user.app_metadata,
-    userId: user.id,
+    userID: user.id,
+    userMeta: user.app_metadata || user.user_metadata,
+    isPinAuth: user.id === localStorage.getItem("pin_auth_user_id"),
+    pinAuthRoles: localStorage.getItem("pin_auth_roles"),
   });
-
-  // Check if user has any of the allowed roles
-  const hasPermission = allowedRoles.some(role => hasRole(role));
-
-  // If user doesn't have required role, redirect to unauthorized page
-  if (!hasPermission) {
-    console.warn("User lacks permission:", {
-      userId: user.id,
-      userRoles: roles,
-      requiredRoles: allowedRoles,
-      hasRoleFunc: typeof hasRole
-    });
-    return <Navigate to={redirectTo} replace />;
+  
+  // Check for each allowed role
+  for (const role of allowedRoles) {
+    console.log(`Checking if user has role: ${role}`, hasRole(role));
+    if (hasRole(role)) {
+      // Render children if any allowed role is found
+      console.log(`Role ${role} authorized, rendering protected content`);
+      return <>{children}</>;
+    }
   }
 
-  // Render children if all checks pass
-  return <>{children}</>;
+  // If no allowed roles match, redirect to unauthorized page
+  console.warn("Access denied. User roles:", roles, "Required roles:", allowedRoles);
+  return <Navigate to={redirectTo} replace />;
 };
 
 export default RoleGuard;

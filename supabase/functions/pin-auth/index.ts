@@ -74,11 +74,11 @@ serve(async (req) => {
       );
     }
 
-    // Get user roles
-    const { data: userRoles, error: rolesError } = await supabaseClient
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId);
+    // Get user roles using our new function
+    const { data: userRoles, error: rolesError } = await supabaseClient.rpc(
+      "get_user_roles_by_id", 
+      { user_id: userId }
+    );
 
     if (rolesError) {
       console.error("Error fetching user roles:", rolesError);
@@ -88,12 +88,13 @@ serve(async (req) => {
       );
     }
 
-    const roles = userRoles?.map(r => r.role) || [];
+    const roles = userRoles || [];
     console.log("User roles:", roles);
 
     // Add extra metadata to help with PIN authentication
     const customClaims = {
       is_pin_user: true,
+      sub: userId, // Explicitly set the subject claim to the user ID
       roles: roles
     };
 
@@ -117,6 +118,7 @@ serve(async (req) => {
 
     console.log("Successfully created session for user:", userId);
     console.log("Session includes roles:", roles);
+    console.log("JWT claims:", customClaims);
 
     // Return the session data along with the user profile and roles
     return new Response(

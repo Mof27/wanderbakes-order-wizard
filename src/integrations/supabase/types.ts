@@ -856,6 +856,13 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: unknown[]
       }
+      check_user_has_role: {
+        Args: {
+          user_id: string
+          role_to_check: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: boolean
+      }
       create_pin_user: {
         Args: {
           first_name: string
@@ -868,6 +875,10 @@ export type Database = {
       }
       get_user_roles: {
         Args: Record<PropertyKey, never>
+        Returns: Database["public"]["Enums"]["app_role"][]
+      }
+      get_user_roles_by_id: {
+        Args: { user_id: string }
         Returns: Database["public"]["Enums"]["app_role"][]
       }
       has_role: {
