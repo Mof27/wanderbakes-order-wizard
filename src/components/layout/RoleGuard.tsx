@@ -29,13 +29,16 @@ const RoleGuard: React.FC<RoleGuardProps> = ({
 
   // If user is not authenticated, redirect to login
   if (!user) {
+    console.log("RoleGuard: No user found, redirecting to auth");
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
+  // Detailed logging for debugging
   console.log("RoleGuard checking roles:", {
     allowedRoles,
     userRoles: roles,
-    user: user.id
+    userMeta: user.app_metadata,
+    userId: user.id,
   });
 
   // Check if user has any of the allowed roles
@@ -46,7 +49,8 @@ const RoleGuard: React.FC<RoleGuardProps> = ({
     console.warn("User lacks permission:", {
       userId: user.id,
       userRoles: roles,
-      requiredRoles: allowedRoles
+      requiredRoles: allowedRoles,
+      hasRoleFunc: typeof hasRole
     });
     return <Navigate to={redirectTo} replace />;
   }

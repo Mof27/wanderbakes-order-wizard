@@ -36,6 +36,8 @@ serve(async (req) => {
       );
     }
 
+    console.log("PIN auth attempt for user ID:", userId);
+
     // Verify the PIN using the database function
     const { data: isValid, error: verifyError } = await supabaseClient.rpc(
       "verify_pin",
@@ -87,6 +89,7 @@ serve(async (req) => {
     }
 
     const roles = userRoles?.map(r => r.role) || [];
+    console.log("User roles:", roles);
 
     // Add extra metadata to help with PIN authentication
     const customClaims = {
@@ -111,6 +114,9 @@ serve(async (req) => {
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
       );
     }
+
+    console.log("Successfully created session for user:", userId);
+    console.log("Session includes roles:", roles);
 
     // Return the session data along with the user profile and roles
     return new Response(

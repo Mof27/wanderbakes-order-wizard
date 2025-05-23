@@ -21,6 +21,7 @@ interface Profile {
   last_name: string | null;
   display_name: string | null;
   is_pin_only?: boolean;
+  roles?: string[];
 }
 
 const PinAuthPage = () => {
@@ -64,6 +65,8 @@ const PinAuthPage = () => {
           userRolesMap.get(ur.user_id).push(ur.role);
         });
         
+        console.log("User roles map:", Object.fromEntries([...userRolesMap.entries()]));
+        
         // Combine data to identify users with roles
         if (profiles) {
           const enrichedProfiles = profiles.map(profile => {
@@ -84,6 +87,7 @@ const PinAuthPage = () => {
             return 0;
           });
           
+          console.log("Enriched profiles:", enrichedProfiles);
           setProfiles(enrichedProfiles);
         }
       } catch (err) {
@@ -118,6 +122,13 @@ const PinAuthPage = () => {
     setError("");
 
     try {
+      // Get the selected profile with roles for enhanced logging
+      const selectedProfile = profiles.find(p => p.id === selectedUserId);
+      console.log("Attempting login with profile:", {
+        userId: selectedUserId,
+        roles: selectedProfile?.roles,
+      });
+
       // Call our edge function to verify PIN and get a session token
       const supabaseUrl = config.supabase.url;
       const supabaseKey = config.supabase.anonKey;
@@ -135,7 +146,7 @@ const PinAuthPage = () => {
       });
       
       const result = await response.json();
-      console.log("Pin auth response:", result);
+      console.log("PIN auth response:", result);
       
       if (!response.ok) {
         throw new Error(result.error || result.message || "Authentication failed");
@@ -157,6 +168,12 @@ const PinAuthPage = () => {
         
         // Store roles in localStorage as a backup method
         localStorage.setItem("user_roles", JSON.stringify(roles || []));
+        localStorage.setItem("pin_auth_user_id", selectedUserId);
+        localStorage.setItem("pin_auth_timestamp", Date.now().toString());
+        localStorage.setItem("pin_auth_roles", JSON.stringify(roles));
+        
+        console.log("Successful PIN authentication for user", selectedUserId);
+        console.log("Roles set:", roles);
         
         toast.success("PIN verified successfully! Logging you in...");
         navigate("/");
@@ -239,10 +256,19 @@ const PinAuthPage = () => {
                   <SelectContent>
                     {profiles.map((profile) => (
                       <SelectItem key={profile.id} value={profile.id} className="flex items-center">
-                        {profile.display_name || `${profile.first_name || ''} ${profile.last_name || ''}`}
-                        {profile.is_pin_only && (
-                          <Badge className="ml-2 bg-green-500 text-xs">PIN</Badge>
-                        )}
+                        <div className="flex items-center justify-between w-full">
+                          <span>
+                            {profile.display_name || `${profile.first_name || ''} ${profile.last_name || ''}`}
+                          </span>
+                          <div className="flex gap-1">
+                            {profile.is_pin_only && (
+                              <Badge className="ml-2 bg-green-500 text-xs">PIN</Badge>
+                            )}
+                            {profile.roles?.includes('admin') && (
+                              <Badge className="ml-2 bg-purple-500 text-xs">Admin</Badge>
+                            )}
+                          </div>
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>

@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from '../services/supabase/client';
@@ -55,6 +54,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!isConfigured) return;
 
     try {
+      console.log("Fetching user data for:", userId);
+      
       // Fetch user profile
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
@@ -65,6 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (profileError) {
         console.error('Error fetching user profile:', profileError);
       } else if (profileData) {
+        console.log("Profile data fetched:", profileData);
         setProfile(profileData as UserProfile);
       }
 
@@ -76,25 +78,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (rolesError) {
         console.error('Error fetching user roles:', rolesError);
+        // Try to get roles from localStorage as fallback
+        tryLoadRolesFromLocalStorage(userId);
       } else if (rolesData) {
         const userRoles = rolesData.map(r => r.role);
+        console.log("Roles fetched from database:", userRoles);
         setRoles(userRoles);
         
         // Store roles in localStorage as a backup method
         localStorage.setItem("user_roles", JSON.stringify(userRoles));
       } else {
         // Try to get roles from localStorage as fallback
-        const storedRoles = localStorage.getItem("user_roles");
-        if (storedRoles) {
-          try {
-            setRoles(JSON.parse(storedRoles));
-          } catch (e) {
-            console.error("Error parsing stored roles:", e);
-          }
-        }
+        tryLoadRolesFromLocalStorage(userId);
       }
     } catch (error) {
       console.error('Error fetching user data:', error);
+      tryLoadRolesFromLocalStorage(userId);
+    }
+  };
+
+  // Helper to load roles from localStorage
+  const tryLoadRolesFromLocalStorage = (userId: string) => {
+    try {
+      // Try to get roles specific to this user first
+      const pinAuthUserId = localStorage.getItem("pin_auth_user_id");
+      const pinAuthRoles = localStorage.getItem("pin_auth_roles");
+      
+      if (pinAuthUserId === userId && pinAuthRoles) {
+        const parsedRoles = JSON.parse(pinAuthRoles);
+        console.log("Loaded pin auth roles from localStorage:", parsedRoles);
+        setRoles(parsedRoles);
+        return;
+      }
+      
+      // Fall back to generic roles storage
+      const storedRoles = localStorage.getItem("user_roles");
+      if (storedRoles) {
+        const parsedRoles = JSON.parse(storedRoles);
+        console.log("Loaded generic roles from localStorage:", parsedRoles);
+        setRoles(parsedRoles);
+      }
+    } catch (e) {
+      console.error("Error parsing stored roles:", e);
     }
   };
 
@@ -110,7 +135,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Get initial session and set up subscription
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log("Initial session:", session);
+      console.log("Initial session check:", session?.user?.id);
       setSession(session);
       setUser(session?.user ?? null);
       
@@ -139,16 +164,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setProfile(null);
           setRoles([]);
           localStorage.removeItem("user_roles");
+          localStorage.removeItem("pin_auth_user_id");
+          localStorage.removeItem("pin_auth_timestamp");
+          localStorage.removeItem("pin_auth_roles");
         }
         
         setLoading(false);
       }
     );
 
+    // Check for stored PIN auth on initialization
+    checkStoredPinAuth();
+
     return () => {
       subscription.unsubscribe();
     };
   }, [isConfigured]);
+
+  // Check for stored PIN auth
+  const checkStoredPinAuth = async () => {
+    if (!isConfigured) return;
+    
+    const storedUserId = localStorage.getItem('pin_auth_user_id');
+    const timestamp = parseInt(localStorage.getItem('pin_auth_timestamp') || '0');
+    const storedRoles = localStorage.getItem('pin_auth_roles');
+    
+    // Check if PIN auth exists and is not expired (24 hours)
+    if (storedUserId && (Date.now() - timestamp) < 24 * 60 * 60 * 1000) {
+      console.log("Found stored PIN auth for user:", storedUserId);
+      await setUserSession(storedUserId);
+      
+      // Also load roles from localStorage if available
+      if (storedRoles) {
+        try {
+          const parsedRoles = JSON.parse(storedRoles);
+          console.log("Loaded stored PIN auth roles:", parsedRoles);
+          setRoles(parsedRoles);
+        } catch (e) {
+          console.error("Error parsing stored roles:", e);
+        }
+      }
+    }
+  };
 
   // Verify PIN for user
   const verifyPin = async (userId: string, pin: string): Promise<boolean> => {
@@ -181,6 +238,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
+      console.log("Setting up user session for:", userId);
+      
       // Fetch the user profile directly
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
@@ -204,6 +263,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       
       const userRoles = rolesData?.map(r => r.role) || [];
+      console.log("Fetched user roles for PIN auth:", userRoles);
       
       // Set the local state
       setProfile(profile);
@@ -211,6 +271,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       // Store roles in localStorage as a backup
       localStorage.setItem("user_roles", JSON.stringify(userRoles));
+      localStorage.setItem("pin_auth_user_id", userId);
+      localStorage.setItem("pin_auth_timestamp", Date.now().toString());
+      localStorage.setItem("pin_auth_roles", JSON.stringify(userRoles));
       
       // Create a temporary user object
       const tempUser = {
@@ -219,9 +282,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user_metadata: {
           first_name: profile.first_name,
           last_name: profile.last_name,
-          display_name: profile.display_name
+          display_name: profile.display_name,
+          roles: userRoles
         }
       };
+      
+      console.log("Created temporary user object:", tempUser);
       
       // @ts-ignore - we're creating a minimal User object for PIN auth
       setUser(tempUser);
@@ -234,13 +300,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         expires_at: Date.now() + 24 * 60 * 60 * 1000 // 24 hours from now
       };
       
+      console.log("Created temporary session:", tempSession);
+      
       // @ts-ignore - using a custom session for PIN auth
       setSession(tempSession);
-      
-      // Store in localStorage to persist "session"
-      localStorage.setItem('pin_auth_user_id', userId);
-      localStorage.setItem('pin_auth_timestamp', Date.now().toString());
-      localStorage.setItem('pin_auth_roles', JSON.stringify(userRoles));
       
       return { success: true, error: null };
     } catch (error) {
@@ -249,36 +312,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
   
-  // Check for stored PIN auth on startup
-  useEffect(() => {
-    const checkPinAuth = async () => {
-      if (!isConfigured) return;
-      
-      const storedUserId = localStorage.getItem('pin_auth_user_id');
-      const timestamp = parseInt(localStorage.getItem('pin_auth_timestamp') || '0');
-      const storedRoles = localStorage.getItem('pin_auth_roles');
-      
-      // Check if PIN auth exists and is not expired (24 hours)
-      if (storedUserId && (Date.now() - timestamp) < 24 * 60 * 60 * 1000) {
-        await setUserSession(storedUserId);
-        
-        // Also load roles from localStorage if available
-        if (storedRoles) {
-          try {
-            setRoles(JSON.parse(storedRoles));
-          } catch (e) {
-            console.error("Error parsing stored roles:", e);
-          }
-        }
-      }
-    };
-    
-    // Only check for PIN auth if no regular session is found
-    if (!session) {
-      checkPinAuth();
-    }
-  }, [isConfigured]);
-
   // Refresh user profile
   const refreshProfile = async () => {
     if (user) {
@@ -393,14 +426,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Check if the user has a specific role
+  // Create an enhanced hasRole function
   const hasRole = (role: AppRole): boolean => {
-    return roles.includes(role);
+    const hasRoleResult = roles.includes(role);
+    console.log(`Checking if user has role ${role}: ${hasRoleResult}`, { allRoles: roles });
+    return hasRoleResult;
   };
 
   // Check if the user is an admin
   const isAdmin = (): boolean => {
-    return roles.includes('admin');
+    return hasRole('admin');
   };
 
   // Value object for the context
