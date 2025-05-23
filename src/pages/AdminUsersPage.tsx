@@ -95,7 +95,7 @@ const roleEditSchema = z.object({
 type RoleEditValues = z.infer<typeof roleEditSchema>;
 
 const AdminUsersPage = () => {
-  const { hasRole } = useAuth();
+  const { user, hasRole, roles } = useAuth();
   const [users, setUsers] = useState<UserWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
@@ -142,51 +142,57 @@ const AdminUsersPage = () => {
     try {
       setLoading(true);
       
-      // Get all users from the auth.users table (requires admin privileges)
-      const { data: authUsers, error: authError } = await supabase.rpc('admin_get_users');
-      
-      if (authError) {
-        console.error('Error fetching users:', authError);
-        toast.error('Failed to fetch users: ' + authError.message);
+      // Check if we have a user ID to fetch users
+      if (!user?.id) {
+        toast.error('Authentication error: User ID not available');
         return;
       }
       
-      // Map user profiles
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('*');
-        
-      if (profilesError) {
-        console.error('Error fetching profiles:', profilesError);
+      console.log("Admin check:", {
+        userId: user.id,
+        roles,
+        hasAdminRole: hasRole('admin'),
+      });
+      
+      // Make sure the user has admin role before proceeding
+      if (!hasRole('admin')) {
+        toast.error('You must have admin privileges to view this page');
+        setLoading(false);
+        return;
       }
       
-      // Map user roles
-      const { data: rolesData, error: rolesError } = await supabase
-        .from('user_roles')
-        .select('user_id, role');
-        
-      if (rolesError) {
-        console.error('Error fetching roles:', rolesError);
+      // Call our new edge function instead of RPC
+      const { data: response, error } = await supabase.functions.invoke('admin-users', {
+        body: { userId: user.id }
+      });
+      
+      if (error) {
+        console.error('Error calling admin-users function:', error);
+        toast.error('Failed to fetch users: ' + error.message);
+        return;
       }
       
-      // Create a combined list of all users (both auth users and PIN-only users)
+      console.log('Admin users response:', response);
+      
+      // Process the response data
       let allUsers: UserWithProfile[] = [];
       
-      // Process auth users
-      if (authUsers) {
-        allUsers = authUsers.map((user: any) => {
-          const profile = profiles?.find(p => p.id === user.id) || null;
-          const userRoles = rolesData?.filter(r => r.user_id === user.id).map(r => r.role) || [];
+      // If we have auth users, process them
+      if (response.auth_users) {
+        // Map auth users with profiles
+        allUsers = response.auth_users.map((authUser: any) => {
+          const profile = response.profiles?.find((p: any) => p.id === authUser.id) || null;
+          const userRoles = response.roles?.filter((r: any) => r.user_id === authUser.id).map((r: any) => r.role) || [];
           
           // Check if this is a PIN-only user
-          const isPinOnly = user.raw_user_meta_data?.is_pin_only === true || 
-                            user.raw_app_meta_data?.provider === 'pin' ||
-                            user.email?.endsWith('@pin-user.local');
+          const isPinOnly = authUser.raw_user_meta_data?.is_pin_only === true || 
+                          authUser.raw_app_meta_data?.provider === 'pin' ||
+                          authUser.email?.endsWith('@pin-user.local');
           
           return {
-            id: user.id,
-            email: user.email || '',
-            created_at: user.created_at,
+            id: authUser.id,
+            email: authUser.email || '',
+            created_at: authUser.created_at,
             profile,
             roles: userRoles,
             is_pin_only: isPinOnly
@@ -194,19 +200,18 @@ const AdminUsersPage = () => {
         });
       }
       
-      // Find PIN-only users that might exist only in profiles table
-      // (this handles our new approach where we don't insert into auth.users)
-      if (profiles) {
+      // Process profiles that might not be in auth users (PIN-only users)
+      if (response.profiles) {
         const existingIds = new Set(allUsers.map(u => u.id));
         
         // Find profiles that aren't in the auth users list but have pin_hash set
-        const pinOnlyProfiles = profiles.filter(p => 
+        const pinOnlyProfiles = response.profiles.filter((p: any) => 
           !existingIds.has(p.id) && p.pin_hash !== null
         );
         
         // Add these PIN-only users to our list
         for (const profile of pinOnlyProfiles) {
-          const userRoles = rolesData?.filter(r => r.user_id === profile.id).map(r => r.role) || [];
+          const userRoles = response.roles?.filter((r: any) => r.user_id === profile.id).map((r: any) => r.role) || [];
           
           allUsers.push({
             id: profile.id,
@@ -236,10 +241,10 @@ const AdminUsersPage = () => {
   };
   
   useEffect(() => {
-    if (hasRole('admin')) {
+    if (user) {
       fetchUsers();
     }
-  }, [hasRole]);
+  }, [user]);
   
   const handleInviteUser = async (data: InviteFormValues) => {
     setIsSubmitting(true);
@@ -435,7 +440,19 @@ const AdminUsersPage = () => {
     setRoleDialogOpen(true);
   };
 
-  // Ensure user has admin role
+  // Make the admin role check more prominent in the render logic
+  if (!user) {
+    return (
+      <div className="container py-8">
+        <Card className="p-8 flex flex-col items-center text-center">
+          <AlertTriangle className="h-16 w-16 text-yellow-500 mb-4" />
+          <h1 className="text-2xl font-bold">Authentication Required</h1>
+          <p className="text-muted-foreground">Please sign in to access this page.</p>
+        </Card>
+      </div>
+    );
+  }
+  
   if (!hasRole('admin')) {
     return (
       <div className="container py-8">
