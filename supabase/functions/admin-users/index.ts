@@ -133,7 +133,7 @@ serve(async (req) => {
       );
     } 
     else if (action === 'createPinUser') {
-      // Create a new PIN-only user directly (bypassing the function that's having issues)
+      // Create a new PIN-only user with a corresponding auth user entry
       if (!userData) {
         return new Response(
           JSON.stringify({ error: "User data is required" }),
@@ -158,10 +158,38 @@ serve(async (req) => {
           roles
         });
         
-        // Generate new user ID
-        const newUserId = crypto.randomUUID();
+        // Generate a unique email and random password for the auth user
+        const uniqueId = crypto.randomUUID();
+        const email = `${first_name.toLowerCase()}.${last_name.toLowerCase()}.${uniqueId.substring(0, 8)}@pin-user.local`;
+        const password = crypto.randomUUID().replace(/-/g, '');
         
-        // Hash the PIN using our database function
+        // Step 1: Create the auth user first
+        const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
+          email,
+          password,
+          email_confirm: true,  // Skip email verification
+          user_metadata: {
+            first_name,
+            last_name,
+            display_name: display_name || `${first_name} ${last_name}`,
+            is_pin_only: true
+          },
+          app_metadata: {
+            provider: 'pin'
+          }
+        });
+
+        if (authError) {
+          console.error("Error creating auth user:", authError);
+          return new Response(
+            JSON.stringify({ error: `Failed to create user: ${authError.message}` }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+          );
+        }
+        
+        const newUserId = authUser.user.id;
+        
+        // Step 2: Hash the PIN using our database function
         const { data: pinHash, error: hashError } = await supabaseAdmin.rpc(
           "hash_pin",
           { pin }
@@ -175,10 +203,11 @@ serve(async (req) => {
           );
         }
         
-        // Insert the user profile
+        // Step 3: Update the profile with PIN information
+        // Note: The profile may already exist from the auth trigger, but we need to update it with PIN info
         const { error: profileError } = await supabaseAdmin
           .from("profiles")
-          .insert({
+          .upsert({
             id: newUserId,
             first_name,
             last_name,
@@ -188,14 +217,14 @@ serve(async (req) => {
           });
           
         if (profileError) {
-          console.error("Error creating user profile:", profileError);
+          console.error("Error updating user profile:", profileError);
           return new Response(
-            JSON.stringify({ error: "Failed to create user profile" }),
+            JSON.stringify({ error: `Failed to update user profile: ${profileError.message}` }),
             { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
           );
         }
         
-        // Assign roles
+        // Step 4: Assign roles
         const rolePromises = roles.map(role => 
           supabaseAdmin
             .from('user_roles')
@@ -223,7 +252,7 @@ serve(async (req) => {
       } catch (error) {
         console.error("Error creating PIN user:", error);
         return new Response(
-          JSON.stringify({ error: "Failed to create PIN user" }),
+          JSON.stringify({ error: `Failed to create PIN user: ${error.message}` }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
         );
       }
