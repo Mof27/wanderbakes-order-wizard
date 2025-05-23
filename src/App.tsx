@@ -127,7 +127,7 @@ const App = () => {
                     </AuthWrapper>
                   } />
                   
-                  {/* Redirect old user management path to the unified page */}
+                  {/* Redirect the legacy user management path to the unified page */}
                   <Route path="/admin/user-management" element={<Navigate to="/admin/users" replace />} />
                   
                   {/* Sales routes */}

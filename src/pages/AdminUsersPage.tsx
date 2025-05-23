@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import { useAuth } from "@/context/AuthContext";
@@ -377,7 +376,8 @@ const AdminUsersPage = () => {
         return;
       }
 
-      toast.success(`PIN reset for ${selectedUser.display_name || selectedUser.email}`);
+      // Fix: Use the profile's display_name property instead of accessing it directly
+      toast.success(`PIN reset for ${selectedUser.profile?.display_name || selectedUser.email}`);
       setNewPin("");
     } catch (error) {
       console.error("Error resetting PIN:", error);
