@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from '../services/supabase/client';
@@ -164,44 +163,60 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      // Call our pin-auth function to create a proper session
-      const supabaseUrl = config.supabase.url;
-      const supabaseKey = config.supabase.anonKey;
+      // Fetch the user profile and roles directly
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
       
-      const response = await fetch(`${supabaseUrl}/functions/v1/pin-auth`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${supabaseKey}`
-        },
-        body: JSON.stringify({
-          userId,
-          pin: "123456" // Note: In a real app, this would come from user input
-        })
-      });
-      
-      const result = await response.json();
-      
-      if (!response.ok || !result.success) {
-        console.error("Error establishing session:", result.error || result.message);
-        return { success: false, error: new Error(result.error || result.message || "Authentication failed") };
+      if (profileError) {
+        console.error('Error fetching profile:', profileError);
+        return { success: false, error: profileError };
       }
       
-      // Set the session in Supabase client
-      const { session } = result;
-      
-      const { error: sessionError } = await supabase.auth.setSession({
-        access_token: session.access_token,
-        refresh_token: session.refresh_token
-      });
-      
-      if (sessionError) {
-        console.error("Error setting session:", sessionError);
-        return { success: false, error: sessionError };
+      // Fetch roles
+      const { data: rolesData, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId);
+        
+      if (rolesError) {
+        console.error('Error fetching roles:', rolesError);
       }
       
-      // Fetch user data for the profile
-      await fetchUserData(userId);
+      // Set the local state
+      setProfile(profile);
+      setRoles(rolesData?.map(r => r.role) || []);
+      
+      // Create a temporary user object
+      const tempUser = {
+        id: userId,
+        app_metadata: { provider: 'pin' },
+        user_metadata: {
+          first_name: profile.first_name,
+          last_name: profile.last_name,
+          display_name: profile.display_name
+        }
+      };
+      
+      // @ts-ignore - we're creating a minimal User object for PIN auth
+      setUser(tempUser);
+      
+      // Create a session-like state (not a real Supabase session but works for our app)
+      const tempSession = {
+        user: tempUser,
+        access_token: `pin_auth_${userId}`,
+        refresh_token: '',
+        expires_at: Date.now() + 24 * 60 * 60 * 1000 // 24 hours from now
+      };
+      
+      // @ts-ignore - using a custom session for PIN auth
+      setSession(tempSession);
+      
+      // Store in localStorage to persist "session"
+      localStorage.setItem('pin_auth_user_id', userId);
+      localStorage.setItem('pin_auth_timestamp', Date.now().toString());
       
       return { success: true, error: null };
     } catch (error) {
@@ -209,13 +224,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { success: false, error: error as Error };
     }
   };
+  
+  // Check for stored PIN auth on startup
+  useEffect(() => {
+    const checkPinAuth = async () => {
+      if (!isConfigured) return;
+      
+      const storedUserId = localStorage.getItem('pin_auth_user_id');
+      const timestamp = parseInt(localStorage.getItem('pin_auth_timestamp') || '0');
+      
+      // Check if PIN auth exists and is not expired (24 hours)
+      if (storedUserId && (Date.now() - timestamp) < 24 * 60 * 60 * 1000) {
+        await setUserSession(storedUserId);
+      }
+    };
+    
+    // Only check for PIN auth if no regular session is found
+    if (!session) {
+      checkPinAuth();
+    }
+  }, [isConfigured]);
 
+  // Refresh user profile
   const refreshProfile = async () => {
     if (user) {
       await fetchUserData(user.id);
     }
   };
 
+  // Sign in with email and password
   const signIn = async (email: string, password: string) => {
     if (!isConfigured) {
       toast.error('Authentication is not available. Supabase is not configured.');
@@ -235,6 +272,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Sign up a new user
   const signUp = async ({ email, password, first_name, last_name, display_name }: SignUpData) => {
     if (!isConfigured) {
       toast.error('Authentication is not available. Supabase is not configured.');
@@ -267,13 +305,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Sign out the user
   const signOut = async () => {
     if (!isConfigured) {
       return;
     }
 
     try {
+      // Clear PIN auth if it exists
+      localStorage.removeItem('pin_auth_user_id');
+      localStorage.removeItem('pin_auth_timestamp');
+      
+      // Standard Supabase signout
       await supabase.auth.signOut();
+      
+      // Clear state
+      setUser(null);
+      setSession(null);
+      setProfile(null);
+      setRoles([]);
+      
       toast.info('Signed out successfully');
     } catch (error) {
       console.error('Error signing out:', error);
@@ -281,6 +332,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Update the user's profile
   const updateProfile = async (updates: Partial<UserProfile>) => {
     if (!user || !isConfigured) {
       return { error: new Error('User not authenticated') };
@@ -305,14 +357,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Check if the user has a specific role
   const hasRole = (role: AppRole): boolean => {
     return roles.includes(role);
   };
 
+  // Check if the user is an admin
   const isAdmin = (): boolean => {
     return roles.includes('admin');
   };
 
+  // Value object for the context
   const value = {
     session,
     user,

@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/table";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/services/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { AppRole } from "@/services/supabase/database.types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Pencil, X, UserPlus, KeyRound, Mail, AlertTriangle } from "lucide-react";
@@ -169,32 +169,64 @@ const AdminUsersPage = () => {
         console.error('Error fetching roles:', rolesError);
       }
       
-      // Combine data and check for PIN users
-      const usersWithProfiles: UserWithProfile[] = authUsers.map((user: any) => {
-        const profile = profiles?.find(p => p.id === user.id) || null;
-        const userRoles = rolesData?.filter(r => r.user_id === user.id).map(r => r.role) || [];
+      // Create a combined list of all users (both auth users and PIN-only users)
+      let allUsers: UserWithProfile[] = [];
+      
+      // Process auth users
+      if (authUsers) {
+        allUsers = authUsers.map((user: any) => {
+          const profile = profiles?.find(p => p.id === user.id) || null;
+          const userRoles = rolesData?.filter(r => r.user_id === user.id).map(r => r.role) || [];
+          
+          // Check if this is a PIN-only user
+          const isPinOnly = user.raw_user_meta_data?.is_pin_only === true || 
+                            user.raw_app_meta_data?.provider === 'pin' ||
+                            user.email?.endsWith('@pin-user.local');
+          
+          return {
+            id: user.id,
+            email: user.email || '',
+            created_at: user.created_at,
+            profile,
+            roles: userRoles,
+            is_pin_only: isPinOnly
+          };
+        });
+      }
+      
+      // Find PIN-only users that might exist only in profiles table
+      // (this handles our new approach where we don't insert into auth.users)
+      if (profiles) {
+        const existingIds = new Set(allUsers.map(u => u.id));
         
-        // Check if this is a PIN-only user
-        const isPinOnly = user.raw_user_meta_data?.is_pin_only === true || 
-                          user.raw_app_meta_data?.provider === 'pin' ||
-                          user.email?.endsWith('@pin-user.local');
+        // Find profiles that aren't in the auth users list but have pin_hash set
+        const pinOnlyProfiles = profiles.filter(p => 
+          !existingIds.has(p.id) && p.pin_hash !== null
+        );
         
-        return {
-          ...user,
-          profile,
-          roles: userRoles,
-          is_pin_only: isPinOnly
-        };
-      });
+        // Add these PIN-only users to our list
+        for (const profile of pinOnlyProfiles) {
+          const userRoles = rolesData?.filter(r => r.user_id === profile.id).map(r => r.role) || [];
+          
+          allUsers.push({
+            id: profile.id,
+            email: `PIN User (${profile.display_name || profile.first_name})`,
+            created_at: profile.created_at,
+            profile,
+            roles: userRoles,
+            is_pin_only: true
+          });
+        }
+      }
       
       // Sort to put PIN users first
-      usersWithProfiles.sort((a, b) => {
+      allUsers.sort((a, b) => {
         if (a.is_pin_only && !b.is_pin_only) return -1;
         if (!a.is_pin_only && b.is_pin_only) return 1;
         return 0;
       });
       
-      setUsers(usersWithProfiles);
+      setUsers(allUsers);
     } catch (error) {
       console.error('Error in fetchUsers:', error);
       toast.error('An error occurred while fetching users');
@@ -263,8 +295,8 @@ const AdminUsersPage = () => {
       // Convert roles to proper AppRole array
       const roles = data.roles as AppRole[];
       
-      // Call the create_pin_user function with our updated approach
-      const { data: result, error } = await supabase.rpc('create_pin_user', {
+      // Call our updated create_pin_user function
+      const { data: userId, error } = await supabase.rpc('create_pin_user', {
         first_name: data.first_name,
         last_name: data.last_name,
         display_name: data.display_name || `${data.first_name} ${data.last_name}`,
@@ -273,12 +305,12 @@ const AdminUsersPage = () => {
       });
       
       if (error) {
-        console.error("Error creating user:", error);
+        console.error("Error creating PIN user:", error);
         toast.error(`Failed to create user: ${error.message}`);
         return;
       }
       
-      toast.success(`User ${data.first_name} ${data.last_name} created successfully`);
+      toast.success(`PIN user ${data.first_name} ${data.last_name} created successfully`);
       setInviteDialogOpen(false);
       pinUserForm.reset();
       

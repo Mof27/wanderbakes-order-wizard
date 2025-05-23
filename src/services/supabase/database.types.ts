@@ -1,3 +1,4 @@
+
 export type Json =
   | string
   | number
@@ -73,6 +74,9 @@ export interface Database {
           last_name: string | null;
           display_name: string | null;
           avatar_url: string | null;
+          pin_hash: string | null;
+          failed_pin_attempts: number | null;
+          locked_until: string | null;
           created_at: string;
           updated_at: string | null;
         };
@@ -82,6 +86,9 @@ export interface Database {
           last_name?: string | null;
           display_name?: string | null;
           avatar_url?: string | null;
+          pin_hash?: string | null;
+          failed_pin_attempts?: number | null;
+          locked_until?: string | null;
           created_at?: string;
           updated_at?: string | null;
         };
@@ -91,6 +98,9 @@ export interface Database {
           last_name?: string | null;
           display_name?: string | null;
           avatar_url?: string | null;
+          pin_hash?: string | null;
+          failed_pin_attempts?: number | null;
+          locked_until?: string | null;
           created_at?: string;
           updated_at?: string | null;
         };
@@ -140,6 +150,29 @@ export interface Database {
           role_to_check: AppRole;
         };
         Returns: boolean;
+      };
+      create_pin_user: {
+        Args: {
+          first_name: string;
+          last_name: string;
+          display_name: string;
+          pin: string;
+          roles: AppRole[];
+        };
+        Returns: string;
+      };
+      verify_pin: {
+        Args: {
+          user_id: string;
+          pin: string;
+        };
+        Returns: boolean;
+      };
+      hash_pin: {
+        Args: {
+          pin: string;
+        };
+        Returns: string;
       };
     };
   };
