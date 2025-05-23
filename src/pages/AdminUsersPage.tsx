@@ -17,7 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/services/supabase/client";
 import { AppRole } from "@/services/supabase/database.types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Pencil, X, UserPlus, AlertTriangle } from "lucide-react";
+import { Pencil, X, UserPlus, KeyRound, Mail, AlertTriangle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -35,6 +35,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import {
   Form,
   FormControl,
@@ -47,6 +48,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface UserWithProfile {
   id: string;
@@ -59,6 +61,7 @@ interface UserWithProfile {
     avatar_url: string | null;
   } | null;
   roles: AppRole[];
+  is_pin_only?: boolean;
 }
 
 const inviteUserSchema = z.object({
@@ -70,6 +73,17 @@ const inviteUserSchema = z.object({
 });
 
 type InviteFormValues = z.infer<typeof inviteUserSchema>;
+
+// Schema for creating a new PIN-only user
+const createPinUserSchema = z.object({
+  first_name: z.string().min(1, "First name is required"),
+  last_name: z.string().min(1, "Last name is required"),
+  display_name: z.string().optional(),
+  pin: z.string().length(6, "PIN must be 6 digits"),
+  roles: z.array(z.string()).min(1, "Select at least one role"),
+});
+
+type CreatePinUserValues = z.infer<typeof createPinUserSchema>;
 
 const roleEditSchema = z.object({
   admin: z.boolean().default(false),
@@ -89,6 +103,8 @@ const AdminUsersPage = () => {
   const [roleDialogOpen, setRoleDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserWithProfile | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [newPin, setNewPin] = useState("");
+  const [activeTab, setActiveTab] = useState<string>("email");
   
   const inviteForm = useForm<InviteFormValues>({
     resolver: zodResolver(inviteUserSchema),
@@ -97,6 +113,17 @@ const AdminUsersPage = () => {
       password: "",
       first_name: "",
       last_name: "",
+      roles: []
+    }
+  });
+  
+  const pinUserForm = useForm<CreatePinUserValues>({
+    resolver: zodResolver(createPinUserSchema),
+    defaultValues: {
+      first_name: "",
+      last_name: "",
+      display_name: "",
+      pin: "",
       roles: []
     }
   });
@@ -143,16 +170,29 @@ const AdminUsersPage = () => {
         console.error('Error fetching roles:', rolesError);
       }
       
-      // Combine data
+      // Combine data and check for PIN users
       const usersWithProfiles: UserWithProfile[] = authUsers.map((user: any) => {
         const profile = profiles?.find(p => p.id === user.id) || null;
         const userRoles = rolesData?.filter(r => r.user_id === user.id).map(r => r.role) || [];
         
+        // Check if this is a PIN-only user
+        const isPinOnly = user.raw_user_meta_data?.is_pin_only === true || 
+                          user.raw_app_meta_data?.provider === 'pin' ||
+                          user.email?.endsWith('@pin-user.local');
+        
         return {
           ...user,
           profile,
-          roles: userRoles
+          roles: userRoles,
+          is_pin_only: isPinOnly
         };
+      });
+      
+      // Sort to put PIN users first
+      usersWithProfiles.sort((a, b) => {
+        if (a.is_pin_only && !b.is_pin_only) return -1;
+        if (!a.is_pin_only && b.is_pin_only) return 1;
+        return 0;
       });
       
       setUsers(usersWithProfiles);
@@ -217,6 +257,42 @@ const AdminUsersPage = () => {
       setIsSubmitting(false);
     }
   };
+
+  const handleCreatePinUser = async (data: CreatePinUserValues) => {
+    setIsSubmitting(true);
+    try {
+      // Convert roles to proper AppRole array
+      const roles = data.roles as AppRole[];
+      
+      // Call the create_pin_user function
+      const { data: newUserId, error } = await supabase.rpc('create_pin_user', {
+        first_name: data.first_name,
+        last_name: data.last_name,
+        display_name: data.display_name || `${data.first_name} ${data.last_name}`,
+        pin: data.pin,
+        roles
+      });
+      
+      if (error) {
+        console.error("Error creating user:", error);
+        toast.error(`Failed to create user: ${error.message}`);
+        return;
+      }
+      
+      toast.success(`User ${data.first_name} ${data.last_name} created successfully`);
+      setInviteDialogOpen(false);
+      pinUserForm.reset();
+      
+      // Refresh the user list
+      await fetchUsers();
+      
+    } catch (error) {
+      console.error("Error creating PIN user:", error);
+      toast.error("An unexpected error occurred while creating the user");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
   
   const handleEditRoles = async (values: RoleEditValues) => {
     if (!selectedUser) return;
@@ -266,6 +342,46 @@ const AdminUsersPage = () => {
       toast.error('An error occurred while updating roles');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleResetPin = async () => {
+    if (!selectedUser) return;
+
+    try {
+      if (newPin.length !== 6) {
+        toast.error("PIN must be 6 digits");
+        return;
+      }
+
+      // Hash and store new PIN
+      const { error } = await supabase.rpc("hash_pin", {
+        pin: newPin
+      }).then(result => {
+        if (result.data) {
+          return supabase
+            .from("profiles")
+            .update({ 
+              pin_hash: result.data,
+              failed_pin_attempts: 0,
+              locked_until: null
+            })
+            .eq("id", selectedUser.id);
+        } else {
+          return { error: new Error("Failed to hash PIN") };
+        }
+      });
+
+      if (error) {
+        toast.error(`Failed to reset PIN: ${error.message}`);
+        return;
+      }
+
+      toast.success(`PIN reset for ${selectedUser.display_name || selectedUser.email}`);
+      setNewPin("");
+    } catch (error) {
+      console.error("Error resetting PIN:", error);
+      toast.error("An unexpected error occurred");
     }
   };
 
@@ -321,111 +437,243 @@ const AdminUsersPage = () => {
                 Create a new user account with specified roles
               </DialogDescription>
             </DialogHeader>
-            <Form {...inviteForm}>
-              <form onSubmit={inviteForm.handleSubmit(handleInviteUser)} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={inviteForm.control}
-                    name="first_name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>First Name</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={inviteForm.control}
-                    name="last_name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Last Name</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                
-                <FormField
-                  control={inviteForm.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input type="email" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={inviteForm.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Password</FormLabel>
-                      <FormControl>
-                        <Input type="password" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={inviteForm.control}
-                  name="roles"
-                  render={() => (
-                    <FormItem>
-                      <FormLabel>Roles</FormLabel>
-                      <div className="space-y-2">
-                        {[
-                          { id: 'admin', label: 'Administrator' },
-                          { id: 'kitchen', label: 'Kitchen Staff' },
-                          { id: 'baker', label: 'Baker' },
-                          { id: 'delivery', label: 'Delivery' },
-                          { id: 'sales', label: 'Sales' },
-                        ].map((role) => (
-                          <div key={role.id} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={role.id}
-                              onCheckedChange={(checked) => {
-                                const currentRoles = inviteForm.getValues('roles');
-                                const newRoles = checked
-                                  ? [...currentRoles, role.id]
-                                  : currentRoles.filter((r) => r !== role.id);
-                                inviteForm.setValue('roles', newRoles, { shouldValidate: true });
-                              }}
-                            />
-                            <label
-                              htmlFor={role.id}
-                              className="text-sm"
-                            >
-                              {role.label}
-                            </label>
+            
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="email" className="flex items-center">
+                  <Mail className="mr-2 h-4 w-4" /> Email/Password
+                </TabsTrigger>
+                <TabsTrigger value="pin" className="flex items-center">
+                  <KeyRound className="mr-2 h-4 w-4" /> PIN Only
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="email" className="mt-4">
+                <Form {...inviteForm}>
+                  <form onSubmit={inviteForm.handleSubmit(handleInviteUser)} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={inviteForm.control}
+                        name="first_name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>First Name</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={inviteForm.control}
+                        name="last_name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Last Name</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
+                    <FormField
+                      control={inviteForm.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <Input type="email" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={inviteForm.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Password</FormLabel>
+                          <FormControl>
+                            <Input type="password" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={inviteForm.control}
+                      name="roles"
+                      render={() => (
+                        <FormItem>
+                          <FormLabel>Roles</FormLabel>
+                          <div className="space-y-2">
+                            {[
+                              { id: 'admin', label: 'Administrator' },
+                              { id: 'kitchen', label: 'Kitchen Staff' },
+                              { id: 'baker', label: 'Baker' },
+                              { id: 'delivery', label: 'Delivery' },
+                              { id: 'sales', label: 'Sales' },
+                            ].map((role) => (
+                              <div key={role.id} className="flex items-center space-x-2">
+                                <Checkbox
+                                  id={`email-${role.id}`}
+                                  onCheckedChange={(checked) => {
+                                    const currentRoles = inviteForm.getValues('roles');
+                                    const newRoles = checked
+                                      ? [...currentRoles, role.id]
+                                      : currentRoles.filter((r) => r !== role.id);
+                                    inviteForm.setValue('roles', newRoles, { shouldValidate: true });
+                                  }}
+                                />
+                                <label
+                                  htmlFor={`email-${role.id}`}
+                                  className="text-sm"
+                                >
+                                  {role.label}
+                                </label>
+                              </div>
+                            ))}
                           </div>
-                        ))}
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <DialogFooter>
-                  <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting ? "Creating..." : "Create User"}
-                  </Button>
-                </DialogFooter>
-              </form>
-            </Form>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <DialogFooter>
+                      <Button type="submit" disabled={isSubmitting}>
+                        {isSubmitting ? "Creating..." : "Create User"}
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </Form>
+              </TabsContent>
+
+              <TabsContent value="pin" className="mt-4">
+                <Form {...pinUserForm}>
+                  <form onSubmit={pinUserForm.handleSubmit(handleCreatePinUser)} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={pinUserForm.control}
+                        name="first_name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>First Name</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={pinUserForm.control}
+                        name="last_name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Last Name</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
+                    <FormField
+                      control={pinUserForm.control}
+                      name="display_name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Display Name (Optional)</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={pinUserForm.control}
+                      name="pin"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>6-Digit PIN</FormLabel>
+                          <FormControl>
+                            <InputOTP maxLength={6} {...field}>
+                              <InputOTPGroup>
+                                <InputOTPSlot index={0} />
+                                <InputOTPSlot index={1} />
+                                <InputOTPSlot index={2} />
+                                <InputOTPSlot index={3} />
+                                <InputOTPSlot index={4} />
+                                <InputOTPSlot index={5} />
+                              </InputOTPGroup>
+                            </InputOTP>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={pinUserForm.control}
+                      name="roles"
+                      render={() => (
+                        <FormItem>
+                          <FormLabel>Roles</FormLabel>
+                          <div className="space-y-2">
+                            {[
+                              { id: 'admin', label: 'Administrator' },
+                              { id: 'kitchen', label: 'Kitchen Staff' },
+                              { id: 'baker', label: 'Baker' },
+                              { id: 'delivery', label: 'Delivery' },
+                              { id: 'sales', label: 'Sales' },
+                            ].map((role) => (
+                              <div key={role.id} className="flex items-center space-x-2">
+                                <Checkbox
+                                  id={`pin-role-${role.id}`}
+                                  onCheckedChange={(checked) => {
+                                    const currentRoles = pinUserForm.getValues('roles');
+                                    const newRoles = checked
+                                      ? [...currentRoles, role.id]
+                                      : currentRoles.filter((r) => r !== role.id);
+                                    pinUserForm.setValue('roles', newRoles, { shouldValidate: true });
+                                  }}
+                                />
+                                <label
+                                  htmlFor={`pin-role-${role.id}`}
+                                  className="text-sm"
+                                >
+                                  {role.label}
+                                </label>
+                              </div>
+                            ))}
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <DialogFooter>
+                      <Button type="submit" disabled={isSubmitting}>
+                        {isSubmitting ? "Creating..." : "Create PIN User"}
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </Form>
+              </TabsContent>
+            </Tabs>
           </DialogContent>
         </Dialog>
       </div>
@@ -449,6 +697,7 @@ const AdminUsersPage = () => {
                   <TableRow>
                     <TableHead>User</TableHead>
                     <TableHead>Email</TableHead>
+                    <TableHead>Type</TableHead>
                     <TableHead>Roles</TableHead>
                     <TableHead>Created</TableHead>
                     <TableHead className="w-[120px]">Actions</TableHead>
@@ -479,6 +728,13 @@ const AdminUsersPage = () => {
                         </TableCell>
                         <TableCell>{user.email}</TableCell>
                         <TableCell>
+                          {user.is_pin_only ? (
+                            <Badge className="bg-green-500">PIN</Badge>
+                          ) : (
+                            <Badge variant="outline">Email</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>
                           <div className="flex flex-wrap gap-1">
                             {user.roles.length > 0 ? (
                               user.roles.map((role) => (
@@ -493,23 +749,114 @@ const AdminUsersPage = () => {
                         </TableCell>
                         <TableCell>{formattedDate}</TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              onClick={() => openRoleDialog(user)}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="text-destructive hover:text-destructive"
-                              onClick={() => confirmDeactivateUser(user.id)}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
+                          <Dialog open={roleDialogOpen && selectedUser?.id === user.id} onOpenChange={(open) => {
+                            if (!open) setSelectedUser(null);
+                            setRoleDialogOpen(open);
+                          }}>
+                            <DialogTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="mr-1"
+                                onClick={() => openRoleDialog(user)}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle className="flex items-center gap-2">
+                                  Manage User
+                                  {user.is_pin_only && <Badge className="bg-green-500">PIN User</Badge>}
+                                </DialogTitle>
+                                <DialogDescription>
+                                  Update settings for {user.profile?.display_name || user.email}
+                                </DialogDescription>
+                              </DialogHeader>
+                              
+                              <div className="space-y-6 py-4">
+                                {user.is_pin_only && (
+                                  <div className="space-y-3 border-b pb-4">
+                                    <h3 className="text-lg font-medium">Reset PIN</h3>
+                                    <div className="space-y-2">
+                                      <FormLabel>New 6-digit PIN</FormLabel>
+                                      <InputOTP maxLength={6} value={newPin} onChange={setNewPin} className="justify-start">
+                                        <InputOTPGroup>
+                                          <InputOTPSlot index={0} />
+                                          <InputOTPSlot index={1} />
+                                          <InputOTPSlot index={2} />
+                                          <InputOTPSlot index={3} />
+                                          <InputOTPSlot index={4} />
+                                          <InputOTPSlot index={5} />
+                                        </InputOTPGroup>
+                                      </InputOTP>
+                                      <Button 
+                                        onClick={handleResetPin} 
+                                        disabled={newPin.length !== 6}
+                                        className="mt-2"
+                                      >
+                                        Set PIN
+                                      </Button>
+                                    </div>
+                                  </div>
+                                )}
+                                
+                                <div className="space-y-2">
+                                  <h3 className="text-lg font-medium">User Roles</h3>
+                                  <Form {...roleForm}>
+                                    <form onSubmit={roleForm.handleSubmit(handleEditRoles)} className="space-y-4">
+                                      <div className="space-y-4">
+                                        {[
+                                          { id: 'admin', label: 'Administrator', description: 'Full system access' },
+                                          { id: 'kitchen', label: 'Kitchen Staff', description: 'Manage kitchen operations' },
+                                          { id: 'baker', label: 'Baker', description: 'Access to production and recipes' },
+                                          { id: 'delivery', label: 'Delivery', description: 'Manage deliveries and routes' },
+                                          { id: 'sales', label: 'Sales', description: 'Manage orders and customers' },
+                                        ].map((role) => (
+                                          <FormField
+                                            key={role.id}
+                                            control={roleForm.control}
+                                            name={role.id as keyof RoleEditValues}
+                                            render={({ field }) => (
+                                              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                                                <FormControl>
+                                                  <Checkbox
+                                                    checked={field.value}
+                                                    onCheckedChange={field.onChange}
+                                                  />
+                                                </FormControl>
+                                                <div className="space-y-1 leading-none">
+                                                  <FormLabel className="text-sm font-medium">{role.label}</FormLabel>
+                                                  <p className="text-sm text-muted-foreground">
+                                                    {role.description}
+                                                  </p>
+                                                </div>
+                                              </FormItem>
+                                            )}
+                                          />
+                                        ))}
+                                      </div>
+                                      
+                                      <DialogFooter>
+                                        <Button type="submit" disabled={isSubmitting}>
+                                          {isSubmitting ? "Saving..." : "Save Changes"}
+                                        </Button>
+                                      </DialogFooter>
+                                    </form>
+                                  </Form>
+                                </div>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => confirmDeactivateUser(user.id)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
                         </TableCell>
                       </TableRow>
                     );
@@ -517,7 +864,7 @@ const AdminUsersPage = () => {
                   
                   {users.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                         No users found
                       </TableCell>
                     </TableRow>
@@ -528,62 +875,6 @@ const AdminUsersPage = () => {
           )}
         </CardContent>
       </Card>
-      
-      {/* Role editing dialog */}
-      <Dialog open={roleDialogOpen} onOpenChange={setRoleDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Edit User Roles</DialogTitle>
-            <DialogDescription>
-              {selectedUser && (
-                <>Manage roles for {selectedUser.email}</>
-              )}
-            </DialogDescription>
-          </DialogHeader>
-          
-          <Form {...roleForm}>
-            <form onSubmit={roleForm.handleSubmit(handleEditRoles)} className="space-y-4">
-              <div className="space-y-4">
-                {[
-                  { id: 'admin', label: 'Administrator', description: 'Full system access' },
-                  { id: 'kitchen', label: 'Kitchen Staff', description: 'Manage kitchen operations' },
-                  { id: 'baker', label: 'Baker', description: 'Access to production and recipes' },
-                  { id: 'delivery', label: 'Delivery', description: 'Manage deliveries and routes' },
-                  { id: 'sales', label: 'Sales', description: 'Manage orders and customers' },
-                ].map((role) => (
-                  <FormField
-                    key={role.id}
-                    control={roleForm.control}
-                    name={role.id as keyof RoleEditValues}
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                        <div className="space-y-1 leading-none">
-                          <FormLabel className="text-sm font-medium">{role.label}</FormLabel>
-                          <p className="text-sm text-muted-foreground">
-                            {role.description}
-                          </p>
-                        </div>
-                      </FormItem>
-                    )}
-                  />
-                ))}
-              </div>
-              
-              <DialogFooter>
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? "Saving..." : "Save Changes"}
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

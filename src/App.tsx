@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -128,16 +127,8 @@ const App = () => {
                     </AuthWrapper>
                   } />
                   
-                  {/* User Management */}
-                  <Route path="/admin/user-management" element={
-                    <AuthWrapper>
-                      <RoleGuard allowedRoles={['admin']}>
-                        <AuthMainLayout>
-                          <UserManagementPage />
-                        </AuthMainLayout>
-                      </RoleGuard>
-                    </AuthWrapper>
-                  } />
+                  {/* Redirect old user management path to the unified page */}
+                  <Route path="/admin/user-management" element={<Navigate to="/admin/users" replace />} />
                   
                   {/* Sales routes */}
                   <Route path="/orders" element={
