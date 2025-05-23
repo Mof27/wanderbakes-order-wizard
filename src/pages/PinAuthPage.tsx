@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { useNavigate } from "react-router-dom";
@@ -13,12 +12,14 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/services/supabase/client";
 import { config } from "@/config";
+import { Badge } from "@/components/ui/badge";
 
 interface Profile {
   id: string;
   first_name: string | null;
   last_name: string | null;
   display_name: string | null;
+  is_pin_only?: boolean;
 }
 
 const PinAuthPage = () => {
@@ -34,18 +35,45 @@ const PinAuthPage = () => {
   useEffect(() => {
     const fetchProfiles = async () => {
       try {
-        // Load profiles from Supabase
-        const { data, error } = await supabase
+        // Load profiles from Supabase with join to auth.users to find PIN-only users
+        const { data: profiles, error: profilesError } = await supabase
           .from("profiles")
           .select("id, first_name, last_name, display_name");
         
-        if (error) {
-          console.error("Error fetching profiles:", error);
+        if (profilesError) {
+          console.error("Error fetching profiles:", profilesError);
           return;
         }
         
-        if (data) {
-          setProfiles(data);
+        // Get user metadata to identify PIN-only users
+        const { data: usersData, error: usersError } = await supabase.rpc('admin_get_users');
+        
+        if (usersError) {
+          console.error("Error fetching users:", usersError);
+        }
+        
+        // Combine data to identify PIN-only users
+        if (profiles && usersData) {
+          const enrichedProfiles = profiles.map(profile => {
+            const userData = usersData.find(u => u.id === profile.id);
+            const isPinOnly = userData?.raw_user_meta_data?.is_pin_only === true || 
+                              userData?.raw_app_meta_data?.provider === 'pin' ||
+                              userData?.email?.endsWith('@pin-user.local');
+            
+            return {
+              ...profile,
+              is_pin_only: isPinOnly
+            };
+          });
+          
+          // Sort to put PIN-only users first
+          enrichedProfiles.sort((a, b) => {
+            if (a.is_pin_only && !b.is_pin_only) return -1;
+            if (!a.is_pin_only && b.is_pin_only) return 1;
+            return 0;
+          });
+          
+          setProfiles(enrichedProfiles);
         }
       } catch (err) {
         console.error("Failed to fetch profiles:", err);
@@ -195,8 +223,11 @@ const PinAuthPage = () => {
                   </SelectTrigger>
                   <SelectContent>
                     {profiles.map((profile) => (
-                      <SelectItem key={profile.id} value={profile.id}>
+                      <SelectItem key={profile.id} value={profile.id} className="flex items-center">
                         {profile.display_name || `${profile.first_name || ''} ${profile.last_name || ''}`}
+                        {profile.is_pin_only && (
+                          <Badge className="ml-2 bg-green-500 text-xs">PIN</Badge>
+                        )}
                       </SelectItem>
                     ))}
                   </SelectContent>

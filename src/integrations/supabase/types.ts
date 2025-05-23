@@ -852,6 +852,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_get_users: {
+        Args: Record<PropertyKey, never>
+        Returns: unknown[]
+      }
+      create_pin_user: {
+        Args: {
+          first_name: string
+          last_name: string
+          display_name: string
+          pin: string
+          roles: Database["public"]["Enums"]["app_role"][]
+        }
+        Returns: string
+      }
       get_user_roles: {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["app_role"][]
