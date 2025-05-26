@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import { useAuth } from "@/context/AuthContext";
@@ -25,7 +24,7 @@ interface PinUser {
 }
 
 const PinAuthPage = () => {
-  const { user, signInWithPin } = useAuth();
+  const { user, verifyPin, setUserSession } = useAuth();
   const navigate = useNavigate();
   const [pinUsers, setPinUsers] = useState<PinUser[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string>("");
@@ -94,11 +93,21 @@ const PinAuthPage = () => {
     setLoading(true);
     
     try {
-      const success = await signInWithPin(selectedUserId, pin);
+      // First verify the PIN
+      const isValidPin = await verifyPin(selectedUserId, pin);
       
-      if (success) {
-        toast.success("Successfully signed in!");
-        navigate("/");
+      if (isValidPin) {
+        // If PIN is valid, set the user session
+        const { success, error } = await setUserSession(selectedUserId);
+        
+        if (success) {
+          toast.success("Successfully signed in!");
+          navigate("/");
+        } else {
+          console.error("Failed to set user session:", error);
+          toast.error("Failed to sign in. Please try again.");
+          setPin("");
+        }
       } else {
         toast.error("Invalid PIN. Please try again.");
         setPin("");
