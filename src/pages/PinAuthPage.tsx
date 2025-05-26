@@ -65,15 +65,22 @@ const PinAuthPage = () => {
       setFetchError(null);
       console.log("PinAuthPage: Fetching PIN users from Supabase...");
       
-      // Fetch all profiles that have a pin_hash (these are PIN users)
+      // Fetch only safe profile fields for PIN users (unauthenticated access)
+      // The new RLS policy allows this query for users with pin_hash
       const { data: profiles, error } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name, display_name, pin_hash')
+        .select('id, first_name, last_name, display_name')
         .not('pin_hash', 'is', null); // Only get users who have a PIN hash
       
       if (error) {
         console.error('PinAuthPage: Error fetching PIN users:', error);
-        setFetchError(`Failed to load PIN users: ${error.message}`);
+        
+        // Check for RLS policy issues
+        if (error.code === '42501' || error.message?.includes('permission denied') || error.message?.includes('row-level security')) {
+          setFetchError('Access denied: Unable to load PIN users due to security policies. Please contact your administrator.');
+        } else {
+          setFetchError(`Failed to load PIN users: ${error.message}`);
+        }
         return;
       }
       
