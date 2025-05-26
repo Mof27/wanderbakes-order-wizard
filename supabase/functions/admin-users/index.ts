@@ -1,3 +1,4 @@
+
 // Follow this setup guide to integrate the Supabase's Edge Functions with your app:
 // https://supabase.com/docs/guides/functions/edge-functions
 
@@ -158,26 +159,69 @@ serve(async (req) => {
           roles
         });
         
-        // Use the database create_pin_user function to create the user directly
-        const { data: newUserId, error: createUserError } = await supabaseAdmin.rpc(
-          "create_pin_user",
-          { 
-            first_name, 
-            last_name, 
-            display_name: display_name || `${first_name} ${last_name}`,
-            pin,
-            roles
-          }
+        // Generate a new UUID for the user directly in JavaScript
+        const newUserId = crypto.randomUUID();
+        console.log("Generated new user ID:", newUserId);
+        
+        // Hash the PIN first
+        const { data: pinHash, error: hashError } = await supabaseAdmin.rpc(
+          "hash_pin",
+          { pin }
         );
 
-        if (createUserError) {
-          console.error("Error creating PIN user:", createUserError);
+        if (hashError) {
+          console.error("Error hashing PIN:", hashError);
           return new Response(
-            JSON.stringify({ error: `Failed to create PIN user: ${createUserError.message}` }),
+            JSON.stringify({ error: `Failed to hash PIN: ${hashError.message}` }),
             { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
           );
         }
         
+        console.log("PIN hashed successfully");
+        
+        // Insert directly into profiles table
+        const { error: profileError } = await supabaseAdmin
+          .from('profiles')
+          .insert({
+            id: newUserId,
+            first_name,
+            last_name,
+            display_name: display_name || `${first_name} ${last_name}`,
+            pin_hash: pinHash,
+            failed_pin_attempts: 0
+          });
+
+        if (profileError) {
+          console.error("Error creating profile:", profileError);
+          return new Response(
+            JSON.stringify({ error: `Failed to create profile: ${profileError.message}` }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+          );
+        }
+        
+        console.log("Profile created successfully");
+        
+        // Assign roles
+        const roleInserts = roles.map(role => ({
+          user_id: newUserId,
+          role: role
+        }));
+        
+        const { error: rolesError } = await supabaseAdmin
+          .from('user_roles')
+          .insert(roleInserts);
+          
+        if (rolesError) {
+          console.error("Error assigning roles:", rolesError);
+          // Try to clean up the profile if role assignment fails
+          await supabaseAdmin.from('profiles').delete().eq('id', newUserId);
+          return new Response(
+            JSON.stringify({ error: `Failed to assign roles: ${rolesError.message}` }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+          );
+        }
+        
+        console.log("Roles assigned successfully:", roles);
         console.log("PIN user created successfully with ID:", newUserId);
         
         return new Response(
@@ -189,7 +233,7 @@ serve(async (req) => {
           { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
         );
       } catch (error) {
-        console.error("Error creating PIN user:", error);
+        console.error("Unexpected error creating PIN user:", error);
         return new Response(
           JSON.stringify({ error: `Failed to create PIN user: ${error.message}` }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }

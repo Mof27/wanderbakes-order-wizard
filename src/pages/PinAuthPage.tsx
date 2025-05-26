@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import { useAuth } from "@/context/AuthContext";
@@ -44,11 +45,12 @@ const PinAuthPage = () => {
     const fetchPinUsers = async () => {
       try {
         setLoadingUsers(true);
+        console.log("Fetching PIN users...");
         
         // Fetch all profiles that have a pin_hash (these are PIN users)
         const { data: profiles, error } = await supabase
           .from('profiles')
-          .select('id, first_name, last_name, display_name')
+          .select('id, first_name, last_name, display_name, pin_hash')
           .not('pin_hash', 'is', null); // Only get users who have a PIN hash
         
         if (error) {
@@ -57,7 +59,7 @@ const PinAuthPage = () => {
           return;
         }
         
-        console.log('Found PIN users:', profiles);
+        console.log('Found profiles with PIN hash:', profiles);
         
         // Map the profiles to PIN users
         const users: PinUser[] = (profiles || []).map(profile => ({
@@ -67,7 +69,12 @@ const PinAuthPage = () => {
           last_name: profile.last_name || ''
         }));
         
+        console.log('Mapped PIN users:', users);
         setPinUsers(users);
+        
+        if (users.length === 0) {
+          console.log('No PIN users found in database');
+        }
       } catch (error) {
         console.error('Error in fetchPinUsers:', error);
         toast.error('An error occurred while loading PIN users');
@@ -93,10 +100,14 @@ const PinAuthPage = () => {
     setLoading(true);
     
     try {
+      console.log("Attempting PIN authentication for user:", selectedUserId);
+      
       // First verify the PIN
       const isValidPin = await verifyPin(selectedUserId, pin);
       
       if (isValidPin) {
+        console.log("PIN verified successfully");
+        
         // If PIN is valid, set the user session
         const { success, error } = await setUserSession(selectedUserId);
         
@@ -109,6 +120,7 @@ const PinAuthPage = () => {
           setPin("");
         }
       } else {
+        console.log("PIN verification failed");
         toast.error("Invalid PIN. Please try again.");
         setPin("");
       }
@@ -164,6 +176,11 @@ const PinAuthPage = () => {
             {!loadingUsers && pinUsers.length === 0 && (
               <p className="text-sm text-muted-foreground">
                 No PIN users found. Contact an administrator to set up PIN access.
+              </p>
+            )}
+            {!loadingUsers && pinUsers.length > 0 && (
+              <p className="text-xs text-muted-foreground">
+                Found {pinUsers.length} PIN user{pinUsers.length === 1 ? '' : 's'}
               </p>
             )}
           </div>
