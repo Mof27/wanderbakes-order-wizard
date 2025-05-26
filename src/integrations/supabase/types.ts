@@ -889,6 +889,22 @@ export type Database = {
         Args: { pin: string }
         Returns: string
       }
+      reset_admin_for_pin_auth: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          success: boolean
+          message: string
+          pin: string
+        }[]
+      }
+      set_admin_profile: {
+        Args: { target_user_id: string; new_pin?: string }
+        Returns: {
+          success: boolean
+          message: string
+          user_id: string
+        }[]
+      }
       verify_pin: {
         Args: { user_id: string; pin: string }
         Returns: boolean

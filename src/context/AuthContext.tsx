@@ -163,6 +163,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // Clear profile and roles when logged out
           setProfile(null);
           setRoles([]);
+          // Clear all auth-related localStorage items
           localStorage.removeItem("user_roles");
           localStorage.removeItem("pin_auth_user_id");
           localStorage.removeItem("pin_auth_timestamp");
@@ -173,8 +174,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     );
 
-    // Check for stored PIN auth on initialization
-    checkStoredPinAuth();
+    // Check for stored PIN auth on initialization only if no regular session
+    if (!session) {
+      checkStoredPinAuth();
+    }
 
     return () => {
       subscription.unsubscribe();
@@ -372,32 +375,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Sign out the user
+  // Enhanced sign out with complete cleanup
   const signOut = async () => {
     if (!isConfigured) {
       return;
     }
 
     try {
+      console.log("Starting complete logout process...");
+      
       // Clear PIN auth if it exists
       localStorage.removeItem('pin_auth_user_id');
       localStorage.removeItem('pin_auth_timestamp');
       localStorage.removeItem('pin_auth_roles');
       localStorage.removeItem('user_roles');
       
+      // Clear any other auth-related items
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.includes('auth') || key.includes('supabase'))) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach(key => localStorage.removeItem(key));
+      
       // Standard Supabase signout
       await supabase.auth.signOut();
       
-      // Clear state
+      // Force clear state immediately
       setUser(null);
       setSession(null);
       setProfile(null);
       setRoles([]);
       
+      console.log("Complete logout finished");
       toast.info('Signed out successfully');
     } catch (error) {
       console.error('Error signing out:', error);
-      toast.error('Failed to sign out');
+      // Even if signout fails, clear local state
+      setUser(null);
+      setSession(null);
+      setProfile(null);
+      setRoles([]);
+      toast.error('Signed out locally (server error)');
     }
   };
 
