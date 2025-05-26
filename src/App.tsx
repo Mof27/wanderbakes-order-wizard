@@ -1,3 +1,4 @@
+
 import React, { useEffect } from "react";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -24,7 +25,7 @@ import AuthPage from "./pages/AuthPage";
 import PinAuthPage from "./pages/PinAuthPage";
 import ProfilePage from "./pages/ProfilePage";
 import AdminUsersPage from "./pages/AdminUsersPage";
-import UserManagementPage from "./pages/UserManagementPage";
+import AdminResetPage from "./pages/AdminResetPage";
 import UnauthorizedPage from "./pages/UnauthorizedPage";
 import NotFound from "./pages/NotFound";
 import { AppProvider } from "./context/AppContext";
@@ -95,6 +96,13 @@ const App = () => {
                     </AuthWrapper>
                   } />
                   
+                  {/* Admin reset route - no auth required */}
+                  <Route path="/admin-reset" element={
+                    <AuthWrapper requireAuth={false}>
+                      <AdminResetPage />
+                    </AuthWrapper>
+                  } />
+                  
                   {/* Unauthorized access page */}
                   <Route path="/unauthorized" element={<UnauthorizedPage />} />
                   
@@ -126,9 +134,6 @@ const App = () => {
                       </RoleGuard>
                     </AuthWrapper>
                   } />
-                  
-                  {/* Redirect the legacy user management path to the unified page */}
-                  <Route path="/admin/user-management" element={<Navigate to="/admin/users" replace />} />
                   
                   {/* Sales routes */}
                   <Route path="/orders" element={

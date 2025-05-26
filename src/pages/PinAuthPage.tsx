@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import { useAuth } from "@/context/AuthContext";
@@ -15,7 +14,7 @@ import {
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { KeyRound, User, ArrowLeft } from "lucide-react";
+import { KeyRound, User, ArrowLeft, Shield } from "lucide-react";
 
 interface PinUser {
   id: string;
@@ -174,9 +173,19 @@ const PinAuthPage = () => {
               </SelectContent>
             </Select>
             {!loadingUsers && pinUsers.length === 0 && (
-              <p className="text-sm text-muted-foreground">
-                No PIN users found. Contact an administrator to set up PIN access.
-              </p>
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground text-center">
+                  No PIN users found. If you're the system administrator, you may need to reset the admin profile.
+                </p>
+                <Button 
+                  onClick={() => navigate("/admin-reset")}
+                  variant="outline"
+                  className="w-full"
+                >
+                  <Shield className="mr-2 h-4 w-4" />
+                  Admin Reset
+                </Button>
+              </div>
             )}
             {!loadingUsers && pinUsers.length > 0 && (
               <p className="text-xs text-muted-foreground">
