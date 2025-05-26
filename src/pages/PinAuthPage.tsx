@@ -27,7 +27,7 @@ interface PinUser {
 }
 
 const PinAuthPage = () => {
-  const { user, verifyPin, setUserSession } = useAuth();
+  const { user, verifyPin } = useAuth();
   const { isReady, error: serviceError, retry } = useDataService();
   const navigate = useNavigate();
   const [pinUsers, setPinUsers] = useState<PinUser[]>([]);
@@ -135,28 +135,36 @@ const PinAuthPage = () => {
     try {
       console.log("PinAuthPage: Attempting PIN authentication for user:", selectedUserId);
       
-      // First verify the PIN
-      const isValidPin = await verifyPin(selectedUserId, pin);
-      
-      if (isValidPin) {
-        console.log("PinAuthPage: PIN verified successfully");
-        
-        // If PIN is valid, set the user session
-        const { success, error } = await setUserSession(selectedUserId);
-        
-        if (success) {
-          toast.success("Successfully signed in!");
-          navigate("/");
-        } else {
-          console.error("PinAuthPage: Failed to set user session:", error);
-          toast.error("Failed to sign in. Please try again.");
-          setPin("");
-        }
-      } else {
-        console.log("PinAuthPage: PIN verification failed");
-        toast.error("Invalid PIN. Please try again.");
+      // Call the Edge Function via verifyPin which uses the hybrid approach
+      const { data, error } = await supabase.functions.invoke('pin-auth', {
+        body: { userId: selectedUserId, pin }
+      });
+
+      if (error) {
+        console.error("PinAuthPage: Edge Function error:", error);
+        toast.error("Authentication failed. Please try again.");
         setPin("");
+        return;
       }
+
+      if (!data.success) {
+        console.log("PinAuthPage: PIN verification failed:", data.message);
+        toast.error(data.message || "Invalid PIN. Please try again.");
+        setPin("");
+        return;
+      }
+
+      console.log("PinAuthPage: PIN verified successfully, session created");
+      
+      // The Edge Function has created a real Supabase session
+      // The auth state change listener will handle the rest
+      toast.success("Successfully signed in!");
+      
+      // Small delay to allow the auth state change to process
+      setTimeout(() => {
+        navigate("/");
+      }, 500);
+      
     } catch (error) {
       console.error("PinAuthPage: PIN authentication error:", error);
       toast.error("Authentication failed. Please try again.");

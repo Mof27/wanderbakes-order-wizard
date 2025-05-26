@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from '../services/supabase/client';
@@ -174,76 +175,55 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     );
 
-    // Check for stored PIN auth on initialization only if no regular session
-    if (!session) {
-      checkStoredPinAuth();
-    }
-
     return () => {
       subscription.unsubscribe();
     };
   }, [isConfigured]);
 
-  // Check for stored PIN auth
-  const checkStoredPinAuth = async () => {
-    if (!isConfigured) return;
-    
-    const storedUserId = localStorage.getItem('pin_auth_user_id');
-    const timestamp = parseInt(localStorage.getItem('pin_auth_timestamp') || '0');
-    const storedRoles = localStorage.getItem('pin_auth_roles');
-    
-    // Check if PIN auth exists and is not expired (24 hours)
-    if (storedUserId && (Date.now() - timestamp) < 24 * 60 * 60 * 1000) {
-      console.log("Found stored PIN auth for user:", storedUserId);
-      await setUserSession(storedUserId);
-      
-      // Also load roles from localStorage if available
-      if (storedRoles) {
-        try {
-          const parsedRoles = JSON.parse(storedRoles);
-          console.log("Loaded stored PIN auth roles:", parsedRoles);
-          setRoles(parsedRoles);
-        } catch (e) {
-          console.error("Error parsing stored roles:", e);
-        }
-      }
-    }
-  };
-
-  // Verify PIN for user
+  // Verify PIN for user using the Edge Function
   const verifyPin = async (userId: string, pin: string): Promise<boolean> => {
     if (!isConfigured) {
       return false;
     }
 
     try {
-      const { data, error } = await supabase.rpc('verify_pin', {
-        user_id: userId,
-        pin
+      console.log("AuthContext: Calling PIN auth Edge Function for user:", userId);
+      
+      const { data, error } = await supabase.functions.invoke('pin-auth', {
+        body: { userId, pin }
       });
 
       if (error) {
-        console.error('Error verifying PIN:', error);
+        console.error('AuthContext: Edge Function error:', error);
         return false;
       }
 
-      return !!data;
+      if (!data.success) {
+        console.log("AuthContext: PIN verification failed:", data.message);
+        return false;
+      }
+
+      console.log("AuthContext: PIN verified successfully, session data:", data.session);
+      return true;
     } catch (error) {
-      console.error('Error in PIN verification:', error);
+      console.error('AuthContext: Error in PIN verification:', error);
       return false;
     }
   };
 
-  // Set a user session manually (for PIN-based auth)
+  // Set a user session using the Edge Function for PIN-based auth
   const setUserSession = async (userId: string) => {
     if (!isConfigured) {
       return { success: false, error: new Error('Supabase is not configured') };
     }
 
     try {
-      console.log("Setting up user session for:", userId);
+      console.log("AuthContext: Setting up user session via Edge Function for:", userId);
       
-      // Fetch the user profile directly
+      // The Edge Function should have already been called via verifyPin
+      // But we need to establish the session properly on the client side
+      
+      // Fetch the user profile and roles to store locally
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
@@ -251,7 +231,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .single();
       
       if (profileError) {
-        console.error('Error fetching profile:', profileError);
+        console.error('AuthContext: Error fetching profile:', profileError);
         return { success: false, error: profileError };
       }
       
@@ -262,55 +242,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .eq('user_id', userId);
         
       if (rolesError) {
-        console.error('Error fetching roles:', rolesError);
+        console.error('AuthContext: Error fetching roles:', rolesError);
       }
       
       const userRoles = rolesData?.map(r => r.role) || [];
-      console.log("Fetched user roles for PIN auth:", userRoles);
+      console.log("AuthContext: Fetched user roles for PIN auth:", userRoles);
       
       // Set the local state
       setProfile(profile);
       setRoles(userRoles);
       
-      // Store roles in localStorage as a backup
+      // Store backup data in localStorage
       localStorage.setItem("user_roles", JSON.stringify(userRoles));
       localStorage.setItem("pin_auth_user_id", userId);
       localStorage.setItem("pin_auth_timestamp", Date.now().toString());
       localStorage.setItem("pin_auth_roles", JSON.stringify(userRoles));
       
-      // Create a temporary user object
-      const tempUser = {
-        id: userId,
-        app_metadata: { provider: 'pin', roles: userRoles },
-        user_metadata: {
-          first_name: profile.first_name,
-          last_name: profile.last_name,
-          display_name: profile.display_name,
-          roles: userRoles
-        }
-      };
-      
-      console.log("Created temporary user object:", tempUser);
-      
-      // @ts-ignore - we're creating a minimal User object for PIN auth
-      setUser(tempUser);
-      
-      // Create a session-like state (not a real Supabase session but works for our app)
-      const tempSession = {
-        user: tempUser,
-        access_token: `pin_auth_${userId}`,
-        refresh_token: '',
-        expires_at: Date.now() + 24 * 60 * 60 * 1000 // 24 hours from now
-      };
-      
-      console.log("Created temporary session:", tempSession);
-      
-      // @ts-ignore - using a custom session for PIN auth
-      setSession(tempSession);
+      // The session should already be established by the Edge Function
+      // We just need to wait for the auth state change event
       
       return { success: true, error: null };
     } catch (error) {
-      console.error('Error setting user session:', error);
+      console.error('AuthContext: Error setting user session:', error);
       return { success: false, error: error as Error };
     }
   };
@@ -382,7 +335,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      console.log("Starting complete logout process...");
+      console.log("AuthContext: Starting complete logout process...");
       
       // Clear PIN auth if it exists
       localStorage.removeItem('pin_auth_user_id');
@@ -409,10 +362,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setProfile(null);
       setRoles([]);
       
-      console.log("Complete logout finished");
+      console.log("AuthContext: Complete logout finished");
       toast.info('Signed out successfully');
     } catch (error) {
-      console.error('Error signing out:', error);
+      console.error('AuthContext: Error signing out:', error);
       // Even if signout fails, clear local state
       setUser(null);
       setSession(null);
@@ -450,7 +403,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Create an enhanced hasRole function
   const hasRole = (role: AppRole): boolean => {
     const hasRoleResult = roles.includes(role);
-    console.log(`Checking if user has role ${role}: ${hasRoleResult}`, { allRoles: roles });
+    console.log(`AuthContext: Checking if user has role ${role}: ${hasRoleResult}`, { allRoles: roles });
     return hasRoleResult;
   };
 
