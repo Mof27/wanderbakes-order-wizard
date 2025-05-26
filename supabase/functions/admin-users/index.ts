@@ -158,8 +158,7 @@ serve(async (req) => {
           roles
         });
         
-        // Instead of using auth.admin.createUser which might be having issues,
-        // we'll use the database create_pin_user function to create the user directly
+        // Use the database create_pin_user function to create the user directly
         const { data: newUserId, error: createUserError } = await supabaseAdmin.rpc(
           "create_pin_user",
           { 
@@ -178,6 +177,8 @@ serve(async (req) => {
             { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
           );
         }
+        
+        console.log("PIN user created successfully with ID:", newUserId);
         
         return new Response(
           JSON.stringify({ 
