@@ -27,7 +27,7 @@ interface PinUser {
 }
 
 const PinAuthPage = () => {
-  const { user, verifyPin } = useAuth();
+  const { user } = useAuth();
   const { isReady, error: serviceError, retry } = useDataService();
   const navigate = useNavigate();
   const [pinUsers, setPinUsers] = useState<PinUser[]>([]);
@@ -135,7 +135,7 @@ const PinAuthPage = () => {
     try {
       console.log("PinAuthPage: Attempting PIN authentication for user:", selectedUserId);
       
-      // Call the Edge Function via verifyPin which uses the hybrid approach
+      // Call the Edge Function for PIN authentication
       const { data, error } = await supabase.functions.invoke('pin-auth', {
         body: { userId: selectedUserId, pin }
       });
@@ -154,13 +154,25 @@ const PinAuthPage = () => {
         return;
       }
 
-      console.log("PinAuthPage: PIN verified successfully, session created");
+      console.log("PinAuthPage: PIN verified successfully, setting session manually");
       
-      // The Edge Function has created a real Supabase session
-      // The auth state change listener will handle the rest
+      // Manually set the session using the tokens from the Edge Function
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: data.access_token,
+        refresh_token: data.refresh_token
+      });
+
+      if (sessionError) {
+        console.error("PinAuthPage: Error setting session:", sessionError);
+        toast.error("Failed to establish session. Please try again.");
+        setPin("");
+        return;
+      }
+
+      console.log("PinAuthPage: Session established successfully");
       toast.success("Successfully signed in!");
       
-      // Small delay to allow the auth state change to process
+      // Navigate to home page
       setTimeout(() => {
         navigate("/");
       }, 500);

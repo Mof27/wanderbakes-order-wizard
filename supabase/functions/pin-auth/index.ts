@@ -91,30 +91,30 @@ serve(async (req) => {
     const roles = (userRoles || []).map(r => r.role);
     console.log("User roles:", roles);
 
-    // Create a proper Supabase session using admin API
-    const { data: sessionData, error: sessionError } = await supabaseClient.auth.admin.createSession({
-      userId: userId,
-      // Set the session to expire in 24 hours
-      expiresIn: 60 * 60 * 24,
-    });
+    // Generate a JWT token manually since admin.createSession is not available
+    // We'll use admin.generateAccessToken instead
+    const { data: tokenData, error: tokenError } = await supabaseClient.auth.admin.generateAccessToken(userId);
 
-    if (sessionError) {
-      console.error("Error creating session:", sessionError);
+    if (tokenError) {
+      console.error("Error generating access token:", tokenError);
       return new Response(
-        JSON.stringify({ success: false, error: "Error creating authentication session" }),
+        JSON.stringify({ success: false, error: "Error creating authentication token" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
       );
     }
 
-    console.log("Successfully created session for user:", userId);
+    console.log("Successfully generated token for user:", userId);
     console.log("Session includes roles:", roles);
 
-    // Return the session data along with the user profile and roles
+    // Return the token data along with the user profile and roles
     return new Response(
       JSON.stringify({ 
         success: true, 
         user: userData,
-        session: sessionData,
+        access_token: tokenData.access_token,
+        refresh_token: tokenData.refresh_token,
+        expires_in: tokenData.expires_in,
+        expires_at: tokenData.expires_at,
         roles: roles,
         message: "PIN verified successfully" 
       }),
