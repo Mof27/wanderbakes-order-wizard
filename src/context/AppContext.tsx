@@ -1,8 +1,10 @@
+
 import React, { createContext, useState, useContext, ReactNode, useEffect } from "react";
 import { Customer, FilterOption, Order, ViewMode } from "../types";
 import { statusFilterOptions, timeFilterOptions } from "../data/mockData";
 import { toast } from "@/components/ui/sonner";
-import { dataService } from "@/services";
+import { dataServiceManager } from "@/services/DataServiceManager";
+import { useDataService } from "@/hooks/useDataService";
 
 interface AppContextProps {
   customers: Customer[];
@@ -34,6 +36,7 @@ interface AppContextProps {
 const AppContext = createContext<AppContextProps | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const { isReady } = useDataService();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [activeStatusFilter, setActiveStatusFilter] = useState<FilterOption>(statusFilterOptions[0]);
@@ -44,17 +47,24 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([null, null]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Load initial data
+  // Load initial data when data service is ready
   useEffect(() => {
+    if (!isReady) {
+      console.log("AppContext: Data service not ready yet, waiting...");
+      return;
+    }
+
     const loadInitialData = async () => {
       try {
-        const customersData = await dataService.customers.getAll();
-        const ordersData = await dataService.orders.getAll();
+        console.log("AppContext: Loading initial data...");
+        const customersData = await dataServiceManager.customers.getAll();
+        const ordersData = await dataServiceManager.orders.getAll();
         
         setCustomers(customersData);
         setOrders(ordersData);
+        console.log("AppContext: Initial data loaded successfully");
       } catch (error) {
-        console.error("Failed to load initial data:", error);
+        console.error("AppContext: Failed to load initial data:", error);
         toast.error("Failed to load data");
       } finally {
         setIsLoading(false);
@@ -62,7 +72,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     };
     
     loadInitialData();
-  }, []);
+  }, [isReady]);
 
   // Reset all filters to default values
   const resetFilters = () => {
@@ -76,7 +86,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Customer functions
   const addCustomer = async (customerData: Omit<Customer, 'id' | 'createdAt'>) => {
     try {
-      const newCustomer = await dataService.customers.create(customerData);
+      const newCustomer = await dataServiceManager.customers.create(customerData);
       setCustomers(prevCustomers => [...prevCustomers, newCustomer]);
       toast.success("Customer added successfully");
       return newCustomer;
@@ -89,7 +99,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const updateCustomer = async (updatedCustomer: Customer) => {
     try {
-      const result = await dataService.customers.update(updatedCustomer.id, updatedCustomer);
+      const result = await dataServiceManager.customers.update(updatedCustomer.id, updatedCustomer);
       setCustomers(prevCustomers => 
         prevCustomers.map(customer => 
           customer.id === updatedCustomer.id ? result : customer
@@ -105,13 +115,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const findCustomerByWhatsApp = async (whatsappNumber: string) => {
-    return await dataService.customers.findByWhatsApp(whatsappNumber);
+    return await dataServiceManager.customers.findByWhatsApp(whatsappNumber);
   };
 
   // Order functions
   const addOrder = async (orderData: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
-      const newOrder = await dataService.orders.create(orderData);
+      const newOrder = await dataServiceManager.orders.create(orderData);
       setOrders(prevOrders => [newOrder, ...prevOrders]);
       toast.success("Order created successfully");
       return newOrder;
@@ -124,7 +134,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const updateOrder = async (updatedOrder: Order) => {
     try {
-      await dataService.orders.update(updatedOrder.id, updatedOrder);
+      await dataServiceManager.orders.update(updatedOrder.id, updatedOrder);
       setOrders(prevOrders =>
         prevOrders.map(order => {
           if (order.id === updatedOrder.id) {
@@ -143,7 +153,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const deleteOrder = async (orderId: string) => {
     try {
-      await dataService.orders.delete(orderId);
+      await dataServiceManager.orders.delete(orderId);
       setOrders(prevOrders => prevOrders.filter(order => order.id !== orderId));
       toast.success("Order deleted successfully");
     } catch (error) {
