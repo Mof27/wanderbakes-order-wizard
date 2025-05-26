@@ -1,4 +1,3 @@
-
 // Follow this setup guide to integrate the Supabase's Edge Functions with your app:
 // https://supabase.com/docs/guides/functions/edge-functions
 
@@ -63,6 +62,7 @@ serve(async (req) => {
 
     // Handle different admin actions
     if (action === 'getUsers') {
+      
       // Get all auth users directly with the service role
       const { data: authUsers, error: authError } = await supabaseAdmin
         .from('auth.users')
