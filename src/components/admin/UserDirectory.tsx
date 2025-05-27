@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,6 +5,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Users, Info, AlertCircle } from "lucide-react";
 import { AppRole } from "@/services/supabase/database.types";
+
+interface AuthUser {
+  id: string;
+  email?: string;
+  created_at: string;
+  raw_user_meta_data?: any;
+}
 
 interface UserProfile {
   id: string;
@@ -33,7 +39,7 @@ const UserDirectory = () => {
       setError(null);
       
       // Get all auth users (requires admin privileges)
-      const { data: authUsers, error: authError } = await supabase.rpc('admin_get_users');
+      const { data: authUsersRaw, error: authError } = await supabase.rpc('admin_get_users');
       
       if (authError) {
         console.error("Error fetching auth users:", authError);
@@ -41,6 +47,9 @@ const UserDirectory = () => {
         await fetchProfilesOnly();
         return;
       }
+
+      // Type assertion for auth users
+      const authUsers = authUsersRaw as AuthUser[];
 
       // Get all profiles
       const { data: profiles, error: profilesError } = await supabase
