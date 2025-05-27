@@ -163,7 +163,7 @@ const App = () => {
                   
                   <Route path="/orders/scan" element={
                     <AuthWrapper>
-                      <RoleGuard allowedRoles={['admin', 'sales', 'kitchen', 'delivery']}>
+                      <RoleGuard allowedRoles={['admin', 'sales', 'kitchen', 'delivery', 'customer_service']}>
                         <AuthMainLayout>
                           <ScanQrPage />
                         </AuthMainLayout>
@@ -206,7 +206,7 @@ const App = () => {
                   {/* Delivery routes */}
                   <Route path="/delivery" element={
                     <AuthWrapper>
-                      <RoleGuard allowedRoles={['admin', 'delivery']}>
+                      <RoleGuard allowedRoles={['admin', 'delivery', 'customer_service']}>
                         <AuthMainLayout>
                           <DeliveryPage />
                         </AuthMainLayout>
@@ -228,7 +228,7 @@ const App = () => {
                   {/* Gallery - visible to more roles for reference */}
                   <Route path="/gallery" element={
                     <AuthWrapper>
-                      <RoleGuard allowedRoles={['admin', 'sales', 'kitchen', 'baker']}>
+                      <RoleGuard allowedRoles={['admin', 'sales', 'kitchen', 'baker', 'customer_service']}>
                         <AuthMainLayout>
                           <GalleryPage />
                         </AuthMainLayout>
@@ -239,7 +239,7 @@ const App = () => {
                   {/* Customer management */}
                   <Route path="/customers" element={
                     <AuthWrapper>
-                      <RoleGuard allowedRoles={['admin', 'sales']}>
+                      <RoleGuard allowedRoles={['admin', 'sales', 'customer_service']}>
                         <AuthMainLayout>
                           <CustomersPage />
                         </AuthMainLayout>
@@ -249,7 +249,7 @@ const App = () => {
                   
                   <Route path="/customers/:id/orders" element={
                     <AuthWrapper>
-                      <RoleGuard allowedRoles={['admin', 'sales']}>
+                      <RoleGuard allowedRoles={['admin', 'sales', 'customer_service']}>
                         <AuthMainLayout>
                           <CustomerOrdersPage />
                         </AuthMainLayout>

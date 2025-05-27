@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Sidebar, SidebarContent, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Home, CakeIcon, Users, Settings, ChefHat, Truck, BeakerIcon, ImagesIcon, ShieldCheck, UserCog } from "lucide-react";
@@ -31,7 +30,7 @@ const SidebarMenu = () => {
       name: "Dashboard",
       path: "/",
       icon: Home,
-      allowedRoles: ['admin', 'sales', 'kitchen', 'baker', 'delivery']
+      allowedRoles: ['admin', 'sales', 'kitchen', 'baker', 'delivery', 'customer_service']
     }, 
     {
       name: "Orders",
@@ -55,19 +54,19 @@ const SidebarMenu = () => {
       name: "Delivery",
       path: "/delivery",
       icon: Truck,
-      allowedRoles: ['admin', 'delivery']
+      allowedRoles: ['admin', 'delivery', 'customer_service']
     },
     {
       name: "Gallery",
       path: "/gallery",
       icon: ImagesIcon,
-      allowedRoles: ['admin', 'sales', 'kitchen', 'baker']
+      allowedRoles: ['admin', 'sales', 'kitchen', 'baker', 'customer_service']
     },
     {
       name: "Customers",
       path: "/customers",
       icon: Users,
-      allowedRoles: ['admin', 'sales']
+      allowedRoles: ['admin', 'sales', 'customer_service']
     }
   ];
   

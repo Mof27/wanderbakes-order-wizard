@@ -1,4 +1,3 @@
-
 export type Json =
   | string
   | number
@@ -7,7 +6,7 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
-export type AppRole = 'admin' | 'kitchen' | 'baker' | 'delivery' | 'sales';
+export type AppRole = 'admin' | 'kitchen' | 'baker' | 'delivery' | 'sales' | 'customer_service';
 
 export interface Database {
   public: {

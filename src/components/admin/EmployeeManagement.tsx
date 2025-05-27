@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -173,7 +172,7 @@ const EmployeeManagement = () => {
     }
   };
 
-  const availableRoles: AppRole[] = ['admin', 'sales', 'kitchen', 'baker', 'delivery'];
+  const availableRoles: AppRole[] = ['admin', 'sales', 'kitchen', 'baker', 'delivery', 'customer_service'];
 
   if (loading) {
     return (
