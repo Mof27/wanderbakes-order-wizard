@@ -3,7 +3,7 @@ import React from "react";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertTriangle, ArrowLeft, Shield } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Shield, Home } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const UnauthorizedPage = () => {
@@ -28,25 +28,26 @@ const UnauthorizedPage = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-center text-muted-foreground">
-            You don't have permission to access this page. Please contact an administrator 
-            or sign in with an account that has the required permissions.
+            You don't have permission to access this page. Please sign in with an account 
+            that has the required permissions or contact an administrator for access.
           </p>
           
           <div className="space-y-2">
             <Button 
+              onClick={() => navigate("/")}
+              className="w-full"
+            >
+              <Home className="mr-2 h-4 w-4" />
+              Back to Dashboard
+            </Button>
+            
+            <Button 
               onClick={() => navigate("/auth")}
+              variant="outline"
               className="w-full"
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
               Go to Login
-            </Button>
-            
-            <Button 
-              onClick={() => navigate("/pin-login")}
-              variant="outline"
-              className="w-full"
-            >
-              PIN Login
             </Button>
             
             <Button 
