@@ -4,21 +4,24 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
-import { User, Users, Info } from "lucide-react";
+import { User, Users, Info, AlertCircle } from "lucide-react";
 import { AppRole } from "@/services/supabase/database.types";
 
 interface UserProfile {
   id: string;
+  email?: string;
   first_name?: string;
   last_name?: string;
   display_name?: string;
   created_at: string;
   roles: AppRole[];
+  has_profile: boolean;
 }
 
 const UserDirectory = () => {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchUsers();
@@ -26,7 +29,71 @@ const UserDirectory = () => {
 
   const fetchUsers = async () => {
     try {
-      console.log("Fetching user directory...");
+      console.log("Fetching comprehensive user directory...");
+      setError(null);
+      
+      // Get all auth users (requires admin privileges)
+      const { data: authUsers, error: authError } = await supabase.rpc('admin_get_users');
+      
+      if (authError) {
+        console.error("Error fetching auth users:", authError);
+        // Fallback to profiles only if auth fetch fails
+        await fetchProfilesOnly();
+        return;
+      }
+
+      // Get all profiles
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('*');
+      
+      if (profilesError) {
+        console.error("Error fetching profiles:", profilesError);
+      }
+
+      // Get all user roles
+      const { data: userRoles, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('user_id, role');
+      
+      if (rolesError) {
+        console.error("Error fetching roles:", rolesError);
+      }
+
+      // Combine auth users with profiles and roles
+      const userList: UserProfile[] = (authUsers || []).map(authUser => {
+        const profile = (profiles || []).find(p => p.id === authUser.id);
+        const userRolesList = (userRoles || [])
+          .filter(role => role.user_id === authUser.id)
+          .map(role => role.role);
+
+        return {
+          id: authUser.id,
+          email: authUser.email,
+          first_name: profile?.first_name,
+          last_name: profile?.last_name,
+          display_name: profile?.display_name,
+          created_at: authUser.created_at || profile?.created_at || new Date().toISOString(),
+          roles: userRolesList,
+          has_profile: !!profile
+        };
+      });
+
+      console.log("Loaded comprehensive user directory:", userList);
+      setUsers(userList);
+    } catch (error) {
+      console.error("Error in fetchUsers:", error);
+      setError("Failed to fetch user data. Please try refreshing the page.");
+      // Fallback to profiles only
+      await fetchProfilesOnly();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchProfilesOnly = async () => {
+    try {
+      console.log("Fetching profiles-only user directory...");
       
       // Get all profiles
       const { data: profiles, error: profilesError } = await supabase
@@ -48,7 +115,7 @@ const UserDirectory = () => {
         console.error("Error fetching roles:", rolesError);
       }
 
-      // Combine profiles with roles
+      // Map profiles to user list
       const userList: UserProfile[] = (profiles || []).map(profile => ({
         id: profile.id,
         first_name: profile.first_name,
@@ -57,15 +124,15 @@ const UserDirectory = () => {
         created_at: profile.created_at,
         roles: (userRoles || [])
           .filter(role => role.user_id === profile.id)
-          .map(role => role.role)
+          .map(role => role.role),
+        has_profile: true
       }));
 
-      console.log("Loaded user directory:", userList);
+      console.log("Loaded profiles-only user directory:", userList);
       setUsers(userList);
     } catch (error) {
-      console.error("Error in fetchUsers:", error);
-    } finally {
-      setLoading(false);
+      console.error("Error in fetchProfilesOnly:", error);
+      setError("Failed to fetch user data. Please try refreshing the page.");
     }
   };
 
@@ -73,6 +140,7 @@ const UserDirectory = () => {
     if (user.display_name) return user.display_name;
     if (user.first_name && user.last_name) return `${user.first_name} ${user.last_name}`;
     if (user.first_name) return user.first_name;
+    if (user.email) return user.email.split('@')[0];
     return 'Unnamed User';
   };
 
@@ -123,6 +191,18 @@ const UserDirectory = () => {
         </CardContent>
       </Card>
 
+      {/* Error Display */}
+      {error && (
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 text-red-800">
+              <AlertCircle className="h-5 w-5" />
+              <span className="text-sm">{error}</span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* User Directory */}
       <Card>
         <CardHeader>
@@ -151,9 +231,15 @@ const UserDirectory = () => {
                       <p className="font-medium text-gray-900">
                         {formatUserName(user)}
                       </p>
-                      <p className="text-sm text-muted-foreground">
-                        ID: {user.id.substring(0, 8)}... • Created: {formatDate(user.created_at)}
-                      </p>
+                      <div className="text-sm text-muted-foreground space-y-1">
+                        <p>ID: {user.id.substring(0, 8)}... • Created: {formatDate(user.created_at)}</p>
+                        {user.email && (
+                          <p>Email: {user.email}</p>
+                        )}
+                        {!user.has_profile && (
+                          <p className="text-amber-600 font-medium">⚠️ No profile entry</p>
+                        )}
+                      </div>
                     </div>
                   </div>
                   
