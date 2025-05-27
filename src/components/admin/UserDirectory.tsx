@@ -1,110 +1,36 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
-import { User, Users, Info, AlertCircle } from "lucide-react";
+import { User, Users, Info, Plus } from "lucide-react";
 import { AppRole } from "@/services/supabase/database.types";
+import { Textarea } from "@/components/ui/textarea";
 
-interface AuthUser {
+interface SimpleUser {
   id: string;
-  email?: string;
-  created_at: string;
-  raw_user_meta_data?: any;
-}
-
-interface UserProfile {
-  id: string;
-  email?: string;
+  display_name?: string;
   first_name?: string;
   last_name?: string;
-  display_name?: string;
   created_at: string;
   roles: AppRole[];
-  has_profile: boolean;
 }
 
 const UserDirectory = () => {
-  const [users, setUsers] = useState<UserProfile[]>([]);
+  const [users, setUsers] = useState<SimpleUser[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [manualNotes, setManualNotes] = useState("");
 
   useEffect(() => {
-    fetchUsers();
+    fetchSimpleUserData();
   }, []);
 
-  const fetchUsers = async () => {
+  const fetchSimpleUserData = async () => {
     try {
-      console.log("Fetching comprehensive user directory...");
-      setError(null);
+      console.log("Fetching simple user data...");
       
-      // Get all auth users (requires admin privileges)
-      const { data: authUsersRaw, error: authError } = await supabase.rpc('admin_get_users');
-      
-      if (authError) {
-        console.error("Error fetching auth users:", authError);
-        // Fallback to profiles only if auth fetch fails
-        await fetchProfilesOnly();
-        return;
-      }
-
-      // Type assertion for auth users
-      const authUsers = authUsersRaw as AuthUser[];
-
-      // Get all profiles
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('*');
-      
-      if (profilesError) {
-        console.error("Error fetching profiles:", profilesError);
-      }
-
-      // Get all user roles
-      const { data: userRoles, error: rolesError } = await supabase
-        .from('user_roles')
-        .select('user_id, role');
-      
-      if (rolesError) {
-        console.error("Error fetching roles:", rolesError);
-      }
-
-      // Combine auth users with profiles and roles
-      const userList: UserProfile[] = (authUsers || []).map(authUser => {
-        const profile = (profiles || []).find(p => p.id === authUser.id);
-        const userRolesList = (userRoles || [])
-          .filter(role => role.user_id === authUser.id)
-          .map(role => role.role);
-
-        return {
-          id: authUser.id,
-          email: authUser.email,
-          first_name: profile?.first_name,
-          last_name: profile?.last_name,
-          display_name: profile?.display_name,
-          created_at: authUser.created_at || profile?.created_at || new Date().toISOString(),
-          roles: userRolesList,
-          has_profile: !!profile
-        };
-      });
-
-      console.log("Loaded comprehensive user directory:", userList);
-      setUsers(userList);
-    } catch (error) {
-      console.error("Error in fetchUsers:", error);
-      setError("Failed to fetch user data. Please try refreshing the page.");
-      // Fallback to profiles only
-      await fetchProfilesOnly();
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchProfilesOnly = async () => {
-    try {
-      console.log("Fetching profiles-only user directory...");
-      
-      // Get all profiles
+      // Get all profiles - simple query
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
@@ -112,10 +38,9 @@ const UserDirectory = () => {
       
       if (profilesError) {
         console.error("Error fetching profiles:", profilesError);
-        return;
       }
 
-      // Get all user roles
+      // Get all user roles - simple query
       const { data: userRoles, error: rolesError } = await supabase
         .from('user_roles')
         .select('user_id, role');
@@ -124,32 +49,31 @@ const UserDirectory = () => {
         console.error("Error fetching roles:", rolesError);
       }
 
-      // Map profiles to user list
-      const userList: UserProfile[] = (profiles || []).map(profile => ({
+      // Simple mapping - just display what we have
+      const userList: SimpleUser[] = (profiles || []).map(profile => ({
         id: profile.id,
+        display_name: profile.display_name,
         first_name: profile.first_name,
         last_name: profile.last_name,
-        display_name: profile.display_name,
         created_at: profile.created_at,
         roles: (userRoles || [])
           .filter(role => role.user_id === profile.id)
-          .map(role => role.role),
-        has_profile: true
+          .map(role => role.role)
       }));
 
-      console.log("Loaded profiles-only user directory:", userList);
+      console.log("Simple user data loaded:", userList);
       setUsers(userList);
     } catch (error) {
-      console.error("Error in fetchProfilesOnly:", error);
-      setError("Failed to fetch user data. Please try refreshing the page.");
+      console.error("Error in fetchSimpleUserData:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const formatUserName = (user: UserProfile) => {
+  const formatUserName = (user: SimpleUser) => {
     if (user.display_name) return user.display_name;
     if (user.first_name && user.last_name) return `${user.first_name} ${user.last_name}`;
     if (user.first_name) return user.first_name;
-    if (user.email) return user.email.split('@')[0];
     return 'Unnamed User';
   };
 
@@ -182,90 +106,104 @@ const UserDirectory = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-blue-800">
             <Info className="h-5 w-5" />
-            User Management Instructions
+            Simple User Directory - Text Display Only
           </CardTitle>
           <CardDescription className="text-blue-700">
-            This is a view-only directory of system users. To add users, modify roles, or make changes:
+            This shows basic user information from the database as simple text. No verification or complex logic.
           </CardDescription>
         </CardHeader>
         <CardContent className="text-blue-700">
-          <ol className="list-decimal list-inside space-y-1 text-sm">
-            <li>Tell the AI what changes you need (e.g., "Add user John with admin role")</li>
-            <li>Review and approve the SQL commands provided</li>
-            <li>Changes will appear immediately after running the SQL</li>
-          </ol>
-          <p className="mt-3 text-xs">
-            This approach ensures reliable user management and gives you full control over the process.
+          <p className="text-sm">
+            This displays whatever is found in the profiles and user_roles tables. 
+            Use the manual notes section below to track additional users or information.
           </p>
         </CardContent>
       </Card>
 
-      {/* Error Display */}
-      {error && (
-        <Card className="border-red-200 bg-red-50">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 text-red-800">
-              <AlertCircle className="h-5 w-5" />
-              <span className="text-sm">{error}</span>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Manual Notes Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Plus className="h-5 w-5" />
+            Manual User Notes
+          </CardTitle>
+          <CardDescription>
+            Add manual notes about users for your own tracking
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Textarea
+            placeholder="Add any manual notes about users here (e.g., known users not showing up in database, additional info, etc.)"
+            value={manualNotes}
+            onChange={(e) => setManualNotes(e.target.value)}
+            className="min-h-[100px]"
+          />
+        </CardContent>
+      </Card>
 
-      {/* User Directory */}
+      {/* Simple User List */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
-            System Users ({users.length})
+            Database Users ({users.length})
           </CardTitle>
           <CardDescription>
-            Current users and their assigned roles in the WanderBakes system
+            Simple text display of users found in profiles table
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {users.length === 0 ? (
               <p className="text-muted-foreground text-center py-8">
-                No users found in the system.
+                No users found in profiles table.
               </p>
             ) : (
               users.map((user) => (
-                <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg bg-gray-50">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                      <User className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900">
-                        {formatUserName(user)}
-                      </p>
-                      <div className="text-sm text-muted-foreground space-y-1">
-                        <p>ID: {user.id.substring(0, 8)}... • Created: {formatDate(user.created_at)}</p>
-                        {user.email && (
-                          <p>Email: {user.email}</p>
-                        )}
-                        {!user.has_profile && (
-                          <p className="text-amber-600 font-medium">⚠️ No profile entry</p>
-                        )}
+                <div key={user.id} className="p-4 border rounded-lg bg-gray-50">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                          <User className="h-4 w-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900">
+                            {formatUserName(user)}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    {user.roles.length > 0 ? (
-                      <div className="flex flex-wrap gap-1">
-                        {user.roles.map((role) => (
-                          <Badge key={role} variant="secondary" size="sm">
-                            {role}
+                      
+                      <div className="flex items-center gap-2">
+                        {user.roles.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {user.roles.map((role) => (
+                              <Badge key={role} variant="secondary" size="sm">
+                                {role}
+                              </Badge>
+                            ))}
+                          </div>
+                        ) : (
+                          <Badge variant="outline" size="sm">
+                            No roles
                           </Badge>
-                        ))}
+                        )}
                       </div>
-                    ) : (
-                      <Badge variant="outline" size="sm">
-                        No roles
-                      </Badge>
-                    )}
+                    </div>
+                    
+                    <div className="text-sm text-muted-foreground space-y-1 ml-11">
+                      <p><strong>ID:</strong> {user.id}</p>
+                      <p><strong>Created:</strong> {formatDate(user.created_at)}</p>
+                      {user.first_name && (
+                        <p><strong>First Name:</strong> {user.first_name}</p>
+                      )}
+                      {user.last_name && (
+                        <p><strong>Last Name:</strong> {user.last_name}</p>
+                      )}
+                      {user.display_name && (
+                        <p><strong>Display Name:</strong> {user.display_name}</p>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))
