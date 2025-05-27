@@ -36,7 +36,7 @@ const SidebarMenu = () => {
       name: "Orders",
       path: "/orders",
       icon: CakeIcon,
-      allowedRoles: ['admin', 'sales']
+      allowedRoles: ['admin', 'sales', 'customer_service']
     },
     {
       name: "Kitchen",

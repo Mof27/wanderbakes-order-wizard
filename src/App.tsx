@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -130,10 +129,10 @@ const App = () => {
                     </AuthWrapper>
                   } />
                   
-                  {/* Sales routes */}
+                  {/* Sales and Customer Service routes */}
                   <Route path="/orders" element={
                     <AuthWrapper>
-                      <RoleGuard allowedRoles={['admin', 'sales']}>
+                      <RoleGuard allowedRoles={['admin', 'sales', 'customer_service']}>
                         <AuthMainLayout>
                           <OrdersPage />
                         </AuthMainLayout>
@@ -153,7 +152,7 @@ const App = () => {
                   
                   <Route path="/orders/:id" element={
                     <AuthWrapper>
-                      <RoleGuard allowedRoles={['admin', 'sales', 'kitchen']}>
+                      <RoleGuard allowedRoles={['admin', 'sales', 'kitchen', 'customer_service']}>
                         <AuthMainLayout>
                           <EditOrderPage />
                         </AuthMainLayout>
@@ -173,7 +172,7 @@ const App = () => {
                   
                   <Route path="/orders/archived" element={
                     <AuthWrapper>
-                      <RoleGuard allowedRoles={['admin', 'sales']}>
+                      <RoleGuard allowedRoles={['admin', 'sales', 'customer_service']}>
                         <AuthMainLayout>
                           <ArchivedOrdersPage />
                         </AuthMainLayout>
