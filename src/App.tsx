@@ -22,7 +22,6 @@ import WorkflowPage from "./pages/WorkflowPage";
 import ArchivedOrdersPage from "./pages/ArchivedOrdersPage";
 import GalleryPage from "./pages/GalleryPage";
 import AuthPage from "./pages/AuthPage";
-import PinAuthPage from "./pages/PinAuthPage";
 import ProfilePage from "./pages/ProfilePage";
 import AdminUsersPage from "./pages/AdminUsersPage";
 import AdminResetPage from "./pages/AdminResetPage";
@@ -89,12 +88,8 @@ const App = () => {
                     </AuthWrapper>
                   } />
                   
-                  {/* PIN-based authentication route */}
-                  <Route path="/pin-login" element={
-                    <AuthWrapper requireAuth={false}>
-                      <PinAuthPage />
-                    </AuthWrapper>
-                  } />
+                  {/* Redirect old PIN login route to regular auth */}
+                  <Route path="/pin-login" element={<Navigate to="/auth" replace />} />
                   
                   {/* Admin reset route - no auth required */}
                   <Route path="/admin-reset" element={

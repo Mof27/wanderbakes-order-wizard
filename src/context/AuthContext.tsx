@@ -36,8 +36,6 @@ interface AuthContextType {
   isAdmin: () => boolean;
   refreshProfile: () => Promise<void>;
   updateProfile: (updates: Partial<UserProfile>) => Promise<{ error: Error | null }>;
-  verifyPin: (userId: string, pin: string) => Promise<boolean>;
-  setUserSession: (userId: string) => Promise<{ success: boolean, error: Error | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -55,7 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!isConfigured) return;
 
     try {
-      console.log("Fetching user data for:", userId);
+      console.log("AuthContext: Fetching user data for:", userId);
       
       // Fetch user profile
       const { data: profileData, error: profileError } = await supabase
@@ -65,9 +63,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .single();
 
       if (profileError) {
-        console.error('Error fetching user profile:', profileError);
+        console.error('AuthContext: Error fetching user profile:', profileError);
       } else if (profileData) {
-        console.log("Profile data fetched:", profileData);
+        console.log("AuthContext: Profile data fetched:", profileData);
         setProfile(profileData as UserProfile);
       }
 
@@ -78,49 +76,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .eq('user_id', userId);
 
       if (rolesError) {
-        console.error('Error fetching user roles:', rolesError);
-        // Try to get roles from localStorage as fallback
-        tryLoadRolesFromLocalStorage(userId);
+        console.error('AuthContext: Error fetching user roles:', rolesError);
+        setRoles([]);
       } else if (rolesData) {
         const userRoles = rolesData.map(r => r.role);
-        console.log("Roles fetched from database:", userRoles);
+        console.log("AuthContext: Roles fetched from database:", userRoles);
         setRoles(userRoles);
-        
-        // Store roles in localStorage as a backup method
-        localStorage.setItem("user_roles", JSON.stringify(userRoles));
       } else {
-        // Try to get roles from localStorage as fallback
-        tryLoadRolesFromLocalStorage(userId);
+        setRoles([]);
       }
     } catch (error) {
-      console.error('Error fetching user data:', error);
-      tryLoadRolesFromLocalStorage(userId);
-    }
-  };
-
-  // Helper to load roles from localStorage
-  const tryLoadRolesFromLocalStorage = (userId: string) => {
-    try {
-      // Try to get roles specific to this user first
-      const pinAuthUserId = localStorage.getItem("pin_auth_user_id");
-      const pinAuthRoles = localStorage.getItem("pin_auth_roles");
-      
-      if (pinAuthUserId === userId && pinAuthRoles) {
-        const parsedRoles = JSON.parse(pinAuthRoles);
-        console.log("Loaded pin auth roles from localStorage:", parsedRoles);
-        setRoles(parsedRoles);
-        return;
-      }
-      
-      // Fall back to generic roles storage
-      const storedRoles = localStorage.getItem("user_roles");
-      if (storedRoles) {
-        const parsedRoles = JSON.parse(storedRoles);
-        console.log("Loaded generic roles from localStorage:", parsedRoles);
-        setRoles(parsedRoles);
-      }
-    } catch (e) {
-      console.error("Error parsing stored roles:", e);
+      console.error('AuthContext: Error fetching user data:', error);
+      setRoles([]);
     }
   };
 
@@ -134,9 +101,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // Get initial session and set up subscription
+    console.log("AuthContext: Initializing authentication...");
+
+    // Set up auth state listener first
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        console.log("AuthContext: Auth state change:", event, session?.user?.id);
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        // If logged in, fetch user data with a small delay to avoid deadlocks
+        if (session?.user) {
+          setTimeout(() => {
+            fetchUserData(session.user.id);
+          }, 0);
+        } else {
+          // Clear profile and roles when logged out
+          setProfile(null);
+          setRoles([]);
+        }
+        
+        setLoading(false);
+      }
+    );
+
+    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log("Initial session check:", session?.user?.id);
+      console.log("AuthContext: Initial session check:", session?.user?.id);
       setSession(session);
       setUser(session?.user ?? null);
       
@@ -147,126 +138,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     });
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log("Auth state change:", event, session?.user?.id);
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        // If logged in, fetch user data
-        if (session?.user) {
-          // Use a timeout to avoid potential deadlocks with Supabase client
-          setTimeout(() => {
-            fetchUserData(session.user.id);
-          }, 0);
-        } else {
-          // Clear profile and roles when logged out
-          setProfile(null);
-          setRoles([]);
-          // Clear all auth-related localStorage items
-          localStorage.removeItem("user_roles");
-          localStorage.removeItem("pin_auth_user_id");
-          localStorage.removeItem("pin_auth_timestamp");
-          localStorage.removeItem("pin_auth_roles");
-        }
-        
-        setLoading(false);
-      }
-    );
-
     return () => {
       subscription.unsubscribe();
     };
   }, [isConfigured]);
-
-  // Verify PIN for user using the Edge Function
-  const verifyPin = async (userId: string, pin: string): Promise<boolean> => {
-    if (!isConfigured) {
-      return false;
-    }
-
-    try {
-      console.log("AuthContext: Calling PIN auth Edge Function for user:", userId);
-      
-      const { data, error } = await supabase.functions.invoke('pin-auth', {
-        body: { userId, pin }
-      });
-
-      if (error) {
-        console.error('AuthContext: Edge Function error:', error);
-        return false;
-      }
-
-      if (!data.success) {
-        console.log("AuthContext: PIN verification failed:", data.message);
-        return false;
-      }
-
-      console.log("AuthContext: PIN verified successfully, session data:", data.session);
-      return true;
-    } catch (error) {
-      console.error('AuthContext: Error in PIN verification:', error);
-      return false;
-    }
-  };
-
-  // Set a user session using the Edge Function for PIN-based auth
-  const setUserSession = async (userId: string) => {
-    if (!isConfigured) {
-      return { success: false, error: new Error('Supabase is not configured') };
-    }
-
-    try {
-      console.log("AuthContext: Setting up user session via Edge Function for:", userId);
-      
-      // The Edge Function should have already been called via verifyPin
-      // But we need to establish the session properly on the client side
-      
-      // Fetch the user profile and roles to store locally
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-      
-      if (profileError) {
-        console.error('AuthContext: Error fetching profile:', profileError);
-        return { success: false, error: profileError };
-      }
-      
-      // Fetch roles
-      const { data: rolesData, error: rolesError } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId);
-        
-      if (rolesError) {
-        console.error('AuthContext: Error fetching roles:', rolesError);
-      }
-      
-      const userRoles = rolesData?.map(r => r.role) || [];
-      console.log("AuthContext: Fetched user roles for PIN auth:", userRoles);
-      
-      // Set the local state
-      setProfile(profile);
-      setRoles(userRoles);
-      
-      // Store backup data in localStorage
-      localStorage.setItem("user_roles", JSON.stringify(userRoles));
-      localStorage.setItem("pin_auth_user_id", userId);
-      localStorage.setItem("pin_auth_timestamp", Date.now().toString());
-      localStorage.setItem("pin_auth_roles", JSON.stringify(userRoles));
-      
-      // The session should already be established by the Edge Function
-      // We just need to wait for the auth state change event
-      
-      return { success: true, error: null };
-    } catch (error) {
-      console.error('AuthContext: Error setting user session:', error);
-      return { success: false, error: error as Error };
-    }
-  };
   
   // Refresh user profile
   const refreshProfile = async () => {
@@ -283,14 +158,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
+      console.log("AuthContext: Attempting sign in for:", email);
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       
       if (!error) {
+        console.log("AuthContext: Sign in successful");
         toast.success('Signed in successfully!');
+      } else {
+        console.error("AuthContext: Sign in error:", error.message);
       }
       
       return { error };
     } catch (error) {
+      console.error("AuthContext: Unexpected sign in error:", error);
       return { error: error as Error };
     }
   };
@@ -303,6 +183,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
+      console.log("AuthContext: Attempting sign up for:", email);
+      
       // Prepare user metadata
       const userData = {
         first_name,
@@ -319,50 +201,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       
       if (!error) {
-        toast.success('Account created successfully! Verify your email.');
+        console.log("AuthContext: Sign up successful");
+        toast.success('Account created successfully! Check your email for verification.');
+      } else {
+        console.error("AuthContext: Sign up error:", error.message);
       }
       
       return { error };
     } catch (error) {
+      console.error("AuthContext: Unexpected sign up error:", error);
       return { error: error as Error };
     }
   };
 
-  // Enhanced sign out with complete cleanup
+  // Sign out
   const signOut = async () => {
     if (!isConfigured) {
       return;
     }
 
     try {
-      console.log("AuthContext: Starting complete logout process...");
-      
-      // Clear PIN auth if it exists
-      localStorage.removeItem('pin_auth_user_id');
-      localStorage.removeItem('pin_auth_timestamp');
-      localStorage.removeItem('pin_auth_roles');
-      localStorage.removeItem('user_roles');
-      
-      // Clear any other auth-related items
-      const keysToRemove = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && (key.includes('auth') || key.includes('supabase'))) {
-          keysToRemove.push(key);
-        }
-      }
-      keysToRemove.forEach(key => localStorage.removeItem(key));
+      console.log("AuthContext: Starting logout process...");
       
       // Standard Supabase signout
       await supabase.auth.signOut();
       
-      // Force clear state immediately
+      // Clear state
       setUser(null);
       setSession(null);
       setProfile(null);
       setRoles([]);
       
-      console.log("AuthContext: Complete logout finished");
+      console.log("AuthContext: Logout completed");
       toast.info('Signed out successfully');
     } catch (error) {
       console.error('AuthContext: Error signing out:', error);
@@ -426,9 +296,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     hasRole,
     isAdmin,
     refreshProfile,
-    updateProfile,
-    verifyPin,
-    setUserSession
+    updateProfile
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

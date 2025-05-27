@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Mail, Lock, User, UserPlus } from "lucide-react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -69,25 +69,31 @@ const AuthPage = () => {
   });
 
   // Redirect if already authenticated
-  if (user) {
-    navigate("/");
-    return null;
-  }
+  useEffect(() => {
+    if (user) {
+      console.log("User already authenticated, redirecting to dashboard");
+      navigate("/");
+    }
+  }, [user, navigate]);
 
   const handleSignIn = async (data: LoginValues) => {
     setLoading(true);
     
     try {
+      console.log("Attempting sign in for:", data.email);
       const { error } = await signIn(data.email, data.password);
       
       if (error) {
+        console.error("Sign in error:", error.message);
         toast.error("Failed to sign in: " + error.message);
       } else {
+        console.log("Sign in successful, redirecting to dashboard");
+        toast.success("Welcome back!");
         navigate("/");
       }
     } catch (error) {
+      console.error("Unexpected sign in error:", error);
       toast.error("An unexpected error occurred");
-      console.error(error);
     } finally {
       setLoading(false);
     }
@@ -97,6 +103,7 @@ const AuthPage = () => {
     setLoading(true);
     
     try {
+      console.log("Attempting sign up for:", data.email);
       const { error } = await signUp({
         email: data.email,
         password: data.password,
@@ -105,14 +112,16 @@ const AuthPage = () => {
       });
       
       if (error) {
+        console.error("Sign up error:", error.message);
         toast.error("Failed to sign up: " + error.message);
       } else {
-        toast.success("Signed up successfully! Check your email for verification.");
+        console.log("Sign up successful");
+        toast.success("Account created successfully! Check your email for verification.");
         loginForm.setValue("email", data.email);
       }
     } catch (error) {
+      console.error("Unexpected sign up error:", error);
       toast.error("An unexpected error occurred");
-      console.error(error);
     } finally {
       setLoading(false);
     }
@@ -123,10 +132,15 @@ const AuthPage = () => {
     navigate("/");
   };
 
+  // Don't render anything if user is already authenticated
+  if (user) {
+    return null;
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center p-4">
       <Helmet>
-        <title>Sign In | WanderBakes</title>
+        <title>WanderBakes - Employee Login</title>
       </Helmet>
       
       <Card className="w-full max-w-md">
@@ -142,7 +156,10 @@ const AuthPage = () => {
 
         {!isConfigured ? (
           <>
-            <CardHeader>
+            <CardHeader className="text-center">
+              <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                <User className="h-6 w-6 text-primary" />
+              </div>
               <CardTitle>Demo Login</CardTitle>
               <CardDescription>
                 This is a demo version as Supabase is not configured
@@ -165,10 +182,13 @@ const AuthPage = () => {
               <TabsContent value="sign-in">
                 <Form {...loginForm}>
                   <form onSubmit={loginForm.handleSubmit(handleSignIn)}>
-                    <CardHeader>
-                      <CardTitle>Sign In</CardTitle>
+                    <CardHeader className="text-center">
+                      <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                        <Mail className="h-6 w-6 text-primary" />
+                      </div>
+                      <CardTitle>Welcome Back</CardTitle>
                       <CardDescription>
-                        Enter your credentials to access your account
+                        Sign in to your WanderBakes employee account
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
@@ -177,11 +197,11 @@ const AuthPage = () => {
                         name="email"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Email</FormLabel>
+                            <FormLabel>Email Address</FormLabel>
                             <FormControl>
                               <Input 
                                 type="email" 
-                                placeholder="Email" 
+                                placeholder="your.email@example.com" 
                                 {...field} 
                               />
                             </FormControl>
@@ -198,7 +218,7 @@ const AuthPage = () => {
                             <FormControl>
                               <Input 
                                 type="password" 
-                                placeholder="Password" 
+                                placeholder="Enter your password" 
                                 {...field} 
                               />
                             </FormControl>
@@ -211,11 +231,9 @@ const AuthPage = () => {
                       <Button type="submit" className="w-full" disabled={loading}>
                         {loading ? "Signing in..." : "Sign In"}
                       </Button>
-                      <div className="text-center text-sm">
-                        <Link to="/pin-login" className="text-primary hover:underline">
-                          Use PIN Login Instead
-                        </Link>
-                      </div>
+                      <p className="text-center text-sm text-muted-foreground">
+                        WanderBakes Employee Portal
+                      </p>
                     </CardFooter>
                   </form>
                 </Form>
@@ -224,10 +242,13 @@ const AuthPage = () => {
               <TabsContent value="sign-up">
                 <Form {...signupForm}>
                   <form onSubmit={signupForm.handleSubmit(handleSignUp)}>
-                    <CardHeader>
-                      <CardTitle>Sign Up</CardTitle>
+                    <CardHeader className="text-center">
+                      <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                        <UserPlus className="h-6 w-6 text-primary" />
+                      </div>
+                      <CardTitle>Create Account</CardTitle>
                       <CardDescription>
-                        Create a new account to get started
+                        Create a new WanderBakes employee account
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
@@ -239,7 +260,7 @@ const AuthPage = () => {
                             <FormItem>
                               <FormLabel>First Name</FormLabel>
                               <FormControl>
-                                <Input placeholder="First Name" {...field} />
+                                <Input placeholder="John" {...field} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -252,7 +273,7 @@ const AuthPage = () => {
                             <FormItem>
                               <FormLabel>Last Name</FormLabel>
                               <FormControl>
-                                <Input placeholder="Last Name" {...field} />
+                                <Input placeholder="Doe" {...field} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -265,11 +286,11 @@ const AuthPage = () => {
                         name="email"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Email</FormLabel>
+                            <FormLabel>Email Address</FormLabel>
                             <FormControl>
                               <Input 
                                 type="email" 
-                                placeholder="Email" 
+                                placeholder="john.doe@example.com" 
                                 {...field} 
                               />
                             </FormControl>
@@ -287,7 +308,7 @@ const AuthPage = () => {
                             <FormControl>
                               <Input 
                                 type="password" 
-                                placeholder="Password" 
+                                placeholder="Create a strong password" 
                                 {...field} 
                               />
                             </FormControl>
@@ -305,7 +326,7 @@ const AuthPage = () => {
                             <FormControl>
                               <Input 
                                 type="password" 
-                                placeholder="Confirm Password" 
+                                placeholder="Confirm your password" 
                                 {...field} 
                               />
                             </FormControl>
@@ -316,13 +337,11 @@ const AuthPage = () => {
                     </CardContent>
                     <CardFooter className="flex flex-col space-y-4">
                       <Button type="submit" className="w-full" disabled={loading}>
-                        {loading ? "Signing up..." : "Sign Up"}
+                        {loading ? "Creating account..." : "Create Account"}
                       </Button>
-                      <div className="text-center text-sm">
-                        <Link to="/pin-login" className="text-primary hover:underline">
-                          Use PIN Login Instead
-                        </Link>
-                      </div>
+                      <p className="text-center text-sm text-muted-foreground">
+                        Contact admin for account approval
+                      </p>
                     </CardFooter>
                   </form>
                 </Form>
