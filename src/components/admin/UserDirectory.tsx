@@ -6,7 +6,6 @@ import { User, Users, Info, Plus } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 
 interface StaticUser {
-  id: string;
   display_name: string;
   first_name?: string;
   last_name?: string;
@@ -20,7 +19,6 @@ const UserDirectory = () => {
   // Static user list based on known database users
   const staticUsers: StaticUser[] = [
     {
-      id: "3af8c4fb-1ed3-4c43-ab6d-14f6ab41162f",
       display_name: "RAI - SUPER ADMIN",
       first_name: "RAI",
       last_name: "SUPER ADMIN",
@@ -28,12 +26,11 @@ const UserDirectory = () => {
       roles: ["admin"]
     },
     {
-      id: "user-id-wanderbakes",
       display_name: "WanderBakes Admin",
       first_name: "WanderBakes",
       last_name: "Admin",
-      created_at: "2025-01-20T00:00:00Z",
-      roles: ["admin"]
+      created_at: "2025-05-27T00:00:00Z",
+      roles: ["customer_service"]
     }
   ];
 
@@ -100,8 +97,8 @@ const UserDirectory = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {staticUsers.map((user) => (
-              <div key={user.id} className="p-4 border rounded-lg bg-gray-50">
+            {staticUsers.map((user, index) => (
+              <div key={index} className="p-4 border rounded-lg bg-gray-50">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -133,7 +130,6 @@ const UserDirectory = () => {
                   </div>
                   
                   <div className="text-sm text-muted-foreground space-y-1 ml-11">
-                    <p><strong>ID:</strong> {user.id}</p>
                     <p><strong>Created:</strong> {formatDate(user.created_at)}</p>
                     {user.first_name && (
                       <p><strong>First Name:</strong> {user.first_name}</p>
