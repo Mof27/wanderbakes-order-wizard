@@ -578,28 +578,40 @@ const OrderForm = ({ order, settings, defaultTab = "required", onStatusChange, r
   };
 
   // Create a complete order object for printing
-  const getCompleteOrderData = (): Partial<Order> => {
-    return {
-      ...(order || {}),
-      id: order?.id,
+  const getCompleteOrderData = (): Order | undefined => {
+    // Only return a complete order if we have all required fields for an Order
+    if (!customer || !deliveryDate) {
+      return undefined;
+    }
+    
+    const baseOrder: Order = {
+      id: order?.id || `temp_${Date.now()}`, // Provide a temporary ID for new orders
       customer,
-      orderDate,
+      status: order?.status || 'incomplete',
+      orderDate: orderDate || new Date(),
       deliveryDate,
       cakeFlavor,
-      ingredients,
+      ingredients: ingredients || [],
       tierDetails: formData.cakeTier > 1 ? tierDetails.slice(0, formData.cakeTier) : undefined,
       customShape: formData.cakeShape === "Custom" ? formData.customShape : undefined,
-      deliveryMethod,
-      deliveryTimeSlot,
-      deliveryPrice,
+      deliveryMethod: deliveryMethod || 'flat-rate',
+      deliveryTimeSlot: deliveryTimeSlot || 'slot1',
+      deliveryPrice: deliveryPrice || 0,
+      useSameFlavor,
+      useSameCover,
+      packingItems: packingItems || [],
       // Add new fields for Delivery & Data Recap
       finishedCakePhotos,
       deliveryDocumentationPhotos,
       actualDeliveryTime,
       customerFeedback,
       orderTags,
+      createdAt: order?.createdAt || new Date(),
+      updatedAt: order?.updatedAt || new Date(),
       ...formData,
     };
+    
+    return baseOrder;
   };
 
   // Find the selected address for display

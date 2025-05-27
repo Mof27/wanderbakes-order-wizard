@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { OrderLogEvent, CakeRevision } from "@/types";
 import { formatDistanceToNow, format, differenceInMinutes, differenceInHours, differenceInDays } from "date-fns";
@@ -124,39 +125,37 @@ const OrderLogSection: React.FC<OrderLogSectionProps> = ({
         return <Info className="h-4 w-4" />;
       case 'print':
         return <FileText className="h-4 w-4" />;
-      case 'driver-assigned':
-        return log.note || "Driver assigned";
       default:
         return <Info className="h-4 w-4" />;
     }
   };
   
   // Format log message based on log type
-  const formatLogMessage = (log: OrderLogEvent) => {
-    switch (log.type) {
+  const formatLogMessage = (logEntry: OrderLogEvent) => {
+    switch (logEntry.type) {
       case 'status-change':
         return (
           <div className="flex items-center">
             Status changed from{" "}
-            {log.previousStatus && <StatusBadge status={log.previousStatus} className="mx-1" />}
+            {logEntry.previousStatus && <StatusBadge status={logEntry.previousStatus} className="mx-1" />}
             {" to "}
-            {log.newStatus && <StatusBadge status={log.newStatus} className="mx-1" />}
+            {logEntry.newStatus && <StatusBadge status={logEntry.newStatus} className="mx-1" />}
           </div>
         );
       case 'photo-upload':
         return "Photos uploaded";
       case 'print':
-        return log.note || "Document printed";
+        return logEntry.note || "Document printed";
       case 'note-added':
-        return `Note added: ${log.note}`;
+        return `Note added: ${logEntry.note}`;
       case 'delivery-update':
         return "Delivery information updated";
       case 'feedback-added':
         return "Customer feedback added";
       case 'driver-assigned':
-        return log.note || "Driver assigned";
+        return logEntry.note || "Driver assigned";
       default:
-        return log.note || "Action performed";
+        return logEntry.note || "Action performed";
     }
   };
 
@@ -200,20 +199,20 @@ const OrderLogSection: React.FC<OrderLogSectionProps> = ({
             </TableHeader>
             <TableBody>
               {filteredLogs.length > 0 ? (
-                filteredLogs.map((log) => (
-                  <TableRow key={log.id}>
+                filteredLogs.map((logEntry) => (
+                  <TableRow key={logEntry.id}>
                     <TableCell className="font-mono text-xs">
-                      {format(new Date(log.timestamp), 'yyyy-MM-dd HH:mm:ss')}
+                      {format(new Date(logEntry.timestamp), 'yyyy-MM-dd HH:mm:ss')}
                     </TableCell>
-                    <TableCell>{formatLogMessage(log)}</TableCell>
+                    <TableCell>{formatLogMessage(logEntry)}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {log.user || "System"}
+                      {logEntry.user || "System"}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end">
-                        {getLogIcon(log.type)}
+                        {getLogIcon(logEntry.type)}
                         <span className="ml-2 text-xs text-muted-foreground">
-                          {log.type.replace('-', ' ')}
+                          {logEntry.type.replace('-', ' ')}
                         </span>
                       </div>
                     </TableCell>

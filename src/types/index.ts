@@ -1,3 +1,4 @@
+
 export type Address = {
   id: string;
   text: string;
@@ -65,6 +66,9 @@ export type DeliveryMethod = 'flat-rate' | 'lalamove' | 'self-pickup';
 export type DriverType = 'driver-1' | 'driver-2' | '3rd-party';
 
 export type FlatRateTimeSlot = 'slot1' | 'slot2' | 'slot3';
+
+// Add missing DateRange type
+export type DateRange = [Date | null, Date | null];
 
 // New type for delivery assignment
 export interface DeliveryAssignment {

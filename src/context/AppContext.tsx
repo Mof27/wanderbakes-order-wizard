@@ -15,6 +15,9 @@ interface AppContextType {
   deleteOrder: (id: string) => Promise<void>;
   refreshOrders: () => Promise<void>;
   refreshCustomers: () => Promise<void>;
+  addCustomer: (customer: Omit<Customer, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Customer>;
+  updateCustomer: (customer: Customer) => Promise<Customer>;
+  findCustomerByWhatsApp: (whatsappNumber: string) => Customer | undefined;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -128,6 +131,34 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     }
   };
 
+  const addCustomer = async (customerData: Omit<Customer, 'id' | 'createdAt' | 'updatedAt'>) => {
+    try {
+      const newCustomer = await dataService.customers.create(customerData);
+      setCustomers(prevCustomers => [newCustomer, ...prevCustomers]);
+      return newCustomer;
+    } catch (error) {
+      console.error('Failed to add customer:', error);
+      throw error;
+    }
+  };
+
+  const updateCustomer = async (updatedCustomer: Customer) => {
+    try {
+      const result = await dataService.customers.update(updatedCustomer.id, updatedCustomer);
+      setCustomers(prevCustomers => 
+        prevCustomers.map(customer => customer.id === updatedCustomer.id ? result : customer)
+      );
+      return result;
+    } catch (error) {
+      console.error('Failed to update customer:', error);
+      throw error;
+    }
+  };
+
+  const findCustomerByWhatsApp = (whatsappNumber: string): Customer | undefined => {
+    return customers.find(customer => customer.whatsappNumber === whatsappNumber);
+  };
+
   const value: AppContextType = {
     orders,
     customers,
@@ -138,6 +169,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     deleteOrder,
     refreshOrders,
     refreshCustomers,
+    addCustomer,
+    updateCustomer,
+    findCustomerByWhatsApp,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
