@@ -1,238 +1,152 @@
 
-import React, { createContext, useState, useContext, ReactNode, useEffect } from "react";
-import { Customer, FilterOption, Order, ViewMode } from "../types";
-import { statusFilterOptions, timeFilterOptions } from "../data/mockData";
-import { toast } from "@/components/ui/sonner";
-import { dataServiceManager } from "@/services/DataServiceManager";
-import { useDataService } from "@/hooks/useDataService";
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { Order, Customer, DateRange, OrderStatus } from '@/types';
+import { dataService } from '@/services';
+import { toast } from 'sonner';
+import { useAuth } from './AuthContext';
 
-interface AppContextProps {
-  customers: Customer[];
+interface AppContextType {
   orders: Order[];
-  activeStatusFilter: FilterOption;
-  activeTimeFilter: FilterOption;
-  viewMode: ViewMode;
-  searchQuery: string;
-  dateRange: [Date | null, Date | null];
-  activeStatusFilters: FilterOption[];
-  addCustomer: (customer: Omit<Customer, 'id' | 'createdAt'>) => Promise<Customer>;
-  updateCustomer: (customer: Customer) => Promise<Customer>;
-  findCustomerByWhatsApp: (whatsappNumber: string) => Promise<Customer | undefined>;
-  addOrder: (order: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Order>;
+  customers: Customer[];
+  dateRange: DateRange;
+  setDateRange: (range: DateRange) => void;
   updateOrder: (order: Order) => Promise<void>;
-  deleteOrder: (orderId: string) => Promise<void>;
-  setActiveStatusFilter: (filter: FilterOption) => void;
-  setActiveTimeFilter: (filter: FilterOption) => void;
-  setViewMode: (mode: ViewMode) => void;
-  setSearchQuery: (query: string) => void;
-  setDateRange: (range: [Date | null, Date | null]) => void;
-  setActiveStatusFilters: (filters: FilterOption[]) => void;
-  resetFilters: () => void;
-  filteredOrders: Order[];
-  isLoading: boolean;
-  getOrderById: (id: string) => Order | undefined;
+  addOrder: (order: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Order>;
+  deleteOrder: (id: string) => Promise<void>;
+  refreshOrders: () => Promise<void>;
+  refreshCustomers: () => Promise<void>;
 }
 
-const AppContext = createContext<AppContextProps | undefined>(undefined);
+const AppContext = createContext<AppContextType | undefined>(undefined);
 
-export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { isReady } = useDataService();
-  const [customers, setCustomers] = useState<Customer[]>([]);
+interface AppProviderProps {
+  children: ReactNode;
+}
+
+export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
+  const { profile } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
-  const [activeStatusFilter, setActiveStatusFilter] = useState<FilterOption>(statusFilterOptions[0]);
-  const [activeTimeFilter, setActiveTimeFilter] = useState<FilterOption>(timeFilterOptions[0]);
-  const [activeStatusFilters, setActiveStatusFilters] = useState<FilterOption[]>([statusFilterOptions[0]]);
-  const [viewMode, setViewMode] = useState<ViewMode>('list');
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([null, null]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [dateRange, setDateRange] = useState<DateRange>([null, null]);
 
-  // Load initial data when data service is ready
-  useEffect(() => {
-    if (!isReady) {
-      console.log("AppContext: Data service not ready yet, waiting...");
-      return;
+  // Get current user display name for logging
+  const getCurrentUserDisplayName = (): string => {
+    if (!profile) {
+      return "System";
     }
+    return profile.display_name || profile.first_name || "Unknown User";
+  };
 
-    const loadInitialData = async () => {
+  // Load initial data
+  useEffect(() => {
+    const loadData = async () => {
       try {
-        console.log("AppContext: Loading initial data...");
-        const customersData = await dataServiceManager.customers.getAll();
-        const ordersData = await dataServiceManager.orders.getAll();
-        
-        setCustomers(customersData);
-        setOrders(ordersData);
-        console.log("AppContext: Initial data loaded successfully");
+        await Promise.all([refreshOrders(), refreshCustomers()]);
       } catch (error) {
-        console.error("AppContext: Failed to load initial data:", error);
-        toast.error("Failed to load data");
-      } finally {
-        setIsLoading(false);
+        console.error('Failed to load initial data:', error);
+        toast.error('Failed to load data');
       }
     };
-    
-    loadInitialData();
-  }, [isReady]);
 
-  // Reset all filters to default values
-  const resetFilters = () => {
-    setActiveStatusFilter(statusFilterOptions[0]);
-    setActiveTimeFilter(timeFilterOptions[0]);
-    setActiveStatusFilters([statusFilterOptions[0]]);
-    setDateRange([null, null]);
-    setSearchQuery('');
-  };
+    loadData();
+  }, []);
 
-  // Customer functions
-  const addCustomer = async (customerData: Omit<Customer, 'id' | 'createdAt'>) => {
+  const refreshOrders = async () => {
     try {
-      const newCustomer = await dataServiceManager.customers.create(customerData);
-      setCustomers(prevCustomers => [...prevCustomers, newCustomer]);
-      toast.success("Customer added successfully");
-      return newCustomer;
+      const fetchedOrders = await dataService.orders.getAll();
+      setOrders(fetchedOrders);
     } catch (error) {
-      console.error("Failed to add customer:", error);
-      toast.error("Failed to add customer");
+      console.error('Failed to fetch orders:', error);
       throw error;
     }
   };
 
-  const updateCustomer = async (updatedCustomer: Customer) => {
+  const refreshCustomers = async () => {
     try {
-      const result = await dataServiceManager.customers.update(updatedCustomer.id, updatedCustomer);
-      setCustomers(prevCustomers => 
-        prevCustomers.map(customer => 
-          customer.id === updatedCustomer.id ? result : customer
-        )
-      );
-      toast.success("Customer updated successfully");
-      return result;
+      const fetchedCustomers = await dataService.customers.getAll();
+      setCustomers(fetchedCustomers);
     } catch (error) {
-      console.error("Failed to update customer:", error);
-      toast.error("Failed to update customer");
-      throw error;
-    }
-  };
-
-  const findCustomerByWhatsApp = async (whatsappNumber: string) => {
-    return await dataServiceManager.customers.findByWhatsApp(whatsappNumber);
-  };
-
-  // Order functions
-  const addOrder = async (orderData: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>) => {
-    try {
-      const newOrder = await dataServiceManager.orders.create(orderData);
-      setOrders(prevOrders => [newOrder, ...prevOrders]);
-      toast.success("Order created successfully");
-      return newOrder;
-    } catch (error) {
-      console.error("Failed to add order:", error);
-      toast.error("Failed to add order");
+      console.error('Failed to fetch customers:', error);
       throw error;
     }
   };
 
   const updateOrder = async (updatedOrder: Order) => {
     try {
-      await dataServiceManager.orders.update(updatedOrder.id, updatedOrder);
-      setOrders(prevOrders =>
-        prevOrders.map(order => {
-          if (order.id === updatedOrder.id) {
-            return { ...updatedOrder, updatedAt: new Date() };
-          }
-          return order;
-        })
-      );
-      toast.success("Order updated successfully");
-    } catch (error) {
-      console.error("Failed to update order:", error);
-      toast.error("Failed to update order");
-      throw error;
-    }
-  };
-
-  const deleteOrder = async (orderId: string) => {
-    try {
-      await dataServiceManager.orders.delete(orderId);
-      setOrders(prevOrders => prevOrders.filter(order => order.id !== orderId));
-      toast.success("Order deleted successfully");
-    } catch (error) {
-      console.error("Failed to delete order:", error);
-      toast.error("Failed to delete order");
-      throw error;
-    }
-  };
-
-  // Get a specific order by ID
-  const getOrderById = (id: string): Order | undefined => {
-    return orders.find(order => order.id === id);
-  };
-
-  // Filter orders
-  const filteredOrders = orders.filter((order) => {
-    // Search query filtering
-    if (searchQuery && !order.id.toLowerCase().includes(searchQuery.toLowerCase()) && 
-        !order.customer.name.toLowerCase().includes(searchQuery.toLowerCase())) {
-      return false;
-    }
-
-    // Status filtering - now using single-select status filter
-    if (activeStatusFilter.value !== 'all' && order.status !== activeStatusFilter.value) {
-      return false;
-    }
-
-    // Date range filtering
-    if (dateRange[0] && dateRange[1]) {
-      const orderDate = new Date(order.createdAt);
-      const startDate = new Date(dateRange[0]);
-      const endDate = new Date(dateRange[1]);
+      // Check if status is changing to add user tracking
+      const existingOrder = orders.find(o => o.id === updatedOrder.id);
+      let orderToUpdate = updatedOrder;
       
-      // Set time to beginning and end of day for proper comparison
-      startDate.setHours(0, 0, 0, 0);
-      endDate.setHours(23, 59, 59, 999);
-      
-      if (orderDate < startDate || orderDate > endDate) {
-        return false;
+      if (existingOrder && existingOrder.status !== updatedOrder.status) {
+        // Status is changing, add user information to the log
+        const orderLogs = [...(updatedOrder.orderLogs || [])];
+        
+        // Find the most recent status change log entry
+        const recentStatusLog = orderLogs
+          .filter(log => log.type === 'status-change')
+          .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0];
+        
+        // Add user info to the most recent status change log if it doesn't have it
+        if (recentStatusLog && !recentStatusLog.user) {
+          recentStatusLog.user = getCurrentUserDisplayName();
+        }
+        
+        orderToUpdate = {
+          ...updatedOrder,
+          orderLogs
+        };
       }
+      
+      const result = await dataService.orders.update(updatedOrder.id, orderToUpdate);
+      setOrders(prevOrders => 
+        prevOrders.map(order => order.id === updatedOrder.id ? result : order)
+      );
+    } catch (error) {
+      console.error('Failed to update order:', error);
+      throw error;
     }
+  };
 
-    return true;
-  });
+  const addOrder = async (orderData: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>) => {
+    try {
+      const newOrder = await dataService.orders.create(orderData);
+      setOrders(prevOrders => [newOrder, ...prevOrders]);
+      return newOrder;
+    } catch (error) {
+      console.error('Failed to add order:', error);
+      throw error;
+    }
+  };
 
-  const value = {
-    customers,
+  const deleteOrder = async (id: string) => {
+    try {
+      await dataService.orders.delete(id);
+      setOrders(prevOrders => prevOrders.filter(order => order.id !== id));
+    } catch (error) {
+      console.error('Failed to delete order:', error);
+      throw error;
+    }
+  };
+
+  const value: AppContextType = {
     orders,
-    activeStatusFilter,
-    activeTimeFilter,
-    viewMode,
-    searchQuery,
+    customers,
     dateRange,
-    activeStatusFilters,
-    addCustomer,
-    updateCustomer,
-    findCustomerByWhatsApp,
-    addOrder,
-    updateOrder,
-    deleteOrder,
-    setActiveStatusFilter,
-    setActiveTimeFilter,
-    setViewMode,
-    setSearchQuery,
     setDateRange,
-    setActiveStatusFilters,
-    resetFilters,
-    filteredOrders,
-    isLoading,
-    getOrderById,
+    updateOrder,
+    addOrder,
+    deleteOrder,
+    refreshOrders,
+    refreshCustomers,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };
 
-export const useApp = (): AppContextProps => {
+export const useApp = () => {
   const context = useContext(AppContext);
   if (context === undefined) {
-    throw new Error("useApp must be used within an AppProvider");
+    throw new Error('useApp must be used within an AppProvider');
   }
   return context;
 };

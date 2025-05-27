@@ -5,8 +5,8 @@ export interface OrderRepository extends BaseRepository<Order> {
   getByStatus(status: OrderStatus): Promise<Order[]>;
   getByCustomerId(customerId: string): Promise<Order[]>;
   getByTimeFrame(timeFrame: 'today' | 'this-week' | 'this-month'): Promise<Order[]>;
-  updatePrintHistory(orderId: string, printEvent: PrintEvent): Promise<Order>;
-  addOrderLog(orderId: string, logEvent: Omit<OrderLogEvent, 'id'>): Promise<Order>;
+  updatePrintHistory(orderId: string, printEvent: PrintEvent, userName?: string): Promise<Order>;
+  addOrderLog(orderId: string, logEvent: Omit<OrderLogEvent, 'id'>, userName?: string): Promise<Order>;
   addRevision(orderId: string, revision: Omit<CakeRevision, 'id'>): Promise<Order>;
   assignDriver(orderId: string, assignment: Omit<DeliveryAssignment, 'assignedAt'>): Promise<Order>; // Method for driver assignment
 }
@@ -116,6 +116,10 @@ export class MockOrderRepository implements OrderRepository {
         type: 'status-change',
         previousStatus: existingOrder.status,
         newStatus: order.status,
+        user: order.orderLogs?.find(log => 
+          log.type === 'status-change' && 
+          log.newStatus === order.status
+        )?.user || "System"
       });
       
       // Include updated logs in the order update
@@ -131,7 +135,7 @@ export class MockOrderRepository implements OrderRepository {
     return this.orders[index];
   }
 
-  async updatePrintHistory(orderId: string, printEvent: PrintEvent): Promise<Order> {
+  async updatePrintHistory(orderId: string, printEvent: PrintEvent, userName?: string): Promise<Order> {
     const index = this.orders.findIndex(o => o.id === orderId);
     if (index === -1) throw new Error(`Order with id ${orderId} not found`);
     
@@ -145,6 +149,7 @@ export class MockOrderRepository implements OrderRepository {
       timestamp: new Date(),
       type: 'print',
       note: `Printed ${printEvent.type}`,
+      user: userName || "System",
       metadata: { printEvent }
     });
     
@@ -158,7 +163,7 @@ export class MockOrderRepository implements OrderRepository {
     return this.orders[index];
   }
   
-  async addOrderLog(orderId: string, logEvent: Omit<OrderLogEvent, 'id'>): Promise<Order> {
+  async addOrderLog(orderId: string, logEvent: Omit<OrderLogEvent, 'id'>, userName?: string): Promise<Order> {
     const index = this.orders.findIndex(o => o.id === orderId);
     if (index === -1) throw new Error(`Order with id ${orderId} not found`);
     
@@ -168,10 +173,11 @@ export class MockOrderRepository implements OrderRepository {
     // Get existing logs or initialize empty array
     const orderLogs = [...(this.orders[index].orderLogs || [])];
     
-    // Add new log event
+    // Add new log event with user information
     orderLogs.push({
       ...logEvent,
-      id: logId
+      id: logId,
+      user: userName || logEvent.user || "System"
     });
     
     // Update order with new logs

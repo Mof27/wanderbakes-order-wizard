@@ -124,6 +124,8 @@ const OrderLogSection: React.FC<OrderLogSectionProps> = ({
         return <Info className="h-4 w-4" />;
       case 'print':
         return <FileText className="h-4 w-4" />;
+      case 'driver-assigned':
+        return log.note || "Driver assigned";
       default:
         return <Info className="h-4 w-4" />;
     }
@@ -151,6 +153,8 @@ const OrderLogSection: React.FC<OrderLogSectionProps> = ({
         return "Delivery information updated";
       case 'feedback-added':
         return "Customer feedback added";
+      case 'driver-assigned':
+        return log.note || "Driver assigned";
       default:
         return log.note || "Action performed";
     }
@@ -190,6 +194,7 @@ const OrderLogSection: React.FC<OrderLogSectionProps> = ({
               <TableRow>
                 <TableHead className="w-[180px]">Timestamp</TableHead>
                 <TableHead>Event</TableHead>
+                <TableHead className="w-[120px]">User</TableHead>
                 <TableHead className="text-right">Type</TableHead>
               </TableRow>
             </TableHeader>
@@ -201,6 +206,9 @@ const OrderLogSection: React.FC<OrderLogSectionProps> = ({
                       {format(new Date(log.timestamp), 'yyyy-MM-dd HH:mm:ss')}
                     </TableCell>
                     <TableCell>{formatLogMessage(log)}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {log.user || "System"}
+                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end">
                         {getLogIcon(log.type)}
@@ -213,7 +221,7 @@ const OrderLogSection: React.FC<OrderLogSectionProps> = ({
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={3} className="text-center py-6 text-muted-foreground">
+                  <TableCell colSpan={4} className="text-center py-6 text-muted-foreground">
                     No log entries found
                   </TableCell>
                 </TableRow>
