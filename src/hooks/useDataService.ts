@@ -1,6 +1,7 @@
 
 import { useEffect, useState } from 'react';
 import { dataServiceManager } from '@/services/DataServiceManager';
+import { config } from '@/config'; // Import config
 
 export const useDataService = () => {
   const [isReady, setIsReady] = useState(dataServiceManager.isReady);
@@ -12,14 +13,18 @@ export const useDataService = () => {
       return;
     }
 
-    console.log('useDataService: Waiting for data service to be ready');
+    if (config.debug.dataService) {
+      console.log('useDataService: Waiting for data service to be ready');
+    }
     
     const initializeService = async () => {
       try {
         await dataServiceManager.initialize();
         setIsReady(true);
         setError(null);
-        console.log('useDataService: Data service is now ready');
+        if (config.debug.dataService) {
+          console.log('useDataService: Data service is now ready');
+        }
       } catch (err) {
         console.error('useDataService: Failed to initialize data service:', err);
         setError(err instanceof Error ? err.message : 'Failed to initialize data service');
@@ -36,7 +41,9 @@ export const useDataService = () => {
   }, []);
 
   const retry = async () => {
-    console.log('useDataService: Retrying initialization');
+    if (config.debug.dataService) {
+      console.log('useDataService: Retrying initialization');
+    }
     setError(null);
     setIsReady(false);
     

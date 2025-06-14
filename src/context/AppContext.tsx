@@ -4,6 +4,7 @@ import { Order, Customer, DateRange, OrderStatus } from '@/types';
 import { dataService } from '@/services';
 import { toast } from 'sonner';
 import { useAuth } from './AuthContext';
+import { config } from '@/config'; // Import config
 
 interface AppContextType {
   orders: Order[];
@@ -46,8 +47,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       try {
         await Promise.all([refreshOrders(), refreshCustomers()]);
       } catch (error) {
-        console.error('Failed to load initial data:', error);
-        toast.error('Failed to load data');
+        // console.error already handled in refreshOrders/refreshCustomers if they throw
+        // Redundant console.error removed here
+        toast.error('Failed to load initial data');
       }
     };
 
@@ -59,8 +61,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       const fetchedOrders = await dataService.orders.getAll();
       setOrders(fetchedOrders);
     } catch (error) {
-      console.error('Failed to fetch orders:', error);
-      throw error;
+      console.error('AppContext: Failed to fetch orders:', error);
+      throw error; // Re-throw to be caught by loadData or caller
     }
   };
 
@@ -69,8 +71,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       const fetchedCustomers = await dataService.customers.getAll();
       setCustomers(fetchedCustomers);
     } catch (error) {
-      console.error('Failed to fetch customers:', error);
-      throw error;
+      console.error('AppContext: Failed to fetch customers:', error);
+      throw error; // Re-throw
     }
   };
 
@@ -105,8 +107,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         prevOrders.map(order => order.id === updatedOrder.id ? result : order)
       );
     } catch (error) {
-      console.error('Failed to update order:', error);
-      throw error;
+      console.error('AppContext: Failed to update order:', error);
+      throw error; // Re-throw
     }
   };
 
@@ -116,8 +118,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       setOrders(prevOrders => [newOrder, ...prevOrders]);
       return newOrder;
     } catch (error) {
-      console.error('Failed to add order:', error);
-      throw error;
+      console.error('AppContext: Failed to add order:', error);
+      throw error; // Re-throw
     }
   };
 
@@ -126,8 +128,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       await dataService.orders.delete(id);
       setOrders(prevOrders => prevOrders.filter(order => order.id !== id));
     } catch (error) {
-      console.error('Failed to delete order:', error);
-      throw error;
+      console.error('AppContext: Failed to delete order:', error);
+      throw error; // Re-throw
     }
   };
 
@@ -137,8 +139,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       setCustomers(prevCustomers => [newCustomer, ...prevCustomers]);
       return newCustomer;
     } catch (error) {
-      console.error('Failed to add customer:', error);
-      throw error;
+      console.error('AppContext: Failed to add customer:', error);
+      throw error; // Re-throw
     }
   };
 
@@ -150,8 +152,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       );
       return result;
     } catch (error) {
-      console.error('Failed to update customer:', error);
-      throw error;
+      console.error('AppContext: Failed to update customer:', error);
+      throw error; // Re-throw
     }
   };
 

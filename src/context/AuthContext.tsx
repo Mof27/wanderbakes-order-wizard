@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from '../services/supabase/client';
@@ -53,8 +52,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!isConfigured) return;
 
     try {
-      console.log("AuthContext: Fetching user data for:", userId);
-      
       // Fetch user profile
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
@@ -63,9 +60,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .single();
 
       if (profileError) {
-        console.error('AuthContext: Error fetching user profile:', profileError);
+        console.error('AuthContext: Error fetching user profile:', profileError.message);
       } else if (profileData) {
-        console.log("AuthContext: Profile data fetched:", profileData);
         setProfile(profileData as UserProfile);
       }
 
@@ -76,11 +72,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .eq('user_id', userId);
 
       if (rolesError) {
-        console.error('AuthContext: Error fetching user roles:', rolesError);
+        console.error('AuthContext: Error fetching user roles:', rolesError.message);
         setRoles([]);
       } else if (rolesData) {
         const userRoles = rolesData.map(r => r.role);
-        console.log("AuthContext: Roles fetched from database:", userRoles);
         setRoles(userRoles);
       } else {
         setRoles([]);
@@ -94,29 +89,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!isConfigured) {
       if (config.debug.enabled) {
-        console.warn('Supabase is not properly configured. Authentication will not work.');
-        toast.warning('Supabase is not configured. Using mock data.');
+        console.warn('AuthContext: Supabase is not properly configured. Authentication will not work.');
+        // toast.warning('Supabase is not configured. Using mock data.'); // Toasting this frequently can be annoying
       }
       setLoading(false);
       return;
     }
 
-    console.log("AuthContext: Initializing authentication...");
+    if (config.debug.enabled) {
+      console.log("AuthContext: Initializing authentication...");
+    }
+    
 
     // Set up auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log("AuthContext: Auth state change:", event, session?.user?.id);
+        if (config.debug.authEvents) {
+          console.log("AuthContext: Auth state change:", event, session?.user?.id);
+        }
         setSession(session);
         setUser(session?.user ?? null);
         
-        // If logged in, fetch user data with a small delay to avoid deadlocks
         if (session?.user) {
-          setTimeout(() => {
+          setTimeout(() => { // Ensure this runs after state update cycle
             fetchUserData(session.user.id);
           }, 0);
         } else {
-          // Clear profile and roles when logged out
           setProfile(null);
           setRoles([]);
         }
@@ -127,12 +125,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log("AuthContext: Initial session check:", session?.user?.id);
+      if (config.debug.authEvents) {
+        console.log("AuthContext: Initial session check:", session?.user?.id);
+      }
       setSession(session);
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        fetchUserData(session.user.id);
+         // No need to call fetchUserData here if onAuthStateChange handles it comprehensively
+         // However, to ensure profile is loaded on initial load if session exists:
+         fetchUserData(session.user.id);
       }
       
       setLoading(false);
@@ -158,14 +160,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      console.log("AuthContext: Attempting sign in for:", email);
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       
       if (!error) {
-        console.log("AuthContext: Sign in successful");
         toast.success('Signed in successfully!');
       } else {
         console.error("AuthContext: Sign in error:", error.message);
+        // The error will be returned and handled by the calling component (e.g., AuthPage)
       }
       
       return { error };
@@ -183,9 +184,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      console.log("AuthContext: Attempting sign up for:", email);
-      
-      // Prepare user metadata
       const userData = {
         first_name,
         last_name,
@@ -196,12 +194,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email,
         password,
         options: {
-          data: userData
+          data: userData,
+          // IMPORTANT: Add emailRedirectTo for Supabase email confirmation
+          emailRedirectTo: `${window.location.origin}/` 
         }
       });
       
       if (!error) {
-        console.log("AuthContext: Sign up successful");
         toast.success('Account created successfully! Check your email for verification.');
       } else {
         console.error("AuthContext: Sign up error:", error.message);
@@ -221,18 +220,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      console.log("AuthContext: Starting logout process...");
-      
-      // Standard Supabase signout
       await supabase.auth.signOut();
       
-      // Clear state
       setUser(null);
       setSession(null);
       setProfile(null);
       setRoles([]);
       
-      console.log("AuthContext: Logout completed");
       toast.info('Signed out successfully');
     } catch (error) {
       console.error('AuthContext: Error signing out:', error);
@@ -258,14 +252,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .eq('id', user.id);
 
       if (!error) {
-        // Update the local profile state
         setProfile(prev => prev ? { ...prev, ...updates } : null);
         toast.success('Profile updated successfully');
+      } else {
+        console.error('AuthContext: Error updating profile:', error.message);
       }
 
       return { error };
     } catch (error) {
-      console.error('Error updating profile:', error);
+      console.error('AuthContext: Unexpected error updating profile:', error);
       return { error: error as Error };
     }
   };
@@ -273,7 +268,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Create an enhanced hasRole function
   const hasRole = (role: AppRole): boolean => {
     const hasRoleResult = roles.includes(role);
-    console.log(`AuthContext: Checking if user has role ${role}: ${hasRoleResult}`, { allRoles: roles });
+    if (config.debug.authEvents) {
+      console.log(`AuthContext: Checking if user has role ${role}: ${hasRoleResult}`, { allRoles: roles });
+    }
     return hasRoleResult;
   };
 
