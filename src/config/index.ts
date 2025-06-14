@@ -1,5 +1,4 @@
 
-
 /**
  * Application configuration
  */
@@ -32,6 +31,11 @@ export const config = {
      * Log data service operations
      */
     dataService: true,
+
+    /**
+     * Log authentication events
+     */
+    authEvents: true, // Added this line
   },
 
   /**
@@ -47,4 +51,3 @@ export const config = {
     useMockWhenUnconfigured: true,
   },
 };
-
