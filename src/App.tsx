@@ -1,11 +1,11 @@
-import React, { useEffect } from "react";
+
+import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import MainLayout from "./components/layout/MainLayout";
-import AuthMainLayout from "./components/layout/AuthMainLayout";
 import Dashboard from "./pages/Index";
 import OrdersPage from "./pages/OrdersPage";
 import NewOrderPage from "./pages/NewOrderPage";
@@ -20,18 +20,11 @@ import DeliveryPage from "./pages/DeliveryPage";
 import WorkflowPage from "./pages/WorkflowPage";
 import ArchivedOrdersPage from "./pages/ArchivedOrdersPage";
 import GalleryPage from "./pages/GalleryPage";
-import AuthPage from "./pages/AuthPage";
-import ProfilePage from "./pages/ProfilePage";
-import AdminUsersPage from "./pages/AdminUsersPage";
-import AdminResetPage from "./pages/AdminResetPage";
-import UnauthorizedPage from "./pages/UnauthorizedPage";
 import NotFound from "./pages/NotFound";
 import { AppProvider } from "./context/AppContext";
-import { AuthProvider } from "./context/AuthContext";
+import { useEffect } from "react";
 import { config } from "./config";
 import { dataService } from "./services";
-import RoleGuard from "./components/layout/RoleGuard";
-import AuthWrapper from "./components/layout/AuthWrapper";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -73,208 +66,89 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <AppProvider>
-          <HelmetProvider>
-            <TooltipProvider>
-              <Sonner />
-              <BrowserRouter>
-                <Routes>
-                  {/* Authentication routes - no auth required */}
-                  <Route path="/auth" element={
-                    <AuthWrapper requireAuth={false}>
-                      <AuthPage />
-                    </AuthWrapper>
-                  } />
-                  
-                  {/* Redirect old PIN login route to regular auth */}
-                  <Route path="/pin-login" element={<Navigate to="/auth" replace />} />
-                  
-                  {/* Admin reset route - no auth required */}
-                  <Route path="/admin-reset" element={
-                    <AuthWrapper requireAuth={false}>
-                      <AdminResetPage />
-                    </AuthWrapper>
-                  } />
-                  
-                  {/* Unauthorized access page */}
-                  <Route path="/unauthorized" element={<UnauthorizedPage />} />
-                  
-                  {/* Protected routes - require authentication */}
-                  <Route path="/" element={
-                    <AuthWrapper>
-                      <AuthMainLayout>
-                        <Dashboard />
-                      </AuthMainLayout>
-                    </AuthWrapper>
-                  } />
-                  
-                  {/* User profile page */}
-                  <Route path="/profile" element={
-                    <AuthWrapper>
-                      <AuthMainLayout>
-                        <ProfilePage />
-                      </AuthMainLayout>
-                    </AuthWrapper>
-                  } />
-                  
-                  {/* Admin routes */}
-                  <Route path="/admin/users" element={
-                    <AuthWrapper>
-                      <RoleGuard allowedRoles={['admin']}>
-                        <AuthMainLayout>
-                          <AdminUsersPage />
-                        </AuthMainLayout>
-                      </RoleGuard>
-                    </AuthWrapper>
-                  } />
-                  
-                  {/* Sales and Customer Service routes */}
-                  <Route path="/orders" element={
-                    <AuthWrapper>
-                      <RoleGuard allowedRoles={['admin', 'sales', 'customer_service']}>
-                        <AuthMainLayout>
-                          <OrdersPage />
-                        </AuthMainLayout>
-                      </RoleGuard>
-                    </AuthWrapper>
-                  } />
-                  
-                  <Route path="/orders/new" element={
-                    <AuthWrapper>
-                      <RoleGuard allowedRoles={['admin', 'sales']}>
-                        <AuthMainLayout>
-                          <NewOrderPage />
-                        </AuthMainLayout>
-                      </RoleGuard>
-                    </AuthWrapper>
-                  } />
-                  
-                  <Route path="/orders/:id" element={
-                    <AuthWrapper>
-                      <RoleGuard allowedRoles={['admin', 'sales', 'kitchen', 'customer_service']}>
-                        <AuthMainLayout>
-                          <EditOrderPage />
-                        </AuthMainLayout>
-                      </RoleGuard>
-                    </AuthWrapper>
-                  } />
-                  
-                  <Route path="/orders/scan" element={
-                    <AuthWrapper>
-                      <RoleGuard allowedRoles={['admin', 'sales', 'kitchen', 'delivery', 'customer_service']}>
-                        <AuthMainLayout>
-                          <ScanQrPage />
-                        </AuthMainLayout>
-                      </RoleGuard>
-                    </AuthWrapper>
-                  } />
-                  
-                  <Route path="/orders/archived" element={
-                    <AuthWrapper>
-                      <RoleGuard allowedRoles={['admin', 'sales', 'customer_service']}>
-                        <AuthMainLayout>
-                          <ArchivedOrdersPage />
-                        </AuthMainLayout>
-                      </RoleGuard>
-                    </AuthWrapper>
-                  } />
-                  
-                  {/* Kitchen routes */}
-                  <Route path="/kitchen" element={
-                    <AuthWrapper>
-                      <RoleGuard allowedRoles={['admin', 'kitchen']}>
-                        <AuthMainLayout>
-                          <KitchenLeaderPage />
-                        </AuthMainLayout>
-                      </RoleGuard>
-                    </AuthWrapper>
-                  } />
-                  
-                  {/* Baker routes */}
-                  <Route path="/baker" element={
-                    <AuthWrapper>
-                      <RoleGuard allowedRoles={['admin', 'baker']}>
-                        <AuthMainLayout>
-                          <BakerPage />
-                        </AuthMainLayout>
-                      </RoleGuard>
-                    </AuthWrapper>
-                  } />
-                  
-                  {/* Delivery routes */}
-                  <Route path="/delivery" element={
-                    <AuthWrapper>
-                      <RoleGuard allowedRoles={['admin', 'delivery', 'customer_service']}>
-                        <AuthMainLayout>
-                          <DeliveryPage />
-                        </AuthMainLayout>
-                      </RoleGuard>
-                    </AuthWrapper>
-                  } />
-                  
-                  {/* Workflow routes - for admins and kitchen staff */}
-                  <Route path="/workflow" element={
-                    <AuthWrapper>
-                      <RoleGuard allowedRoles={['admin', 'kitchen']}>
-                        <AuthMainLayout>
-                          <WorkflowPage />
-                        </AuthMainLayout>
-                      </RoleGuard>
-                    </AuthWrapper>
-                  } />
-                  
-                  {/* Gallery - visible to more roles for reference */}
-                  <Route path="/gallery" element={
-                    <AuthWrapper>
-                      <RoleGuard allowedRoles={['admin', 'sales', 'kitchen', 'baker', 'customer_service']}>
-                        <AuthMainLayout>
-                          <GalleryPage />
-                        </AuthMainLayout>
-                      </RoleGuard>
-                    </AuthWrapper>
-                  } />
-                  
-                  {/* Customer management */}
-                  <Route path="/customers" element={
-                    <AuthWrapper>
-                      <RoleGuard allowedRoles={['admin', 'sales', 'customer_service']}>
-                        <AuthMainLayout>
-                          <CustomersPage />
-                        </AuthMainLayout>
-                      </RoleGuard>
-                    </AuthWrapper>
-                  } />
-                  
-                  <Route path="/customers/:id/orders" element={
-                    <AuthWrapper>
-                      <RoleGuard allowedRoles={['admin', 'sales', 'customer_service']}>
-                        <AuthMainLayout>
-                          <CustomerOrdersPage />
-                        </AuthMainLayout>
-                      </RoleGuard>
-                    </AuthWrapper>
-                  } />
-                  
-                  {/* Settings - admin only */}
-                  <Route path="/settings/*" element={
-                    <AuthWrapper>
-                      <RoleGuard allowedRoles={['admin']}>
-                        <AuthMainLayout>
-                          <SettingsPage />
-                        </AuthMainLayout>
-                      </RoleGuard>
-                    </AuthWrapper>
-                  } />
-                  
-                  {/* Catch-all for 404s */}
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </BrowserRouter>
-            </TooltipProvider>
-          </HelmetProvider>
-        </AppProvider>
-      </AuthProvider>
+      <AppProvider>
+        <HelmetProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={
+                  <MainLayout>
+                    <Dashboard />
+                  </MainLayout>
+                } />
+                <Route path="/orders" element={
+                  <MainLayout>
+                    <OrdersPage />
+                  </MainLayout>
+                } />
+                <Route path="/orders/new" element={
+                  <MainLayout>
+                    <NewOrderPage />
+                  </MainLayout>
+                } />
+                <Route path="/orders/:id" element={
+                  <MainLayout>
+                    <EditOrderPage />
+                  </MainLayout>
+                } />
+                <Route path="/orders/scan" element={
+                  <MainLayout>
+                    <ScanQrPage />
+                  </MainLayout>
+                } />
+                <Route path="/orders/archived" element={
+                  <MainLayout>
+                    <ArchivedOrdersPage />
+                  </MainLayout>
+                } />
+                <Route path="/kitchen" element={
+                  <MainLayout>
+                    <KitchenLeaderPage />
+                  </MainLayout>
+                } />
+                <Route path="/baker" element={
+                  <MainLayout>
+                    <BakerPage />
+                  </MainLayout>
+                } />
+                <Route path="/delivery" element={
+                  <MainLayout>
+                    <DeliveryPage />
+                  </MainLayout>
+                } />
+                <Route path="/workflow" element={
+                  <MainLayout>
+                    <WorkflowPage />
+                  </MainLayout>
+                } />
+                <Route path="/gallery" element={
+                  <MainLayout>
+                    <GalleryPage />
+                  </MainLayout>
+                } />
+                <Route path="/customers" element={
+                  <MainLayout>
+                    <CustomersPage />
+                  </MainLayout>
+                } />
+                <Route path="/customers/:id/orders" element={
+                  <MainLayout>
+                    <CustomerOrdersPage />
+                  </MainLayout>
+                } />
+                <Route path="/settings/*" element={
+                  <MainLayout>
+                    <SettingsPage />
+                  </MainLayout>
+                } />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </HelmetProvider>
+      </AppProvider>
     </QueryClientProvider>
   );
 };

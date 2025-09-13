@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { OrderLogEvent, CakeRevision } from "@/types";
 import { formatDistanceToNow, format, differenceInMinutes, differenceInHours, differenceInDays } from "date-fns";
@@ -131,31 +130,29 @@ const OrderLogSection: React.FC<OrderLogSectionProps> = ({
   };
   
   // Format log message based on log type
-  const formatLogMessage = (logEntry: OrderLogEvent) => {
-    switch (logEntry.type) {
+  const formatLogMessage = (log: OrderLogEvent) => {
+    switch (log.type) {
       case 'status-change':
         return (
           <div className="flex items-center">
             Status changed from{" "}
-            {logEntry.previousStatus && <StatusBadge status={logEntry.previousStatus} className="mx-1" />}
+            {log.previousStatus && <StatusBadge status={log.previousStatus} className="mx-1" />}
             {" to "}
-            {logEntry.newStatus && <StatusBadge status={logEntry.newStatus} className="mx-1" />}
+            {log.newStatus && <StatusBadge status={log.newStatus} className="mx-1" />}
           </div>
         );
       case 'photo-upload':
         return "Photos uploaded";
       case 'print':
-        return logEntry.note || "Document printed";
+        return log.note || "Document printed";
       case 'note-added':
-        return `Note added: ${logEntry.note}`;
+        return `Note added: ${log.note}`;
       case 'delivery-update':
         return "Delivery information updated";
       case 'feedback-added':
         return "Customer feedback added";
-      case 'driver-assigned':
-        return logEntry.note || "Driver assigned";
       default:
-        return logEntry.note || "Action performed";
+        return log.note || "Action performed";
     }
   };
 
@@ -193,26 +190,22 @@ const OrderLogSection: React.FC<OrderLogSectionProps> = ({
               <TableRow>
                 <TableHead className="w-[180px]">Timestamp</TableHead>
                 <TableHead>Event</TableHead>
-                <TableHead className="w-[120px]">User</TableHead>
                 <TableHead className="text-right">Type</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredLogs.length > 0 ? (
-                filteredLogs.map((logEntry) => (
-                  <TableRow key={logEntry.id}>
+                filteredLogs.map((log) => (
+                  <TableRow key={log.id}>
                     <TableCell className="font-mono text-xs">
-                      {format(new Date(logEntry.timestamp), 'yyyy-MM-dd HH:mm:ss')}
+                      {format(new Date(log.timestamp), 'yyyy-MM-dd HH:mm:ss')}
                     </TableCell>
-                    <TableCell>{formatLogMessage(logEntry)}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {logEntry.user || "System"}
-                    </TableCell>
+                    <TableCell>{formatLogMessage(log)}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end">
-                        {getLogIcon(logEntry.type)}
+                        {getLogIcon(log.type)}
                         <span className="ml-2 text-xs text-muted-foreground">
-                          {logEntry.type.replace('-', ' ')}
+                          {log.type.replace('-', ' ')}
                         </span>
                       </div>
                     </TableCell>
@@ -220,7 +213,7 @@ const OrderLogSection: React.FC<OrderLogSectionProps> = ({
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center py-6 text-muted-foreground">
+                  <TableCell colSpan={3} className="text-center py-6 text-muted-foreground">
                     No log entries found
                   </TableCell>
                 </TableRow>

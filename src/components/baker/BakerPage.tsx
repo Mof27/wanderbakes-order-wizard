@@ -15,7 +15,8 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-import { toast } from '@/components/ui/use-toast';
+import { useToast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import BakingTaskList from './BakingTaskList';
 import InventorySection from './InventorySection';
 import ProductionLogTable from './ProductionLogTable';
@@ -25,6 +26,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 const BakerPage: React.FC = () => {
+  const { toast } = useToast();
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
   
@@ -113,7 +115,11 @@ const BakerPage: React.FC = () => {
         }
       } catch (error) {
         console.error("Error syncing baker tasks:", error);
-        toast.error("Failed to sync orders with baker tasks");
+        toast({
+          title: "Sync Error",
+          description: "Failed to sync orders with baker tasks",
+          variant: "destructive"
+        });
       }
     };
     
@@ -125,7 +131,7 @@ const BakerPage: React.FC = () => {
     return () => {
       clearInterval(intervalId);
     };
-  }, [queryClient, tasks]);
+  }, [queryClient, toast, tasks]);
   
   // Mutations
   const startTaskMutation = useMutation({
@@ -137,7 +143,10 @@ const BakerPage: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bakingTasks'] });
-      toast.success("The task has been marked as in progress.");
+      toast({
+        title: "Task Started",
+        description: "The task has been marked as in progress."
+      });
     }
   });
   
@@ -149,7 +158,10 @@ const BakerPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['bakingTasks'] });
       queryClient.invalidateQueries({ queryKey: ['productionLog'] });
       
-      toast.success("The cancelled task has been acknowledged and removed.");
+      toast({
+        title: "Task Acknowledged",
+        description: "The cancelled task has been acknowledged and removed."
+      });
     }
   });
   
@@ -183,7 +195,10 @@ const BakerPage: React.FC = () => {
       setIsCompletionFormOpen(false);
       setSelectedTask(null);
       
-      toast.success("The completed cakes have been added to inventory.");
+      toast({
+        title: "Production Recorded",
+        description: "The completed cakes have been added to inventory."
+      });
     }
   });
   
@@ -206,7 +221,10 @@ const BakerPage: React.FC = () => {
       
       setIsManualTaskFormOpen(false);
       
-      toast.success("A new manual baking task has been created.");
+      toast({
+        title: "Task Created",
+        description: "A new manual baking task has been created."
+      });
     }
   });
   
@@ -218,7 +236,10 @@ const BakerPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['bakingTasks'] });
       queryClient.invalidateQueries({ queryKey: ['productionLog'] });
       
-      toast.success("The manual task has been deleted.");
+      toast({
+        title: "Task Deleted",
+        description: "The manual task has been deleted."
+      });
     }
   });
   
@@ -233,7 +254,10 @@ const BakerPage: React.FC = () => {
       setTaskToCancel(null);
       setCancelReason('');
       
-      toast.success("The manual task has been cancelled.");
+      toast({
+        title: "Task Cancelled",
+        description: "The manual task has been cancelled."
+      });
     }
   });
   

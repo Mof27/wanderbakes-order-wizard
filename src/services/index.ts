@@ -1,10 +1,9 @@
+
 import { CustomerRepository } from "./repositories/customer.repository";
 import { OrderRepository } from "./repositories/order.repository";
 import { SettingsRepository } from "./repositories/settings.repository";
 import { BakerRepository } from "./repositories/baker.repository";
 import { GalleryRepository } from "./repositories/gallery.repository";
-import { isSupabaseConfigured } from "./supabase/client";
-import { config } from "@/config";
 
 // Define the complete data service interface
 export interface DataService {
@@ -13,28 +12,12 @@ export interface DataService {
   settings: SettingsRepository;
   baker: BakerRepository;
   gallery: GalleryRepository;
-  setMode: (mode: 'mock' | 'firebase' | 'supabase', baseUrl?: string, apiKey?: string) => void;
-  currentMode: 'mock' | 'firebase' | 'supabase';
+  setMode: (mode: 'mock' | 'firebase', baseUrl?: string) => void;
 }
 
 // Function to set the data source mode
-let currentMode: 'mock' | 'firebase' | 'supabase' = 'mock';
+let currentMode: 'mock' | 'firebase' = 'mock';
 let currentBaseUrl: string | undefined = undefined;
-let currentApiKey: string | undefined = undefined;
-
-// Auto-detect Supabase configuration on startup
-if (isSupabaseConfigured()) {
-  currentMode = 'supabase';
-  console.log('Supabase configuration detected! Using Supabase as data source.');
-  // Set the baseUrl and apiKey from environment variables or config
-  currentBaseUrl = config.supabase.url;
-  currentApiKey = config.supabase.anonKey;
-} else {
-  console.log('Supabase not configured. Using mock data as fallback.');
-  if (config.supabase.useMockWhenUnconfigured) {
-    currentMode = 'mock';
-  }
-}
 
 const dataService: DataService = {
   customers: null as any,
@@ -42,11 +25,9 @@ const dataService: DataService = {
   settings: null as any,
   baker: null as any,
   gallery: null as any,
-  currentMode,
-  setMode: (mode: 'mock' | 'firebase' | 'supabase', baseUrl?: string, apiKey?: string) => {
+  setMode: (mode: 'mock' | 'firebase', baseUrl?: string) => {
     currentMode = mode;
     currentBaseUrl = baseUrl;
-    currentApiKey = apiKey;
     
     // Dynamically import the data service based on the mode
     if (mode === 'mock') {
@@ -57,7 +38,6 @@ const dataService: DataService = {
           dataService.settings = mock.mockDataService.settings;
           dataService.baker = mock.mockDataService.baker;
           dataService.gallery = mock.mockDataService.gallery;
-          console.log('Mock data service loaded successfully');
         })
         .catch(err => console.error('Failed to load mock data service', err));
     } else if (mode === 'firebase') {
@@ -77,74 +57,8 @@ const dataService: DataService = {
           dataService.gallery = mock.mockDataService.gallery;
         })
         .catch(err => console.error('Failed to load mock data service', err));
-    } else if (mode === 'supabase') {
-      // For Supabase mode, we'll use a hybrid approach:
-      // 1. Use Supabase repositories for those that are implemented
-      // 2. Use mock data repositories for those not yet migrated
-      
-      Promise.all([
-        import('./mock'),
-        import('./repositories/supabase/gallery.repository'),
-        import('./repositories/supabase/customer.repository'), 
-        import('./repositories/supabase/order.repository'),
-        import('./repositories/supabase/settings.repository'),
-        import('./repositories/supabase/baker.repository') // Import our new baker repository
-      ]).then(([mock, { SupabaseGalleryRepository }, { SupabaseCustomerRepository }, 
-              { SupabaseOrderRepository }, { SupabaseSettingsRepository }, 
-              { SupabaseBakerRepository }]) => { // Add SupabaseBakerRepository to destructuring
-        try {
-          // Only use Supabase implementations if Supabase is properly configured
-          if (isSupabaseConfigured()) {
-            console.log('Initializing Supabase repositories...');
-            // Use Supabase implementation for customer repository
-            dataService.customers = new SupabaseCustomerRepository();
-            
-            // Use Supabase implementation for gallery
-            dataService.gallery = new SupabaseGalleryRepository();
-            
-            // Use Supabase implementation for orders
-            dataService.orders = new SupabaseOrderRepository();
-            
-            // Use Supabase implementation for settings
-            dataService.settings = new SupabaseSettingsRepository();
-            
-            // Use Supabase implementation for baker
-            dataService.baker = new SupabaseBakerRepository();
-            
-            console.log('Supabase repositories initialized successfully');
-          } else {
-            throw new Error('Supabase is not configured properly');
-          }
-        } catch (error) {
-          console.error('Failed to initialize Supabase repositories:', error);
-          console.warn('Falling back to mock data for all repositories');
-          
-          // Fall back to mock data for all repositories
-          dataService.customers = mock.mockDataService.customers;
-          dataService.orders = mock.mockDataService.orders;
-          dataService.settings = mock.mockDataService.settings;
-          dataService.baker = mock.mockDataService.baker;
-          dataService.gallery = mock.mockDataService.gallery;
-        }
-      }).catch(err => {
-        console.error('Failed to load repositories:', err);
-        
-        // Handle the error by falling back to mock data
-        import('./mock')
-          .then(mock => {
-            dataService.customers = mock.mockDataService.customers;
-            dataService.orders = mock.mockDataService.orders;
-            dataService.settings = mock.mockDataService.settings;
-            dataService.baker = mock.mockDataService.baker;
-            dataService.gallery = mock.mockDataService.gallery;
-          })
-          .catch(err => console.error('Failed to load mock data service as fallback', err));
-      });
     }
   }
 };
-
-// Initialize the data service with the detected mode
-dataService.setMode(currentMode, currentBaseUrl, currentApiKey);
 
 export { dataService, currentMode, currentBaseUrl };

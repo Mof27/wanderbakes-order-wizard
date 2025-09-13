@@ -9,7 +9,7 @@ interface ActionButtonsProps {
   isFormValid: boolean;
   handleSaveDraft: () => void;
   handleSubmitOrder: () => void;
-  formData?: Order; // Change from Partial<Order> to Order
+  formData?: Partial<Order>;
   referrer?: string;
   onGoBack?: () => void;
   readOnly?: boolean; // Add readOnly prop
@@ -71,7 +71,7 @@ const ActionButtons = ({
       </div>
       
       <div className="flex gap-2">
-        {formData && formData.id && (
+        {formData && (
           <OrderPrintButton order={formData} />
         )}
         <Button

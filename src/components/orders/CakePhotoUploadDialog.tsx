@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useApp } from "@/context/AppContext";
 import { CakeRevision, Order } from "@/types";
@@ -5,7 +6,6 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Button } from "@/components/ui/button";
 import { Upload, X, Plus, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
-import { useAuth } from "@/context/AuthContext";
 
 interface CakePhotoUploadDialogProps {
   order: Order;
@@ -16,18 +16,12 @@ interface CakePhotoUploadDialogProps {
 
 const CakePhotoUploadDialog = ({ order, open, onClose, onSuccess }: CakePhotoUploadDialogProps) => {
   const { updateOrder } = useApp();
-  const { profile } = useAuth();
   const [photos, setPhotos] = useState<string[]>(order.finishedCakePhotos || []);
   const [loading, setLoading] = useState(false);
   
   // Check if we're in revision mode
   const isRevisionMode = order.status === "needs-revision";
   const revisionCount = order.revisionCount || 0;
-
-  const getCurrentUserDisplayName = (): string => {
-    if (!profile) return "System";
-    return profile.display_name || profile.first_name || "Unknown User";
-  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -74,16 +68,6 @@ const CakePhotoUploadDialog = ({ order, open, onClose, onSuccess }: CakePhotoUpl
       // Calculate the new revision count - only increment if we're submitting a revision
       const newRevisionCount = isRevisionMode ? revisionCount + 1 : revisionCount;
       
-      // Add log entry for photo upload
-      const orderLogs = [...(order.orderLogs || [])];
-      orderLogs.push({
-        id: `log_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-        timestamp: new Date(),
-        type: 'photo-upload',
-        note: isRevisionMode ? `Revision #${newRevisionCount} photos uploaded` : "Cake photos uploaded",
-        user: getCurrentUserDisplayName()
-      });
-
       // Update order with new photos and change status to pending-approval
       await updateOrder({
         ...order,
@@ -91,7 +75,6 @@ const CakePhotoUploadDialog = ({ order, open, onClose, onSuccess }: CakePhotoUpl
         status: "pending-approval",
         revisionCount: newRevisionCount,
         revisionHistory: revisionHistory,
-        orderLogs: orderLogs,
         // Clear revision notes if we're uploading a new version
         revisionNotes: isRevisionMode ? "" : order.revisionNotes
       });

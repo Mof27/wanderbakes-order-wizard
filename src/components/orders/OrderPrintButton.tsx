@@ -1,56 +1,93 @@
 
-import { useState } from "react";
-import { Order } from "@/types";
+import React, { useRef } from 'react';
+import { Order, PrintEvent } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Printer } from "lucide-react";
-import { dataService } from "@/services";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { toast } from "sonner";
+import { useReactToPrint } from 'react-to-print';
+import PrintableOrderView from './PrintableOrderView';
+import { useApp } from "@/context/AppContext";
+import { toast } from "@/components/ui/sonner";
 
 interface OrderPrintButtonProps {
-  order: Order;
+  order: Partial<Order>;
+  showPrintCount?: boolean;
 }
 
-const OrderPrintButton = ({ order }: OrderPrintButtonProps) => {
-  const [isPrinting, setIsPrinting] = useState(false);
-  const { getCurrentUserDisplayName } = useCurrentUser();
+const OrderPrintButton = ({ order, showPrintCount = true }: OrderPrintButtonProps) => {
+  const printRef = useRef<HTMLDivElement>(null);
+  const { updateOrder } = useApp();
 
-  const handlePrint = async () => {
-    setIsPrinting(true);
-    try {
-      // Create print event
-      const printEvent = {
-        id: `print_${Date.now()}`,
-        timestamp: new Date(),
-        type: 'order-form' as const,
-        printedBy: getCurrentUserDisplayName()
-      };
+  // Track print count from history
+  const printCount = order.printHistory?.filter(event => event.type === 'order-form').length || 0;
 
-      // Update order with print history including user info
-      await dataService.orders.updatePrintHistory(order.id, printEvent, getCurrentUserDisplayName());
-      
-      // Trigger actual print
-      window.print();
-      
-      toast.success("Order form printed");
-    } catch (error) {
-      console.error("Failed to record print event:", error);
-      toast.error("Failed to record print event");
-    } finally {
-      setIsPrinting(false);
-    }
-  };
+  const handlePrint = useReactToPrint({
+    documentTitle: `Cake Order ${order.id || ''}`,
+    onPrintError: (error) => {
+      console.error('Print failed', error);
+      toast.error('Failed to print order form');
+    },
+    onAfterPrint: async () => {
+      // Only track prints for saved orders with an ID
+      if (order.id) {
+        try {
+          // Create a new print event
+          const printEvent: PrintEvent = {
+            type: 'order-form',
+            timestamp: new Date(),
+          };
+          
+          // Update the order with the new print event
+          const printHistory = [...(order.printHistory || []), printEvent];
+          
+          await updateOrder({ 
+            ...order as Order, 
+            printHistory 
+          });
+          
+          toast.success('Print successful');
+        } catch (error) {
+          console.error('Failed to update print history', error);
+        }
+      }
+    },
+    contentRef: printRef,
+    pageStyle: `
+      @page {
+        size: A5 landscape;
+        margin: 5mm;
+      }
+      @media print {
+        body {
+          margin: 0;
+          padding: 0;
+        }
+        .print-container {
+          width: 100% !important;
+          height: 100% !important;
+          margin: 0 !important;
+          padding: 5mm !important;
+          box-shadow: none !important;
+        }
+      }
+    `,
+  });
 
   return (
-    <Button 
-      variant="outline" 
-      onClick={handlePrint}
-      disabled={isPrinting}
-      className="gap-2"
-    >
-      <Printer className="h-4 w-4" />
-      {isPrinting ? "Printing..." : "Print Order"}
-    </Button>
+    <>
+      <Button onClick={handlePrint} variant="outline">
+        <Printer className="mr-2 h-4 w-4" />
+        Print Order
+        {showPrintCount && order.id && (
+          <span className="ml-1 text-xs bg-muted text-muted-foreground rounded-full px-1.5 py-0.5">
+            {printCount}
+          </span>
+        )}
+      </Button>
+      
+      <div className="hidden">
+        <PrintableOrderView ref={printRef} order={order} />
+      </div>
+    </>
   );
 };
 
