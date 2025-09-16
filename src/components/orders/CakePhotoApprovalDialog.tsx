@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useApp } from "@/context/AppContext";
-import { CakeRevision, Order, OrderLogEvent, OrderTag } from "@/types";
+import { CakeRevision, Order, OrderLogEvent } from "@/types";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,7 +9,6 @@ import { CheckCircle2, XCircle, Clock, History } from "lucide-react";
 import { toast } from "sonner";
 import { formatDate } from "@/lib/utils";
 import RevisionHistoryView from "./RevisionHistoryView";
-import { dataService } from "@/services";
 
 // Import Textarea from the correct location
 import { Textarea } from "@/components/ui/textarea";
@@ -63,32 +62,7 @@ const CakePhotoApprovalDialog = ({ order, open, onClose, onSuccess }: CakePhotoA
       
       await updateOrder(orderWithLogs);
       
-      // Add approved photos to gallery
-      if (photos.length > 0) {
-        try {
-          // Generate tags based on order data
-          const galleryTags: OrderTag[] = [];
-          
-          // Add order tags if they exist
-          if (order.orderTags) {
-            galleryTags.push(...order.orderTags);
-          }
-          
-          // Add each photo to the gallery
-          for (const photoUrl of photos) {
-            await dataService.gallery.addPhotoFromOrder(orderWithLogs, photoUrl, galleryTags);
-          }
-          
-          toast.success(`Cake photos approved and added to gallery. Order ${order.id} is now ready for delivery.`);
-        } catch (galleryError) {
-          console.error("Failed to add photos to gallery:", galleryError);
-          toast.success(`Cake photos approved. Order ${order.id} is now ready for delivery.`);
-          toast.error("Photos approved but failed to add to gallery.");
-        }
-      } else {
-        toast.success(`Cake photos approved. Order ${order.id} is now ready for delivery.`);
-      }
-      
+      toast.success(`Cake photos approved. Order ${order.id} is now ready for delivery.`);
       if (onSuccess) onSuccess();
       onClose();
     } catch (error) {

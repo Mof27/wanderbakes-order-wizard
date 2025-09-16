@@ -24,6 +24,7 @@ import NotFound from "./pages/NotFound";
 import { AppProvider } from "./context/AppContext";
 import { useEffect } from "react";
 import { config } from "./config";
+import { dataService } from "./services";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -36,10 +37,31 @@ const queryClient = new QueryClient({
 
 const App = () => {
   // Initialize data service
-  useEffect(() => {    
+  useEffect(() => {
+    // Set the data source mode from config
+    dataService.setMode(config.api.dataSourceMode, config.api.baseUrl);
+    
     if (config.debug.enabled && config.debug.dataService) {
       console.log(`Data service initialized in ${config.api.dataSourceMode} mode`);
     }
+
+    // Handle migration of existing customers with old address format
+    const migrateCustomers = async () => {
+      const customers = await dataService.customers.getAll();
+      for (const customer of customers) {
+        // @ts-ignore - to handle old format with address property
+        if (customer.addresses?.length === 0 && customer.addresses) {
+          // Convert old address format to new format if needed
+          // This is just a placeholder as we've already updated the type definition
+          await dataService.customers.update(customer.id, {
+            ...customer,
+            addresses: []
+          });
+        }
+      }
+    };
+    
+    migrateCustomers().catch(console.error);
   }, []);
 
   return (
