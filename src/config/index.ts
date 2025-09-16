@@ -10,7 +10,7 @@ export const config = {
     /**
      * Data source mode: 'mock' or 'live'
      */
-    dataSourceMode: 'mock' as const,
+    dataSourceMode: 'live' as const,
     
     /**
      * Base URL for the API when in live mode

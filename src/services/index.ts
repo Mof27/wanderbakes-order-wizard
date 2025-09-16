@@ -12,11 +12,11 @@ export interface DataService {
   settings: SettingsRepository;
   baker: BakerRepository;
   gallery: GalleryRepository;
-  setMode: (mode: 'mock' | 'firebase', baseUrl?: string) => void;
+  setMode: (mode: 'mock' | 'firebase' | 'live', baseUrl?: string) => void;
 }
 
 // Function to set the data source mode
-let currentMode: 'mock' | 'firebase' = 'mock';
+let currentMode: 'mock' | 'firebase' | 'live' = 'mock';
 let currentBaseUrl: string | undefined = undefined;
 
 const dataService: DataService = {
@@ -25,7 +25,7 @@ const dataService: DataService = {
   settings: null as any,
   baker: null as any,
   gallery: null as any,
-  setMode: (mode: 'mock' | 'firebase', baseUrl?: string) => {
+  setMode: (mode: 'mock' | 'firebase' | 'live', baseUrl?: string) => {
     currentMode = mode;
     currentBaseUrl = baseUrl;
     
@@ -40,6 +40,16 @@ const dataService: DataService = {
           dataService.gallery = mock.mockDataService.gallery;
         })
         .catch(err => console.error('Failed to load mock data service', err));
+    } else if (mode === 'live') {
+      import('./live')
+        .then(live => {
+          dataService.customers = live.liveDataService.customers;
+          dataService.orders = live.liveDataService.orders;
+          dataService.settings = live.liveDataService.settings;
+          dataService.baker = live.liveDataService.baker;
+          dataService.gallery = live.liveDataService.gallery;
+        })
+        .catch(err => console.error('Failed to load live data service', err));
     } else if (mode === 'firebase') {
       if (!baseUrl) {
         throw new Error('Base URL is required for Firebase mode');
